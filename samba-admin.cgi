@@ -75,9 +75,7 @@ sanitize_input() {
     fi
 
     # Validar paths seguros
-    if [[ "$SHARE_PATH" =~ ^/[a-zA-Z0-9/_.-]+$ ]]; then
-        SHARE_PATH="$SHARE_PATH"
-    else
+    if ! [[ "$SHARE_PATH" =~ ^/[a-zA-Z0-9/_.-]+$ ]]; then
         SHARE_PATH=""
     fi
 }
@@ -95,9 +93,9 @@ execute_samba_command() {
     exit_code=$?
 
     if [ $exit_code -eq 0 ]; then
-        echo $(echo "$result")
+        echo "$result"
     else
-        echo "Erro ao executar o comando:" $(echo "$result")
+        echo "Erro ao executar o comando:" "$result"
     fi
 }
 
@@ -161,7 +159,7 @@ delete_user() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool user delete \"$USERNAME\""
+    execute_samba_command "sudo samba-tool user delete $USERNAME"
 }
 
 enable_user() {
@@ -170,7 +168,7 @@ enable_user() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool user enable \"$USERNAME\""
+    execute_samba_command "sudo samba-tool user enable $USERNAME"
 }
 
 disable_user() {
@@ -179,7 +177,7 @@ disable_user() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool user disable \"$USERNAME\""
+    execute_samba_command "sudo samba-tool user disable $USERNAME"
 }
 
 reset_password() {
@@ -188,7 +186,7 @@ reset_password() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool user setpassword \"$USERNAME\" --newpassword=\"$PASSWORD\""
+    execute_samba_command "sudo samba-tool user setpassword $USERNAME\" --newpassword=$PASSWORD"
 }
 
 promote_user() {
@@ -227,7 +225,7 @@ show_user_groups() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool user getgroups \"$USERNAME\""
+    execute_samba_command "sudo samba-tool user getgroups $USERNAME"
 }
 
 move_user_ou() {
@@ -236,7 +234,7 @@ move_user_ou() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool user move \"$USERNAME\" OU=\"$OU_NAME\""
+    execute_samba_command "sudo samba-tool user move $USERNAME\" OU=$OU_NAME"
 }
 
 # === FUNÇÕES DE GRUPOS ===
@@ -247,7 +245,7 @@ create_group() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool group add \"$GROUP\""
+    execute_samba_command "sudo samba-tool group add $GROUP"
 }
 
 list_groups() {
@@ -270,7 +268,7 @@ check_group() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool group show \"$GROUP\""
+    execute_samba_command "sudo samba-tool group show $GROUP"
 }
 
 delete_group() {
@@ -279,7 +277,7 @@ delete_group() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool group delete \"$GROUP\""
+    execute_samba_command "sudo samba-tool group delete $GROUP"
 }
 
 add_user_to_group() {
@@ -288,7 +286,7 @@ add_user_to_group() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool group addmembers \"$GROUP\" \"$USERNAME\""
+    execute_samba_command "sudo samba-tool group addmembers $GROUP\" $USERNAME"
 }
 
 remove_user_from_group() {
@@ -297,7 +295,7 @@ remove_user_from_group() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool group removemembers \"$GROUP\" \"$USERNAME\""
+    execute_samba_command "sudo samba-tool group removemembers $GROUP\" $USERNAME"
 }
 
 list_group_members() {
@@ -306,7 +304,7 @@ list_group_members() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool group listmembers \"$GROUP\""
+    execute_samba_command "sudo samba-tool group listmembers $GROUP"
 }
 
 move_group_ou() {
@@ -315,7 +313,7 @@ move_group_ou() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool group move \"$GROUP\" OU=\"$OU_NAME\""
+    execute_samba_command "sudo samba-tool group move $GROUP\" OU=$OU_NAME"
 }
 
 # === FUNÇÕES DE COMPUTADORES ===
@@ -326,7 +324,7 @@ add_computer() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool computer create \"$COMPUTER\""
+    execute_samba_command "sudo samba-tool computer create $COMPUTER"
 }
 
 list_computers() {
@@ -349,7 +347,7 @@ check_computer() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool computer show \"$COMPUTER\$\""
+    execute_samba_command "sudo samba-tool computer show $COMPUTER\$"
 }
 
 delete_computer() {
@@ -358,7 +356,7 @@ delete_computer() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool computer delete \"$COMPUTER\$\""
+    execute_samba_command "sudo samba-tool computer delete $COMPUTER\$"
 }
 
 move_computer_ou() {
@@ -367,7 +365,7 @@ move_computer_ou() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool computer move \"$COMPUTER\" OU=\"$OU_NAME\""
+    execute_samba_command "sudo samba-tool computer move $COMPUTER\" OU=$OU_NAME"
 }
 
 # === FUNÇÕES DE UNIDADES ORGANIZACIONAIS ===
@@ -378,7 +376,7 @@ create_ou() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool ou create OU=\"$OU_NAME\""
+    execute_samba_command "sudo samba-tool ou create OU=$OU_NAME"
 }
 
 list_ous() {
@@ -391,7 +389,7 @@ delete_ou() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool ou delete OU=\"$OU_NAME\""
+    execute_samba_command "sudo samba-tool ou delete OU=$OU_NAME"
 }
 
 list_ou_objects() {
@@ -400,7 +398,7 @@ list_ou_objects() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool ou listobjects OU=\"$OU_NAME\""
+    execute_samba_command "sudo samba-tool ou listobjects OU=$OU_NAME"
 }
 
 # === FUNÇÕES DE SILOS ===
@@ -411,7 +409,7 @@ create_silo() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool domain auth silo create --name \"$SILO_NAME\""
+    execute_samba_command "sudo samba-tool domain auth silo create --name $SILO_NAME"
 }
 
 list_silos() {
@@ -424,7 +422,7 @@ check_silo() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool domain auth silo view --name \"$SILO_NAME\""
+    execute_samba_command "sudo samba-tool domain auth silo view --name $SILO_NAME"
 }
 
 delete_silo() {
@@ -433,7 +431,7 @@ delete_silo() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool domain auth silo delete --name \"$SILO_NAME\""
+    execute_samba_command "sudo samba-tool domain auth silo delete --name $SILO_NAME"
 }
 
 list_silo_users() {
@@ -442,7 +440,7 @@ list_silo_users() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool domain auth silo member list --name \"$SILO_NAME\""
+    execute_samba_command "sudo samba-tool domain auth silo member list --name $SILO_NAME"
 }
 
 add_user_silo() {
@@ -451,7 +449,7 @@ add_user_silo() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool domain auth silo member add --name \"$SILO_NAME\" --member \"$USERNAME\""
+    execute_samba_command "sudo samba-tool domain auth silo member add --name $SILO_NAME\" --member $USERNAME"
 }
 
 remove_user_silo() {
@@ -460,7 +458,7 @@ remove_user_silo() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool domain auth silo member remove --name \"$SILO_NAME\" --member \"$USERNAME\""
+    execute_samba_command "sudo samba-tool domain auth silo member remove --name $SILO_NAME\" --member $USERNAME"
 }
 
 # === FUNÇÕES DE INFORMAÇÕES DO DOMÍNIO ===
