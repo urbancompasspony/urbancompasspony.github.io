@@ -107,8 +107,7 @@ if apache2ctl configtest; then
     
     # Reiniciar Apache
     echo "Reiniciando Apache..."
-    systemctl restart apache2
-    systemctl enable apache2
+    service apache2 restart
     
     echo ""
     echo "=== CONFIGURAÇÃO CONCLUÍDA ==="
