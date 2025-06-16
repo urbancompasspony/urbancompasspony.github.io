@@ -1520,7 +1520,12 @@ async function executeCommand(action) {
         }
         if(resultContainer) {
             resultContainer.style.display = 'block';
-            resultContainer.innerHTML = `<pre>${JSON.stringify(output, null, 2)}</pre>`;
+            if (output.text) {
+                // Aqui faz a conversão de \n para <br>
+                resultContainer.innerHTML = output.text.replace(/\n/g, '<br>');
+            } else {
+                resultContainer.innerHTML = `<pre>${JSON.stringify(output, null, 2)}</pre>`;
+            }
         }
     } catch(e) {
         if(resultContainer) {
