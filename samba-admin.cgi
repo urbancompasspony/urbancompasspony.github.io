@@ -30,9 +30,9 @@ log_action() {
 # Função para processar parâmetros CGI
 parse_cgi_params() {
     if [ "$REQUEST_METHOD" = "POST" ]; then
-        read -r QUERY_STRING
+        read -n "$CONTENT_LENGTH" QUERY_STRING
     fi
-    
+
     # Decodifica parâmetros URL
     QUERY_STRING=$(echo "$QUERY_STRING" | sed 's/+/ /g')
     
