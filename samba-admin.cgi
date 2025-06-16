@@ -11,7 +11,6 @@ echo ""
 ACTION=""
 USERNAME=""
 FIRSTNAME=""
-LASTNAME=""
 PASSWORD=""
 EMAIL=""
 MUST_CHANGE_PASSWORD=""
@@ -95,7 +94,7 @@ execute_samba_command() {
     log_action "Executando: $cmd"
     
     # Executa comando com timeout
-    result=$(timeout 30 sudo $cmd 2>&1)
+    result=$(timeout 30 sudo "$cmd" 2>&1)
     exit_code=$?
     
     if [ $exit_code -eq 0 ]; then
