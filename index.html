@@ -192,7 +192,8 @@
             align-items: center;
             margin-bottom: 15px;
         }
-        .checkbox-group input[type="checkbox"] {
+        .checkbox-group input[type="checkbox"],
+        .checkbox-group input[type="radio"] {
             width: auto;
             margin-right: 10px;
         }
@@ -204,7 +205,6 @@
         }
         .domain-info h4 { color: #2c3e50; margin-bottom: 10px;}
         .domain-info p { color: #7f8c8d; margin-bottom: 5px;}
-        /* Painel de instrução */
         .instruction-panel {
             background: #f9f9f9;
             border-radius: 10px;
@@ -224,6 +224,7 @@
         </div>
 
         <div class="main-content">
+            <!-- Menu Principal -->
             <div id="main-menu" class="menu-grid">
                 <div class="menu-card" onclick="showSubmenu('user-tools')">
                     <h3>👤 Ferramentas de Usuários</h3>
@@ -264,8 +265,7 @@
                     <h3>⚙️ Configurações do Domínio</h3>
                     <p>Definir políticas de senha, ACLs, instalar templates ADMX e muito mais.</p>
                 </div>
-            </div>            
-        </div>
+            </div>
 
             <!-- Submenu Ferramentas de Usuários -->
             <div id="user-tools" class="submenu">
@@ -274,35 +274,127 @@
                 <div class="submenu-grid">
                     <div class="submenu-item" onclick="showForm('search-user')">Procurar usuário</div>
                     <div class="submenu-item" onclick="showForm('check-user')">Verificar um usuário</div>
-                    <!-- Bloco especial para "Criar usuário" com botão de instrução -->
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <div class="submenu-item" onclick="showForm('create-user')">Criar usuário</div>
-                        <button class="btn" style="height:32px; padding:0 10px;" onclick="showInstructionPanel('instruction-create-user')" title="Ver instruções">?</button>
-                    </div>
+                    <div class="submenu-item" onclick="showForm('create-user')">Criar usuário</div>
                     <div class="submenu-item" onclick="executeCommand('list-users')">Exibir todos os usuários</div>
-                    <!-- ... outros itens ... -->
+                    <div class="submenu-item" onclick="showForm('block-user')">Bloquear usuário</div>
+                    <div class="submenu-item" onclick="showForm('unblock-user')">Desbloquear usuário</div>
+                    <div class="submenu-item" onclick="showForm('add-user-group')">Adicionar usuário a um grupo</div>
+                    <div class="submenu-item" onclick="showForm('show-user-groups')">Exibir grupos de usuário</div>
+                    <div class="submenu-item" onclick="showForm('remove-user-group')">Remover usuário de um grupo</div>
+                    <div class="submenu-item" onclick="showForm('copy-user-groups')">Copiar os grupos de um usuário</div>
+                    <div class="submenu-item" onclick="showForm('promote-user')">Promover usuário a admin</div>
+                    <div class="submenu-item" onclick="showForm('demote-user')">Demover usuário de admin</div>
+                    <div class="submenu-item" onclick="showForm('change-password')">Alterar a senha de um usuário</div>
+                    <div class="submenu-item" onclick="showForm('test-password')">Verificar a senha de um usuário</div>
+                    <div class="submenu-item" onclick="showForm('password-expiry')">A senha do usuário deve expirar?</div>
+                    <div class="submenu-item" onclick="showForm('password-expiry-days')">Quando a senha usuário vai expirar?</div>
+                    <div class="submenu-item" onclick="showForm('force-password-change')">Forçar a troca de senha imediata!</div>
+                    <div class="submenu-item" onclick="showForm('move-user-ou')">Mover usuário para OU</div>
+                    <div class="submenu-item" onclick="showForm('delete-user')">Cuidado: Excluir um usuário</div>
                 </div>
             </div>
 
-            <!-- Painel de instrução para "Criar usuário" -->
-            <div id="instruction-create-user" class="instruction-panel" style="display:none;">
-                <h3>Como Criar um Usuário</h3>
-                <ol>
-                    <li>Clique em <b>Criar usuário</b> no menu acima.</li>
-                    <li>Preencha o formulário com:
-                        <ul>
-                            <li><b>Nome do Usuário</b></li>
-                            <li><b>Primeiro Nome</b></li>
-                            <li><b>Último Nome</b></li>
-                            <li><b>Senha</b></li>
-                            <li><b>Email</b> (opcional)</li>
-                            <li>Opcional: Marque se o usuário deve trocar a senha no próximo login.</li>
-                        </ul>
-                    </li>
-                    <li>Clique em <b>Criar Usuário</b> para concluir.</li>
-                    <li>Se houver erro, confira os campos obrigatórios.</li>
-                </ol>
-                <button class="btn" onclick="closeInstructionPanel('instruction-create-user')">Fechar</button>
+            <!-- Submenu Ferramentas de Grupos -->
+            <div id="group-tools" class="submenu">
+                <button class="back-btn" onclick="showMainMenu()">← Voltar</button>
+                <h3>Ferramentas de Grupos</h3>
+                <div class="submenu-grid">
+                    <div class="submenu-item" onclick="showForm('search-group')">Procurar grupo</div>
+                    <div class="submenu-item" onclick="showForm('check-group')">Verificar um Grupo</div>
+                    <div class="submenu-item" onclick="showForm('create-group')">Criar grupo</div>
+                    <div class="submenu-item" onclick="executeCommand('list-groups')">Exibir todos os grupos</div>
+                    <div class="submenu-item" onclick="showForm('show-group-members')">Exibir membros de um grupo</div>
+                    <div class="submenu-item" onclick="showForm('copy-group-members')">Copiar os membros de um grupo</div>
+                    <div class="submenu-item" onclick="showForm('add-group-to-group')">Adicionar grupo 1 a um grupo 2</div>
+                    <div class="submenu-item" onclick="showForm('remove-group-from-group')">Remover grupo 1 de um grupo 2</div>
+                    <div class="submenu-item" onclick="showForm('move-group-ou')">Mover grupo para OU</div>
+                    <div class="submenu-item" onclick="showForm('delete-group')">Cuidado: Excluir um grupo</div>
+                </div>
+            </div>
+
+            <!-- Submenu Ferramentas de Computadores -->
+            <div id="pc-tools" class="submenu">
+                <button class="back-btn" onclick="showMainMenu()">← Voltar</button>
+                <h3>Ferramentas de Computadores</h3>
+                <div class="submenu-grid">
+                    <div class="submenu-item" onclick="showForm('search-computer')">Procurar computador</div>
+                    <div class="submenu-item" onclick="showForm('check-computer')">Verificar um computador</div>
+                    <div class="submenu-item" onclick="executeCommand('list-computers')">Exibir todos os computadores</div>
+                    <div class="submenu-item" onclick="showForm('create-computer')">Criar/Adicionar um computador</div>
+                    <div class="submenu-item" onclick="showForm('move-computer-ou')">Mover computador para OU</div>
+                    <div class="submenu-item" onclick="showForm('delete-computer')">Cuidado: Excluir um computador</div>
+                </div>
+            </div>
+
+            <!-- Submenu Gestão de Pastas Compartilhadas -->
+            <div id="shared-folders" class="submenu">
+                <button class="back-btn" onclick="showMainMenu()">← Voltar</button>
+                <h3>Gestão de Pastas Compartilhadas</h3>
+                <div class="submenu-grid">
+                    <div class="submenu-item" onclick="executeCommand('show-shares')">Mostrar pastas compartilhadas</div>
+                    <div class="submenu-item" onclick="showForm('create-share')">Criar nova pasta compartilhada</div>
+                    <div class="submenu-item" onclick="showForm('create-sync-share')">Compartilhamento estruturado</div>
+                    <div class="submenu-item" onclick="showForm('delete-share')">Excluir compartilhamento</div>
+                    <div class="submenu-item" onclick="executeCommand('revalidate-shares')">Revalidar configurações</div>
+                </div>
+            </div>
+
+            <!-- Submenu Unidades Organizacionais -->
+            <div id="ou-tools" class="submenu">
+                <button class="back-btn" onclick="showMainMenu()">← Voltar</button>
+                <h3>Unidades Organizacionais</h3>
+                <div class="submenu-grid">
+                    <div class="submenu-item" onclick="executeCommand('list-ous')">Listar todas as OUs</div>
+                    <div class="submenu-item" onclick="showForm('create-ou')">Criar uma OU</div>
+                    <div class="submenu-item" onclick="showForm('list-ou-objects')">Listar objetos de OU</div>
+                    <div class="submenu-item" onclick="showForm('delete-ou')">Excluir uma OU</div>
+                </div>
+            </div>
+
+            <!-- Submenu Silos de Autenticação -->
+            <div id="auth-silos" class="submenu">
+                <button class="back-btn" onclick="showMainMenu()">← Voltar</button>
+                <h3>Silos de Autenticação</h3>
+                <div class="submenu-grid">
+                    <div class="submenu-item" onclick="showForm('check-silo')">Procurar/verificar um silo</div>
+                    <div class="submenu-item" onclick="executeCommand('list-silos')">Listar todos os silos</div>
+                    <div class="submenu-item" onclick="showForm('create-silo')">Criar um silo</div>
+                    <div class="submenu-item" onclick="showForm('list-silo-users')">Listar usuários de um silo</div>
+                    <div class="submenu-item" onclick="showForm('add-user-silo')">Adicionar um usuário a um silo</div>
+                    <div class="submenu-item" onclick="showForm('remove-user-silo')">Remover um usuário de um silo</div>
+                    <div class="submenu-item" onclick="showForm('delete-silo')">Excluir um silo</div>
+                </div>
+            </div>
+
+            <!-- Submenu Informações do Domínio -->
+            <div id="domain-info" class="submenu">
+                <button class="back-btn" onclick="showMainMenu()">← Voltar</button>
+                <h3>Informações do Domínio</h3>
+                <div class="submenu-grid">
+                    <div class="submenu-item" onclick="executeCommand('show-domain-info')">Detalhes deste Domínio</div>
+                    <div class="submenu-item" onclick="executeCommand('show-domain-level')">Nível funcional do domínio</div>
+                    <div class="submenu-item" onclick="executeCommand('show-fsmo-roles')">Funções FSMO</div>
+                    <div class="submenu-item" onclick="executeCommand('show-sites')">Sites de replicação</div>
+                    <div class="submenu-item" onclick="executeCommand('show-replication-info')">Informações de replicação</div>
+                    <div class="submenu-item" onclick="executeCommand('active-sessions')">Status das Sessões ativas</div>
+                    <div class="submenu-item" onclick="executeCommand('active-shares')">Status dos Compartilhamentos</div>
+                    <div class="submenu-item" onclick="executeCommand('samba-processes')">Processos do SAMBA-AD-DC</div>
+                </div>
+            </div>
+
+            <!-- Submenu Configurações do Domínio -->
+            <div id="domain-settings" class="submenu">
+                <button class="back-btn" onclick="showMainMenu()">← Voltar</button>
+                <h3>Configurações do Domínio</h3>
+                <div class="submenu-grid">
+                    <div class="submenu-item" onclick="showForm('password-policy')">Regras de Senhas</div>
+                    <div class="submenu-item" onclick="showForm('permissions')">Permissões Comuns</div>
+                    <div class="submenu-item" onclick="showForm('acls')">Cuidado: ACLs</div>
+                    <div class="submenu-item" onclick="executeCommand('install-admx-w10')">Instalar ADMX Templates extras W 10</div>
+                    <div class="submenu-item" onclick="executeCommand('install-admx-w11')">Instalar ADMX Templates extras W 11</div>
+                    <div class="submenu-item" onclick="executeCommand('remove-admx')">Remover ADMX Templates extras</div>
+                    <div class="submenu-item" onclick="executeCommand('update-menu')">Atualizar este Menu!</div>
+                </div>
             </div>
 
             <!-- Área de Formulários -->
@@ -316,20 +408,12 @@
                             <input type="text" id="username" name="username" required>
                         </div>
                         <div class="form-group">
-                            <label for="firstname">Primeiro Nome:</label>
-                            <input type="text" id="firstname" name="firstname" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="lastname">Último Nome:</label>
-                            <input type="text" id="lastname" name="lastname" required>
+                            <label for="display-name">Nome de Exibição:</label>
+                            <input type="text" id="display-name" name="display-name" required>
                         </div>
                         <div class="form-group">
                             <label for="password">Senha:</label>
                             <input type="password" id="password" name="password" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="email">Email (opcional):</label>
-                            <input type="email" id="email" name="email">
                         </div>
                         <div class="checkbox-group">
                             <input type="checkbox" id="must-change-password" name="must-change-password">
@@ -339,61 +423,121 @@
                         <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
                     </form>
                 </div>
-                <!-- ... outros formulários ... -->
-            </div>
-        </div>
-    </div>
-    <script>
-    // Funções para mostrar/ocultar menus e instruções
-    function showSubmenu(submenuId) {
-        document.querySelectorAll('.submenu').forEach(function(sub) {
-            sub.classList.remove('active');
-        });
-        document.querySelectorAll('.instruction-panel').forEach(function(panel) {
-            panel.style.display = 'none';
-        });
-        document.getElementById('main-menu').style.display = 'none';
-        var submenu = document.getElementById(submenuId);
-        if (submenu) submenu.classList.add('active');
-    }
-    function showMainMenu() {
-        document.querySelectorAll('.submenu').forEach(function(sub) {
-            sub.classList.remove('active');
-        });
-        document.getElementById('main-menu').style.display = 'grid';
-        document.querySelectorAll('.instruction-panel').forEach(function(panel) {
-            panel.style.display = 'none';
-        });
-    }
-    function showInstructionPanel(id) {
-        document.querySelectorAll('.instruction-panel').forEach(function(panel) {
-            panel.style.display = 'none';
-        });
-        document.getElementById(id).style.display = 'block';
-    }
-    function closeInstructionPanel(id) {
-        document.getElementById(id).style.display = 'none';
-    }
-    function showForm(formName) {
-        document.querySelectorAll('.form-container').forEach(function(form) {
-            form.classList.remove('active');
-        });
-        var el = document.getElementById(formName + '-form');
-        if (el) el.classList.add('active');
-        document.querySelectorAll('.instruction-panel').forEach(function(panel) {
-            panel.style.display = 'none';
-        });
-    }
-    function hideForm() {
-        document.querySelectorAll('.form-container').forEach(function(form) {
-            form.classList.remove('active');
-        });
-    }
-    // Ao carregar a página, mostrar o menu principal
-    document.addEventListener('DOMContentLoaded', function() {
-        showMainMenu();
-    });
-    // Adicione suas funções executeCommand, submitForm, etc, conforme necessário!
-    </script>
-</body>
-</html>
+
+                <!-- Formulário Buscar Usuário -->
+                <div id="search-user-form" class="form-container">
+                    <h3>Buscar Usuário</h3>
+                    <form onsubmit="submitForm(event, 'search-user')">
+                        <div class="form-group">
+                            <label for="search-username">Nome do Usuário (ou parte do nome):</label>
+                            <input type="text" id="search-username" name="search-term" required>
+                        </div>
+                        <button type="submit" class="btn">Buscar</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Verificar Usuário -->
+                <div id="check-user-form" class="form-container">
+                    <h3>Verificar Usuário</h3>
+                    <form onsubmit="submitForm(event, 'check-user')">
+                        <div class="form-group">
+                            <label for="check-username">Nome do Usuário:</label>
+                            <input type="text" id="check-username" name="username" required>
+                        </div>
+                        <button type="submit" class="btn">Verificar</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Bloquear Usuário -->
+                <div id="block-user-form" class="form-container">
+                    <h3>Bloquear Usuário</h3>
+                    <form onsubmit="submitForm(event, 'disable-user')">
+                        <div class="form-group">
+                            <label for="block-username">Nome do Usuário:</label>
+                            <input type="text" id="block-username" name="username" required>
+                        </div>
+                        <button type="submit" class="btn btn-danger">Bloquear Usuário</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Desbloquear Usuário -->
+                <div id="unblock-user-form" class="form-container">
+                    <h3>Desbloquear Usuário</h3>
+                    <form onsubmit="submitForm(event, 'enable-user')">
+                        <div class="form-group">
+                            <label for="unblock-username">Nome do Usuário:</label>
+                            <input type="text" id="unblock-username" name="username" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Desbloquear Usuário</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Alterar Senha -->
+                <div id="change-password-form" class="form-container">
+                    <h3>Alterar Senha do Usuário</h3>
+                    <form onsubmit="submitForm(event, 'reset-password')">
+                        <div class="form-group">
+                            <label for="change-pass-username">Nome do Usuário:</label>
+                            <input type="text" id="change-pass-username" name="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="new-password">Nova Senha:</label>
+                            <input type="password" id="new-password" name="password" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Alterar Senha</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Deletar Usuário -->
+                <div id="delete-user-form" class="form-container">
+                    <h3>Deletar Usuário</h3>
+                    <div class="alert alert-error active">
+                        <strong>Atenção!</strong> Esta ação é irreversível.
+                    </div>
+                    <form onsubmit="submitForm(event, 'delete-user')">
+                        <div class="form-group">
+                            <label for="delete-username">Nome do Usuário:</label>
+                            <input type="text" id="delete-username" name="username" required>
+                        </div>
+                        <button type="submit" class="btn btn-danger">Deletar Usuário</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Criar Grupo -->
+                <div id="create-group-form" class="form-container">
+                    <h3>Criar Grupo</h3>
+                    <form onsubmit="submitForm(event, 'create-group')">
+                        <div class="form-group">
+                            <label for="group-name">Nome do Grupo:</label>
+                            <input type="text" id="group-name" name="group" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Criar Grupo</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Adicionar Usuário ao Grupo -->
+                <div id="add-user-group-form" class="form-container">
+                    <h3>Adicionar Usuário ao Grupo</h3>
+                    <form onsubmit="submitForm(event, 'add-user-to-group')">
+                        <div class="form-group">
+                            <label for="user-for-group">Nome do Usuário:</label>
+                            <input type="text" id="user-for-group" name="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="target-group">Nome do Grupo:</label>
+                            <input type="text" id="target-group" name="group" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Adicionar ao Grupo</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Criar Compartilhamento -->
+                <div id="create-share-
