@@ -86,7 +86,7 @@ sanitize_input() {
     fi
 }
 
-# Função para executar comandos samba-tool com segurança
+# Função para executar comandos sudo samba-tool com segurança
 execute_samba_command() {
     local cmd="$1"
     local result
@@ -127,7 +127,7 @@ create_user() {
     fi
     
     # Construir comando
-    local cmd="samba-tool user create \"$USERNAME\" \"$PASSWORD\" --surname=\"$FIRSTNAME\""
+    local cmd="sudo samba-tool user create \"$USERNAME\" \"$PASSWORD\" --surname=\"$FIRSTNAME\""
     
     if [ "$MUST_CHANGE_PASSWORD" = "on" ]; then
         cmd="$cmd --must-change-at-next-login"
@@ -137,7 +137,7 @@ create_user() {
 }
 
 list_users() {
-    execute_samba_command "samba-tool user list"
+    execute_samba_command "sudo samba-tool user list"
 }
 
 search_user() {
@@ -146,7 +146,7 @@ search_user() {
         return
     fi
     
-    result=$(samba-tool user list | grep "$SEARCH_TERM")
+    result=$(sudo samba-tool user list | grep "$SEARCH_TERM")
     json_response "success" "Resultados encontrados" "$result"
 }
 
@@ -156,7 +156,7 @@ check_user() {
         return
     fi
     
-    execute_samba_command "samba-tool user show \"$USERNAME\""
+    execute_samba_command "sudo samba-tool user show \"$USERNAME\""
 }
 
 delete_user() {
@@ -165,7 +165,7 @@ delete_user() {
         return
     fi
     
-    execute_samba_command "samba-tool user delete \"$USERNAME\""
+    execute_samba_command "sudo samba-tool user delete \"$USERNAME\""
 }
 
 enable_user() {
@@ -174,7 +174,7 @@ enable_user() {
         return
     fi
     
-    execute_samba_command "samba-tool user enable \"$USERNAME\""
+    execute_samba_command "sudo samba-tool user enable \"$USERNAME\""
 }
 
 disable_user() {
@@ -183,7 +183,7 @@ disable_user() {
         return
     fi
     
-    execute_samba_command "samba-tool user disable \"$USERNAME\""
+    execute_samba_command "sudo samba-tool user disable \"$USERNAME\""
 }
 
 reset_password() {
@@ -192,7 +192,7 @@ reset_password() {
         return
     fi
     
-    execute_samba_command "samba-tool user setpassword \"$USERNAME\" --newpassword=\"$PASSWORD\""
+    execute_samba_command "sudo samba-tool user setpassword \"$USERNAME\" --newpassword=\"$PASSWORD\""
 }
 
 promote_user() {
@@ -201,11 +201,11 @@ promote_user() {
         return
     fi
     
-    samba-tool group addmembers "Domain Admins" "$USERNAME"
-    samba-tool group addmembers "Schema Admins" "$USERNAME"
-    samba-tool group addmembers "Enterprise Admins" "$USERNAME"
-    samba-tool group addmembers "Group Policy Creator Owners" "$USERNAME"
-    samba-tool group addmembers "Administrators" "$USERNAME"
+    sudo samba-tool group addmembers "Domain Admins" "$USERNAME"
+    sudo samba-tool group addmembers "Schema Admins" "$USERNAME"
+    sudo samba-tool group addmembers "Enterprise Admins" "$USERNAME"
+    sudo samba-tool group addmembers "Group Policy Creator Owners" "$USERNAME"
+    sudo samba-tool group addmembers "Administrators" "$USERNAME"
     
     json_response "success" "Usuário $USERNAME promovido a administrador"
 }
@@ -216,11 +216,11 @@ demote_user() {
         return
     fi
     
-    samba-tool group removemembers "Domain Admins" "$USERNAME"
-    samba-tool group removemembers "Schema Admins" "$USERNAME"
-    samba-tool group removemembers "Enterprise Admins" "$USERNAME"
-    samba-tool group removemembers "Group Policy Creator Owners" "$USERNAME"
-    samba-tool group removemembers "Administrators" "$USERNAME"
+    sudo samba-tool group removemembers "Domain Admins" "$USERNAME"
+    sudo samba-tool group removemembers "Schema Admins" "$USERNAME"
+    sudo samba-tool group removemembers "Enterprise Admins" "$USERNAME"
+    sudo samba-tool group removemembers "Group Policy Creator Owners" "$USERNAME"
+    sudo samba-tool group removemembers "Administrators" "$USERNAME"
     
     json_response "success" "Usuário $USERNAME removido de administrador"
 }
@@ -231,7 +231,7 @@ show_user_groups() {
         return
     fi
     
-    execute_samba_command "samba-tool user getgroups \"$USERNAME\""
+    execute_samba_command "sudo samba-tool user getgroups \"$USERNAME\""
 }
 
 move_user_ou() {
@@ -240,7 +240,7 @@ move_user_ou() {
         return
     fi
     
-    execute_samba_command "samba-tool user move \"$USERNAME\" OU=\"$OU_NAME\""
+    execute_samba_command "sudo samba-tool user move \"$USERNAME\" OU=\"$OU_NAME\""
 }
 
 # === FUNÇÕES DE GRUPOS ===
@@ -251,11 +251,11 @@ create_group() {
         return
     fi
     
-    execute_samba_command "samba-tool group add \"$GROUP\""
+    execute_samba_command "sudo samba-tool group add \"$GROUP\""
 }
 
 list_groups() {
-    execute_samba_command "samba-tool group list"
+    execute_samba_command "sudo samba-tool group list"
 }
 
 search_group() {
@@ -264,7 +264,7 @@ search_group() {
         return
     fi
     
-    result=$(samba-tool group list | grep "$SEARCH_TERM")
+    result=$(sudo samba-tool group list | grep "$SEARCH_TERM")
     json_response "success" "Resultados encontrados" "$result"
 }
 
@@ -274,7 +274,7 @@ check_group() {
         return
     fi
     
-    execute_samba_command "samba-tool group show \"$GROUP\""
+    execute_samba_command "sudo samba-tool group show \"$GROUP\""
 }
 
 delete_group() {
@@ -283,7 +283,7 @@ delete_group() {
         return
     fi
     
-    execute_samba_command "samba-tool group delete \"$GROUP\""
+    execute_samba_command "sudo samba-tool group delete \"$GROUP\""
 }
 
 add_user_to_group() {
@@ -292,7 +292,7 @@ add_user_to_group() {
         return
     fi
     
-    execute_samba_command "samba-tool group addmembers \"$GROUP\" \"$USERNAME\""
+    execute_samba_command "sudo samba-tool group addmembers \"$GROUP\" \"$USERNAME\""
 }
 
 remove_user_from_group() {
@@ -301,7 +301,7 @@ remove_user_from_group() {
         return
     fi
     
-    execute_samba_command "samba-tool group removemembers \"$GROUP\" \"$USERNAME\""
+    execute_samba_command "sudo samba-tool group removemembers \"$GROUP\" \"$USERNAME\""
 }
 
 list_group_members() {
@@ -310,7 +310,7 @@ list_group_members() {
         return
     fi
     
-    execute_samba_command "samba-tool group listmembers \"$GROUP\""
+    execute_samba_command "sudo samba-tool group listmembers \"$GROUP\""
 }
 
 move_group_ou() {
@@ -319,7 +319,7 @@ move_group_ou() {
         return
     fi
     
-    execute_samba_command "samba-tool group move \"$GROUP\" OU=\"$OU_NAME\""
+    execute_samba_command "sudo samba-tool group move \"$GROUP\" OU=\"$OU_NAME\""
 }
 
 # === FUNÇÕES DE COMPUTADORES ===
@@ -330,11 +330,11 @@ add_computer() {
         return
     fi
     
-    execute_samba_command "samba-tool computer create \"$COMPUTER\""
+    execute_samba_command "sudo samba-tool computer create \"$COMPUTER\""
 }
 
 list_computers() {
-    execute_samba_command "samba-tool computer list"
+    execute_samba_command "sudo samba-tool computer list"
 }
 
 search_computer() {
@@ -343,7 +343,7 @@ search_computer() {
         return
     fi
     
-    result=$(samba-tool computer list | grep "$SEARCH_TERM")
+    result=$(sudo samba-tool computer list | grep "$SEARCH_TERM")
     json_response "success" "Resultados encontrados" "$result"
 }
 
@@ -353,7 +353,7 @@ check_computer() {
         return
     fi
     
-    execute_samba_command "samba-tool computer show \"$COMPUTER\$\""
+    execute_samba_command "sudo samba-tool computer show \"$COMPUTER\$\""
 }
 
 delete_computer() {
@@ -362,7 +362,7 @@ delete_computer() {
         return
     fi
     
-    execute_samba_command "samba-tool computer delete \"$COMPUTER\$\""
+    execute_samba_command "sudo samba-tool computer delete \"$COMPUTER\$\""
 }
 
 move_computer_ou() {
@@ -371,7 +371,7 @@ move_computer_ou() {
         return
     fi
     
-    execute_samba_command "samba-tool computer move \"$COMPUTER\" OU=\"$OU_NAME\""
+    execute_samba_command "sudo samba-tool computer move \"$COMPUTER\" OU=\"$OU_NAME\""
 }
 
 # === FUNÇÕES DE UNIDADES ORGANIZACIONAIS ===
@@ -382,11 +382,11 @@ create_ou() {
         return
     fi
     
-    execute_samba_command "samba-tool ou create OU=\"$OU_NAME\""
+    execute_samba_command "sudo samba-tool ou create OU=\"$OU_NAME\""
 }
 
 list_ous() {
-    execute_samba_command "samba-tool ou list"
+    execute_samba_command "sudo samba-tool ou list"
 }
 
 delete_ou() {
@@ -395,7 +395,7 @@ delete_ou() {
         return
     fi
     
-    execute_samba_command "samba-tool ou delete OU=\"$OU_NAME\""
+    execute_samba_command "sudo samba-tool ou delete OU=\"$OU_NAME\""
 }
 
 list_ou_objects() {
@@ -404,7 +404,7 @@ list_ou_objects() {
         return
     fi
     
-    execute_samba_command "samba-tool ou listobjects OU=\"$OU_NAME\""
+    execute_samba_command "sudo samba-tool ou listobjects OU=\"$OU_NAME\""
 }
 
 # === FUNÇÕES DE SILOS ===
@@ -415,11 +415,11 @@ create_silo() {
         return
     fi
     
-    execute_samba_command "samba-tool domain auth silo create --name \"$SILO_NAME\""
+    execute_samba_command "sudo samba-tool domain auth silo create --name \"$SILO_NAME\""
 }
 
 list_silos() {
-    execute_samba_command "samba-tool domain auth silo list"
+    execute_samba_command "sudo samba-tool domain auth silo list"
 }
 
 check_silo() {
@@ -428,7 +428,7 @@ check_silo() {
         return
     fi
     
-    execute_samba_command "samba-tool domain auth silo view --name \"$SILO_NAME\""
+    execute_samba_command "sudo samba-tool domain auth silo view --name \"$SILO_NAME\""
 }
 
 delete_silo() {
@@ -437,7 +437,7 @@ delete_silo() {
         return
     fi
     
-    execute_samba_command "samba-tool domain auth silo delete --name \"$SILO_NAME\""
+    execute_samba_command "sudo samba-tool domain auth silo delete --name \"$SILO_NAME\""
 }
 
 list_silo_users() {
@@ -446,7 +446,7 @@ list_silo_users() {
         return
     fi
     
-    execute_samba_command "samba-tool domain auth silo member list --name \"$SILO_NAME\""
+    execute_samba_command "sudo samba-tool domain auth silo member list --name \"$SILO_NAME\""
 }
 
 add_user_silo() {
@@ -455,7 +455,7 @@ add_user_silo() {
         return
     fi
     
-    execute_samba_command "samba-tool domain auth silo member add --name \"$SILO_NAME\" --member \"$USERNAME\""
+    execute_samba_command "sudo samba-tool domain auth silo member add --name \"$SILO_NAME\" --member \"$USERNAME\""
 }
 
 remove_user_silo() {
@@ -464,29 +464,29 @@ remove_user_silo() {
         return
     fi
     
-    execute_samba_command "samba-tool domain auth silo member remove --name \"$SILO_NAME\" --member \"$USERNAME\""
+    execute_samba_command "sudo samba-tool domain auth silo member remove --name \"$SILO_NAME\" --member \"$USERNAME\""
 }
 
 # === FUNÇÕES DE INFORMAÇÕES DO DOMÍNIO ===
 
 show_domain_info() {
-    execute_samba_command "samba-tool domain info 127.0.0.1"
+    execute_samba_command "sudo samba-tool domain info 127.0.0.1"
 }
 
 show_domain_level() {
-    execute_samba_command "samba-tool domain level show"
+    execute_samba_command "sudo samba-tool domain level show"
 }
 
 show_fsmo_roles() {
-    execute_samba_command "samba-tool fsmo show"
+    execute_samba_command "sudo samba-tool fsmo show"
 }
 
 show_sites() {
-    execute_samba_command "samba-tool sites list"
+    execute_samba_command "sudo samba-tool sites list"
 }
 
 show_replication_info() {
-    execute_samba_command "samba-tool drs showrepl"
+    execute_samba_command "sudo samba-tool drs showrepl"
 }
 
 active_sessions() {
@@ -498,7 +498,7 @@ active_shares() {
 }
 
 samba_processes() {
-    execute_samba_command "samba-tool processes"
+    execute_samba_command "sudo samba-tool processes"
 }
 
 # === FUNÇÕES DE COMPARTILHAMENTOS ===
@@ -593,45 +593,45 @@ revalidate_shares() {
 # === FUNÇÕES DE CONFIGURAÇÕES ===
 
 show_password_policy() {
-    execute_samba_command "samba-tool domain passwordsettings show"
+    execute_samba_command "sudo samba-tool domain passwordsettings show"
 }
 
 enable_complexity() {
-    samba-tool domain passwordsettings set --complexity=on
-    samba-tool domain passwordsettings set --history-length=24
-    samba-tool domain passwordsettings set --min-pwd-age=1
-    samba-tool domain passwordsettings set --max-pwd-age=90
-    samba-tool domain passwordsettings set --min-pwd-length=7
+    sudo samba-tool domain passwordsettings set --complexity=on
+    sudo samba-tool domain passwordsettings set --history-length=24
+    sudo samba-tool domain passwordsettings set --min-pwd-age=1
+    sudo samba-tool domain passwordsettings set --max-pwd-age=90
+    sudo samba-tool domain passwordsettings set --min-pwd-length=7
     json_response "success" "Complexidade de senhas ativada"
 }
 
 disable_complexity() {
-    samba-tool domain passwordsettings set --complexity=off
-    samba-tool domain passwordsettings set --history-length=0
-    samba-tool domain passwordsettings set --min-pwd-age=0
-    samba-tool domain passwordsettings set --max-pwd-age=0
-    samba-tool domain passwordsettings set --min-pwd-length=0
+    sudo samba-tool domain passwordsettings set --complexity=off
+    sudo samba-tool domain passwordsettings set --history-length=0
+    sudo samba-tool domain passwordsettings set --min-pwd-age=0
+    sudo samba-tool domain passwordsettings set --max-pwd-age=0
+    sudo samba-tool domain passwordsettings set --min-pwd-length=0
     json_response "success" "Complexidade de senhas desativada"
 }
 
 sysvol_check() {
-    execute_samba_command "samba-tool ntacl sysvolcheck -U administrator"
+    execute_samba_command "sudo samba-tool ntacl sysvolcheck -U administrator"
 }
 
 sysvol_reset() {
-    execute_samba_command "samba-tool ntacl sysvolreset -U Administrator"
+    execute_samba_command "sudo samba-tool ntacl sysvolreset -U Administrator"
 }
 
 db_check_general() {
-    execute_samba_command "samba-tool dbcheck --cross-ncs --fix --yes"
+    execute_samba_command "sudo samba-tool dbcheck --cross-ncs --fix --yes"
 }
 
 db_check_acls() {
-    execute_samba_command "samba-tool dbcheck --cross-ncs --reset-well-known-acls --fix --yes"
+    execute_samba_command "sudo samba-tool dbcheck --cross-ncs --reset-well-known-acls --fix --yes"
 }
 
 check_acl() {
-    execute_samba_command "samba-tool gpo aclcheck -U Administrator"
+    execute_samba_command "sudo samba-tool gpo aclcheck -U Administrator"
 }
 
 install_admx_w10() {
