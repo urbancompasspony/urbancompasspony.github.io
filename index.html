@@ -220,7 +220,7 @@
     <div class="container">
         <div class="header">
             <h1>Active Directory & Domain Controller</h1>
-            <p>v7.1 - Interface Web de Administração - 16.06.2025</p>
+            <p>Interface Web de Administração - v8.0 - 16.06.2025</p>
         </div>
 
         <div class="main-content">
@@ -1520,12 +1520,12 @@ async function executeCommand(action) {
         }
         if(resultContainer) {
             resultContainer.style.display = 'block';
-            if (output.text) {
-                // Aqui faz a conversão de \n para <br>
-                resultContainer.innerHTML = output.text.replace(/\n/g, '<br>');
-            } else {
-                resultContainer.innerHTML = `<pre>${JSON.stringify(output, null, 2)}</pre>`;
-            }
+if (output.text) {
+    let html = output.text.replace(/\n/g, '<br>');
+    resultContainer.innerHTML = html;
+} else {
+    resultContainer.innerHTML = `<pre>${JSON.stringify(output, null, 2)}</pre>`;
+}
         }
     } catch(e) {
         if(resultContainer) {
