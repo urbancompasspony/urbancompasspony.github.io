@@ -540,4 +540,916 @@
                 </div>
 
                 <!-- Formulário Criar Compartilhamento -->
-                <div id="create-share-
+                <div id="create-share-form" class="form-container">
+                    <h3>Criar Nova Pasta Compartilhada</h3>
+                    <form onsubmit="submitForm(event, 'create-share')">
+                        <div class="form-group">
+                            <label for="share-name">Nome do Compartilhamento:</label>
+                            <input type="text" id="share-name" name="share-name" placeholder="nome_do_compartilhamento" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="share-path">Caminho (/mnt):</label>
+                            <input type="text" id="share-path" name="share-path" placeholder="/pasta_compartilhada" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="share-users">Grupos/Usuários (separados por vírgula):</label>
+                            <input type="text" id="share-users" name="share-users" placeholder="@grupo, usuario" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="share-writable">Gravável:</label>
+                            <select id="share-writable" name="writable">
+                                <option value="yes">Sim</option>
+                                <option value="no">Não</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="share-browsable">Navegável:</label>
+                            <select id="share-browsable" name="browsable">
+                                <option value="yes">Sim</option>
+                                <option value="no">Não</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success">Criar Compartilhamento</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Criar Compartilhamento Sync -->
+                <div id="create-sync-share-form" class="form-container">
+                    <h3>Compartilhamento Estruturado (Sync Center)</h3>
+                    <form onsubmit="submitForm(event, 'create-sync-share')">
+                        <div class="form-group">
+                            <label for="sync-share-name">Nome do Compartilhamento:</label>
+                            <input type="text" id="sync-share-name" name="share-name" placeholder="nome_do_compartilhamento" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="sync-share-path">Caminho (/mnt):</label>
+                            <input type="text" id="sync-share-path" name="share-path" placeholder="/pasta_sync" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="sync-share-users">Grupos/Usuários (separados por vírgula):</label>
+                            <input type="text" id="sync-share-users" name="share-users" placeholder="@Sync, @Desativar_Sync" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="sync-share-browsable">Navegável:</label>
+                            <select id="sync-share-browsable" name="browsable">
+                                <option value="no">Não</option>
+                                <option value="yes">Sim</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success">Criar Compartilhamento Sync</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Deletar Compartilhamento -->
+                <div id="delete-share-form" class="form-container">
+                    <h3>Excluir Compartilhamento</h3>
+                    <div class="alert alert-warning active">
+                        <strong>Atenção!</strong> Os dados não são apagados, apenas o compartilhamento será removido.
+                    </div>
+                    <form onsubmit="submitForm(event, 'delete-share')">
+                        <div class="form-group">
+                            <label for="delete-share-name">Nome do Compartilhamento:</label>
+                            <input type="text" id="delete-share-name" name="share-name" required>
+                        </div>
+                        <button type="submit" class="btn btn-danger">Excluir Compartilhamento</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Criar OU -->
+                <div id="create-ou-form" class="form-container">
+                    <h3>Criar Unidade Organizacional</h3>
+                    <form onsubmit="submitForm(event, 'create-ou')">
+                        <div class="form-group">
+                            <label for="ou-name">Nome da OU:</label>
+                            <input type="text" id="ou-name" name="ou-name" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Criar OU</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Listar Objetos da OU -->
+                <div id="list-ou-objects-form" class="form-container">
+                    <h3>Listar Objetos da OU</h3>
+                    <form onsubmit="submitForm(event, 'list-ou-objects')">
+                        <div class="form-group">
+                            <label for="list-ou-name">Nome da OU:</label>
+                            <input type="text" id="list-ou-name" name="ou-name" required>
+                        </div>
+                        <button type="submit" class="btn">Listar Objetos</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Deletar OU -->
+                <div id="delete-ou-form" class="form-container">
+                    <h3>Excluir Unidade Organizacional</h3>
+                    <div class="alert alert-warning active">
+                        <strong>Atenção!</strong> A OU só será removida se estiver vazia.
+                    </div>
+                    <form onsubmit="submitForm(event, 'delete-ou')">
+                        <div class="form-group">
+                            <label for="delete-ou-name">Nome da OU:</label>
+                            <input type="text" id="delete-ou-name" name="ou-name" required>
+                        </div>
+                        <button type="submit" class="btn btn-danger">Excluir OU</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Mover Usuário para OU -->
+                <div id="move-user-ou-form" class="form-container">
+                    <h3>Mover Usuário para OU</h3>
+                    <form onsubmit="submitForm(event, 'move-user-ou')">
+                        <div class="form-group">
+                            <label for="move-user-name">Nome do Usuário:</label>
+                            <input type="text" id="move-user-name" name="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="move-user-target-ou">Nome da OU de Destino:</label>
+                            <input type="text" id="move-user-target-ou" name="ou-name" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Mover Usuário</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Mover Grupo para OU -->
+                <div id="move-group-ou-form" class="form-container">
+                    <h3>Mover Grupo para OU</h3>
+                    <form onsubmit="submitForm(event, 'move-group-ou')">
+                        <div class="form-group">
+                            <label for="move-group-name">Nome do Grupo:</label>
+                            <input type="text" id="move-group-name" name="group" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="move-group-target-ou">Nome da OU de Destino:</label>
+                            <input type="text" id="move-group-target-ou" name="ou-name" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Mover Grupo</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Mover Computador para OU -->
+                <div id="move-computer-ou-form" class="form-container">
+                    <h3>Mover Computador para OU</h3>
+                    <form onsubmit="submitForm(event, 'move-computer-ou')">
+                        <div class="form-group">
+                            <label for="move-computer-name">Nome do Computador (sem $):</label>
+                            <input type="text" id="move-computer-name" name="computer" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="move-computer-target-ou">Nome da OU de Destino:</label>
+                            <input type="text" id="move-computer-target-ou" name="ou-name" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Mover Computador</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Criar Computador -->
+                <div id="create-computer-form" class="form-container">
+                    <h3>Criar/Adicionar Computador</h3>
+                    <form onsubmit="submitForm(event, 'add-computer')">
+                        <div class="form-group">
+                            <label for="computer-name">Nome do Computador (sem $):</label>
+                            <input type="text" id="computer-name" name="computer" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Criar Computador</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Buscar Computador -->
+                <div id="search-computer-form" class="form-container">
+                    <h3>Buscar Computador</h3>
+                    <form onsubmit="submitForm(event, 'search-computer')">
+                        <div class="form-group">
+                            <label for="search-computer-name">Nome do Computador (sem $):</label>
+                            <input type="text" id="search-computer-name" name="search-term" required>
+                        </div>
+                        <button type="submit" class="btn">Buscar</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Verificar Computador -->
+                <div id="check-computer-form" class="form-container">
+                    <h3>Verificar Computador</h3>
+                    <form onsubmit="submitForm(event, 'check-computer')">
+                        <div class="form-group">
+                            <label for="check-computer-name">Nome do Computador (sem $):</label>
+                            <input type="text" id="check-computer-name" name="computer" required>
+                        </div>
+                        <button type="submit" class="btn">Verificar</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Deletar Computador -->
+                <div id="delete-computer-form" class="form-container">
+                    <h3>Excluir Computador</h3>
+                    <div class="alert alert-error active">
+                        <strong>Atenção!</strong> Esta ação é irreversível.
+                    </div>
+                    <form onsubmit="submitForm(event, 'delete-computer')">
+                        <div class="form-group">
+                            <label for="delete-computer-name">Nome do Computador (sem $):</label>
+                            <input type="text" id="delete-computer-name" name="computer" required>
+                        </div>
+                        <button type="submit" class="btn btn-danger">Excluir Computador</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Criar Silo -->
+                <div id="create-silo-form" class="form-container">
+                    <h3>Criar Silo de Autenticação</h3>
+                    <form onsubmit="submitForm(event, 'create-silo')">
+                        <div class="form-group">
+                            <label for="silo-name">Nome do Silo:</label>
+                            <input type="text" id="silo-name" name="silo-name" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Criar Silo</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Verificar Silo -->
+                <div id="check-silo-form" class="form-container">
+                    <h3>Procurar/Verificar Silo</h3>
+                    <form onsubmit="submitForm(event, 'check-silo')">
+                        <div class="form-group">
+                            <label for="check-silo-name">Nome do Silo:</label>
+                            <input type="text" id="check-silo-name" name="silo-name" required>
+                        </div>
+                        <button type="submit" class="btn">Verificar Silo</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Listar Usuários do Silo -->
+                <div id="list-silo-users-form" class="form-container">
+                    <h3>Listar Usuários do Silo</h3>
+                    <form onsubmit="submitForm(event, 'list-silo-users')">
+                        <div class="form-group">
+                            <label for="list-silo-name">Nome do Silo:</label>
+                            <input type="text" id="list-silo-name" name="silo-name" required>
+                        </div>
+                        <button type="submit" class="btn">Listar Usuários</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Adicionar Usuário ao Silo -->
+                <div id="add-user-silo-form" class="form-container">
+                    <h3>Adicionar Usuário ao Silo</h3>
+                    <form onsubmit="submitForm(event, 'add-user-silo')">
+                        <div class="form-group">
+                            <label for="silo-user-name">Nome do Usuário:</label>
+                            <input type="text" id="silo-user-name" name="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="silo-target-name">Nome do Silo:</label>
+                            <input type="text" id="silo-target-name" name="silo-name" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Adicionar ao Silo</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Remover Usuário do Silo -->
+                <div id="remove-user-silo-form" class="form-container">
+                    <h3>Remover Usuário do Silo</h3>
+                    <form onsubmit="submitForm(event, 'remove-user-silo')">
+                        <div class="form-group">
+                            <label for="remove-silo-user-name">Nome do Usuário:</label>
+                            <input type="text" id="remove-silo-user-name" name="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="remove-silo-target-name">Nome do Silo:</label>
+                            <input type="text" id="remove-silo-target-name" name="silo-name" required>
+                        </div>
+                        <button type="submit" class="btn btn-danger">Remover do Silo</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulário Deletar Silo -->
+                <div id="delete-silo-form" class="form-container">
+                    <h3>Excluir Silo</h3>
+                    <div class="alert alert-error active">
+                        <strong>Atenção!</strong> Esta ação é irreversível.
+                    </div>
+                    <form onsubmit="submitForm(event, 'delete-silo')">
+                        <div class="form-group">
+                            <label for="delete-silo-name">Nome do Silo:</label>
+                            <input type="text" id="delete-silo-name" name="silo-name" required>
+                        </div>
+                        <button type="submit" class="btn btn-danger">Excluir Silo</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulários de Grupos -->
+                <div id="search-group-form" class="form-container">
+                    <h3>Buscar Grupo</h3>
+                    <form onsubmit="submitForm(event, 'search-group')">
+                        <div class="form-group">
+                            <label for="search-group-name">Nome do Grupo (ou parte do nome):</label>
+                            <input type="text" id="search-group-name" name="search-term" required>
+                        </div>
+                        <button type="submit" class="btn">Buscar</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <div id="check-group-form" class="form-container">
+                    <h3>Verificar Grupo</h3>
+                    <form onsubmit="submitForm(event, 'check-group')">
+                        <div class="form-group">
+                            <label for="check-group-name">Nome do Grupo:</label>
+                            <input type="text" id="check-group-name" name="group" required>
+                        </div>
+                        <button type="submit" class="btn">Verificar</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <div id="show-group-members-form" class="form-container">
+                    <h3>Exibir Membros do Grupo</h3>
+                    <form onsubmit="submitForm(event, 'list-group-members')">
+                        <div class="form-group">
+                            <label for="show-group-name">Nome do Grupo:</label>
+                            <input type="text" id="show-group-name" name="group" required>
+                        </div>
+                        <button type="submit" class="btn">Listar Membros</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <div id="delete-group-form" class="form-container">
+                    <h3>Excluir Grupo</h3>
+                    <div class="alert alert-error active">
+                        <strong>Atenção!</strong> Esta ação é irreversível.
+                    </div>
+                    <form onsubmit="submitForm(event, 'delete-group')">
+                        <div class="form-group">
+                            <label for="delete-group-name">Nome do Grupo:</label>
+                            <input type="text" id="delete-group-name" name="group" required>
+                        </div>
+                        <button type="submit" class="btn btn-danger">Excluir Grupo</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulários Adicionais para Usuários -->
+                <div id="show-user-groups-form" class="form-container">
+                    <h3>Exibir Grupos do Usuário</h3>
+                    <form onsubmit="submitForm(event, 'show-user-groups')">
+                        <div class="form-group">
+                            <label for="show-groups-username">Nome do Usuário:</label>
+                            <input type="text" id="show-groups-username" name="username" required>
+                        </div>
+                        <button type="submit" class="btn">Exibir Grupos</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <div id="remove-user-group-form" class="form-container">
+                    <h3>Remover Usuário do Grupo</h3>
+                    <form onsubmit="submitForm(event, 'remove-user-from-group')">
+                        <div class="form-group">
+                            <label for="remove-user-name">Nome do Usuário:</label>
+                            <input type="text" id="remove-user-name" name="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="remove-from-group">Nome do Grupo:</label>
+                            <input type="text" id="remove-from-group" name="group" required>
+                        </div>
+                        <button type="submit" class="btn btn-danger">Remover do Grupo</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <div id="promote-user-form" class="form-container">
+                    <h3>Promover Usuário a Admin</h3>
+                    <form onsubmit="submitForm(event, 'promote-user')">
+                        <div class="form-group">
+                            <label for="promote-username">Nome do Usuário:</label>
+                            <input type="text" id="promote-username" name="username" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Promover a Admin</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <div id="demote-user-form" class="form-container">
+                    <h3>Demover Usuário de Admin</h3>
+                    <form onsubmit="submitForm(event, 'demote-user')">
+                        <div class="form-group">
+                            <label for="demote-username">Nome do Usuário:</label>
+                            <input type="text" id="demote-username" name="username" required>
+                        </div>
+                        <button type="submit" class="btn btn-danger">Demover de Admin</button>
+                        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <!-- Formulários de Política de Senha -->
+                <div id="password-policy-form" class="form-container">
+                    <h3>Configurações de Política de Senha</h3>
+                    <div class="submenu-grid">
+                        <div class="submenu-item" onclick="executeCommand('show-password-policy')">Mostrar Status das Regras de Senhas</div>
+                        <div class="submenu-item" onclick="executeCommand('enable-complexity')">Ativar complexidade das senhas</div>
+                        <div class="submenu-item" onclick="executeCommand('disable-complexity')">Desativar complexidade das senhas</div>
+                        <div class="submenu-item" onclick="showForm('password-history')">Tamanho do histórico das senhas</div>
+                        <div class="submenu-item" onclick="showForm('password-min-length')">Tamanho mínimo das senhas</div>
+                        <div class="submenu-item" onclick="showForm('password-min-age')">Validade mínima das senhas</div>
+                        <div class="submenu-item" onclick="showForm('password-max-age')">Validade máxima das senhas</div>
+                        <div class="submenu-item" onclick="showForm('login-attempts')">Tentativas de login antes de bloquear</div>
+                    </div>
+                    <button type="button" class="btn" onclick="hideForm()">Voltar</button>
+                </div>
+
+                <!-- Formulários de Permissões -->
+                <div id="permissions-form" class="form-container">
+                    <h3>Permissões Comuns</h3>
+                    <div class="submenu-grid">
+                        <div class="submenu-item" onclick="executeCommand('sysvol-check')">SysVol check status</div>
+                        <div class="submenu-item" onclick="executeCommand('sysvol-reset')">SysVol reset permissions</div>
+                        <div class="submenu-item" onclick="executeCommand('db-check-general')">samba-ad-dc db check: general</div>
+                        <div class="submenu-item" onclick="executeCommand('db-check-acls')">samba-ad-dc db check: well-known-acls</div>
+                    </div>
+                    <button type="button" class="btn" onclick="hideForm()">Voltar</button>
+                </div>
+
+                <!-- Formulários de ACLs -->
+                <div id="acls-form" class="form-container">
+                    <h3>Gerenciamento de ACLs</h3>
+                    <div class="alert alert-warning active">
+                        <strong>Cuidado!</strong> Prefira rodar este comando nas máquinas locais: icacls C:\caminho\do\usuario /reset /t /c
+                    </div>
+                    <div class="submenu-grid">
+                        <div class="submenu-item" onclick="executeCommand('check-acl')">Verificar ACL padrão (Administrator!)</div>
+                        <div class="submenu-item" onclick="showForm('get-acls')">Coletar ACLs de arquivo ou pasta</div>
+                        <div class="submenu-item" onclick="showForm('set-acls')">PERIGO! Definir uma ACL a um arquivo ou pasta</div>
+                    </div>
+                    <button type="button" class="btn" onclick="hideForm()">Voltar</button>
+                </div>
+
+            </div>
+
+            <!-- Loading -->
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Processando comando...</p>
+            </div>
+
+            <!-- Result Container -->
+            <div class="result-container">
+                <h4>Resultado:</h4>
+                <div class="result-content"></div>
+            </div>
+
+            <!-- Alert Container -->
+            <div class="alert"></div>
+
+        </div>
+    </div>
+
+    <script>
+        // URL do script CGI
+        const CGI_URL = '/cgi-bin/samba-admin.cgi';
+
+        // Elementos DOM
+        let loadingElement = null;
+        let resultContainer = null;
+        let alertContainer = null;
+
+        // Inicializar elementos quando DOM carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            createUIElements();
+            showMainMenu();
+        });
+
+        // Criar elementos de UI dinâmicos
+        function createUIElements() {
+            loadingElement = document.querySelector('.loading');
+            resultContainer = document.querySelector('.result-container');
+            alertContainer = document.querySelector('.alert');
+        }
+
+        // Mostrar loading
+        function showLoading() {
+            hideAlert();
+            hideResult();
+            loadingElement.classList.add('active');
+        }
+
+        // Ocultar loading
+        function hideLoading() {
+            loadingElement.classList.remove('active');
+        }
+
+        // Mostrar resultado
+        function showResult(content, isError = false) {
+            const resultContent = resultContainer.querySelector('.result-content');
+            resultContent.innerHTML = content;
+            resultContainer.classList.add('active');
+            
+            if (isError) {
+                resultContainer.style.borderLeftColor = '#e74c3c';
+            } else {
+                resultContainer.style.borderLeftColor = '#3498db';
+            }
+        }
+
+        // Ocultar resultado
+        function hideResult() {
+            resultContainer.classList.remove('active');
+        }
+
+        // Mostrar alerta
+        function showAlert(message, type = 'success') {
+            alertContainer.textContent = message;
+            alertContainer.className = `alert alert-${type} active`;
+            
+            // Auto-hide após 5 segundos
+            setTimeout(() => {
+                hideAlert();
+            }, 5000);
+        }
+
+        // Ocultar alerta
+        function hideAlert() {
+            alertContainer.classList.remove('active');
+        }
+
+        // Função para executar comandos diretos (sem formulário)
+        function executeCommand(action) {
+            showLoading();
+            
+            const params = new URLSearchParams();
+            params.append('action', action);
+            
+            fetch(CGI_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: params.toString()
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                
+                if (data.status === 'success') {
+                    showAlert('Comando executado com sucesso!', 'success');
+                    showResult(`<pre>${data.output || data.message}</pre>`);
+                } else {
+                    showAlert(data.message, 'error');
+                    showResult(`<pre>${data.output || 'Erro ao executar comando'}</pre>`, true);
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                showAlert('Erro de conexão: ' + error.message, 'error');
+                console.error('Erro:', error);
+            });
+        }
+
+        // Função para submeter formulários
+        function submitForm(event, formType) {
+            event.preventDefault();
+            showLoading();
+            
+            const form = event.target;
+            const formData = new FormData(form);
+            const params = new URLSearchParams();
+            
+            // Adicionar ação baseada no tipo de formulário
+            params.append('action', formType);
+            
+            // Adicionar dados do formulário
+            for (let [key, value] of formData.entries()) {
+                params.append(key, value);
+            }
+            
+            fetch(CGI_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: params.toString()
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                
+                if (data.status === 'success') {
+                    showAlert('Operação realizada com sucesso!', 'success');
+                    showResult(`<pre>${data.output || data.message}</pre>`);
+                    form.reset(); // Limpar formulário
+                } else {
+                    showAlert(data.message, 'error');
+                    showResult(`<pre>${data.output || 'Erro na operação'}</pre>`, true);
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                showAlert('Erro de conexão: ' + error.message, 'error');
+                console.error('Erro:', error);
+            });
+        }
+
+        // Funções de navegação
+        function showSubmenu(submenuId) {
+            hideAlert();
+            hideResult();
+            
+            document.querySelectorAll('.submenu').forEach(function(sub) {
+                sub.classList.remove('active');
+            });
+            document.querySelectorAll('.instruction-panel').forEach(function(panel) {
+                panel.style.display = 'none';
+            });
+            document.getElementById('main-menu').style.display = 'none';
+            
+            var submenu = document.getElementById(submenuId);
+            if (submenu) submenu.classList.add('active');
+        }
+
+        function showMainMenu() {
+            hideAlert();
+            hideResult();
+            
+            document.querySelectorAll('.submenu').forEach(function(sub) {
+                sub.classList.remove('active');
+            });
+            document.querySelectorAll('.form-container').forEach(function(form) {
+                form.classList.remove('active');
+            });
+            document.getElementById('main-menu').style.display = 'grid';
+            document.querySelectorAll('.instruction-panel').forEach(function(panel) {
+                panel.style.display = 'none';
+            });
+        }
+
+        function showInstructionPanel(id) {
+            document.querySelectorAll('.instruction-panel').forEach(function(panel) {
+                panel.style.display = 'none';
+            });
+            document.getElementById(id).style.display = 'block';
+        }
+
+        function closeInstructionPanel(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function showForm(formName) {
+            hideAlert();
+            hideResult();
+            
+            document.querySelectorAll('.form-container').forEach(function(form) {
+                form.classList.remove('active');
+            });
+            var el = document.getElementById(formName + '-form');
+            if (el) el.classList.add('active');
+            document.querySelectorAll('.instruction-panel').forEach(function(panel) {
+                panel.style.display = 'none';
+            });
+        }
+
+        function hideForm() {
+            document.querySelectorAll('.form-container').forEach(function(form) {
+                form.classList.remove('active');
+            });
+        }
+
+        // Mapeamento de ações para comandos samba-tool
+        const commandMapping = {
+            'list-users': 'list-users',
+            'list-groups': 'list-groups',
+            'list-computers': 'list-computers',
+            'list-ous': 'list-ous',
+            'list-silos': 'list-silos',
+            'show-domain-info': 'show-domain-info',
+            'show-domain-level': 'show-domain-level',
+            'show-fsmo-roles': 'show-fsmo-roles',
+            'show-sites': 'show-sites',
+            'show-replication-info': 'show-replication-info',
+            'active-sessions': 'active-sessions',
+            'active-shares': 'active-shares',
+            'samba-processes': 'samba-processes',
+            'show-shares': 'show-shares',
+            'revalidate-shares': 'revalidate-shares',
+            'install-admx-w10': 'install-admx-w10',
+            'install-admx-w11': 'install-admx-w11',
+            'remove-admx': 'remove-admx',
+            'update-menu': 'update-menu',
+            'show-password-policy': 'show-password-policy',
+            'enable-complexity': 'enable-complexity',
+            'disable-complexity': 'disable-complexity',
+            'sysvol-check': 'sysvol-check',
+            'sysvol-reset': 'sysvol-reset',
+            'db-check-general': 'db-check-general',
+            'db-check-acls': 'db-check-acls',
+            'check-acl': 'check-acl'
+        };
+
+        // Funções específicas para validação
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function validateUsername(username) {
+            const re = /^[a-zA-Z0-9._-]+$/;
+            return re.test(username) && username.length >= 3;
+        }
+
+        // Função para confirmar ações destrutivas
+        function confirmAndExecute(action, message) {
+            if (confirm(message)) {
+                executeCommand(action);
+            }
+        }
+
+        // Função para prompts simples
+        function promptAndExecute(action, promptMessage) {
+            const input = prompt(promptMessage);
+            if (input) {
+                showLoading();
+                
+                const params = new URLSearchParams();
+                params.append('action', action);
+                params.append('input', input);
+                
+                fetch(CGI_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: params.toString()
+                })
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading();
+                    
+                    if (data.status === 'success') {
+                        showAlert('Operação realizada com sucesso!', 'success');
+                        showResult(`<pre>${data.output || data.message}</pre>`);
+                    } else {
+                        showAlert(data.message, 'error');
+                        showResult(`<pre>${data.output || 'Erro na operação'}</pre>`, true);
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    showAlert('Erro de conexão: ' + error.message, 'error');
+                });
+            }
+        }
+
+        // Adicionar validação em tempo real aos formulários
+        document.addEventListener('DOMContentLoaded', function() {
+            // Validação de email
+            const emailInputs = document.querySelectorAll('input[type="email"]');
+            emailInputs.forEach(input => {
+                input.addEventListener('blur', function() {
+                    if (this.value && !validateEmail(this.value)) {
+                        this.style.borderColor = '#e74c3c';
+                        showAlert('Formato de email inválido', 'warning');
+                    } else {
+                        this.style.borderColor = '#ddd';
+                    }
+                });
+            });
+            
+            // Validação de username
+            const usernameInputs = document.querySelectorAll('input[name="username"]');
+            usernameInputs.forEach(input => {
+                input.addEventListener('blur', function() {
+                    if (this.value && !validateUsername(this.value)) {
+                        this.style.borderColor = '#e74c3c';
+                        showAlert('Nome de usuário deve ter pelo menos 3 caracteres e conter apenas letras, números, pontos, underscores e hífens', 'warning');
+                    } else {
+                        this.style.borderColor = '#ddd';
+                    }
+                });
+            });
+
+            // Adicionar validação para campos obrigatórios
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const requiredFields = this.querySelectorAll('[required]');
+                    let hasErrors = false;
+                    
+                    requiredFields.forEach(field => {
+                        if (!field.value.trim()) {
+                            field.style.borderColor = '#e74c3c';
+                            hasErrors = true;
+                        } else {
+                            field.style.borderColor = '#ddd';
+                        }
+                    });
+                    
+                    if (hasErrors) {
+                        e.preventDefault();
+                        showAlert('Por favor, preencha todos os campos obrigatórios', 'error');
+                    }
+                });
+            });
+        });
+
+        // Função para resetar formulários
+        function resetForm(formId) {
+            const form = document.getElementById(formId);
+            if (form) {
+                form.reset();
+                // Resetar estilos de validação
+                const inputs = form.querySelectorAll('input, select, textarea');
+                inputs.forEach(input => {
+                    input.style.borderColor = '#ddd';
+                });
+            }
+        }
+
+        // Função para auto-completar campos baseado em dados anteriores
+        function setupAutoComplete() {
+            // Implementar auto-complete para usuários, grupos, etc.
+            // Pode ser expandido conforme necessário
+        }
+
+        // Atalhos de teclado
+        document.addEventListener('keydown', function(e) {
+            // ESC para fechar formulários
+            if (e.key === 'Escape') {
+                hideForm();
+                hideAlert();
+            }
+            
+            // Ctrl+Home para voltar ao menu principal
+            if (e.ctrlKey && e.key === 'Home') {
+                showMainMenu();
+            }
+        });
+
+        // Função para exportar resultados
+        function exportResults() {
+            const resultContent = resultContainer.querySelector('.result-content');
+            if (resultContent && resultContent.textContent) {
+                const blob = new Blob([resultContent.textContent], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'samba-result-' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }
+        }
+
+        // Função para imprimir resultados
+        function printResults() {
+            const resultContent = resultContainer.querySelector('.result-content');
+            if (resultContent && resultContent.textContent) {
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <html>
+                        <head>
+                            <title>Resultado Samba Admin</title>
+                            <style>
+                                body { font-family: monospace; margin: 20px; }
+                                pre { white-space: pre-wrap; }
+                            </style>
+                        </head>
+                        <body>
+                            <h1>Resultado Samba Administration</h1>
+                            <p>Data: ${new Date().toLocaleString('pt-BR')}</p>
+                            <hr>
+                            <pre>${resultContent.textContent}</pre>
+                        </body>
+                    </html>
+                `);
+                printWindow.document.close();
+                printWindow.print();
+            }
+        }
+
+        // Inicialização final
+        window.addEventListener('load', function() {
+            setupAutoComplete();
+            console.log('Samba Web Admin Interface carregada com sucesso!');
+        });
+
+    </script>
+</body>
+</html>
