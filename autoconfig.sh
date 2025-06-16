@@ -115,9 +115,15 @@ if apache2ctl configtest; then
     echo "Apache configurado com sucesso!"
     echo ""
     echo "Próximos passos:"
-    echo "1. Copie o script CGI para: /var/www/samba-admin/cgi-bin/samba-admin.cgi"
-    echo "2. Copie o index.html para: /var/www/samba-admin/index.html"
-    echo "3. Configure as permissões: chmod 755 /var/www/samba-admin/cgi-bin/samba-admin.cgi"
+    echo "1. Script CGI para: /var/www/samba-admin/cgi-bin/samba-admin.cgi"
+    mkdir -p /var/www/samba-admin/cgi-bin
+    curl -sSL https://raw.githubusercontent.com/urbancompasspony/urbancompasspony.github.io/refs/heads/main/samba-admin.cgi | tee /var/www/samba-admin/cgi-bin/samba-admin.cgi
+    echo "2. Index.html para: /var/www/samba-admin/index.html"
+    mkdir -p /var/www/samba-admin
+    curl -sSL https://raw.githubusercontent.com/urbancompasspony/urbancompasspony.github.io/refs/heads/main/index.html | tee /var/www/samba-admin/index.html
+    echo "3. Permissões: chmod 755 /var/www/samba-admin/cgi-bin/samba-admin.cgi"
+    chmod +x /var/www/samba-admin/cgi-bin/samba-admin.cgi
+    chmod 755 /var/www/samba-admin/cgi-bin/samba-admin.cgi
     echo "4. Acesse: http://localhost/"
     echo ""
     echo "Logs:"
