@@ -1,0 +1,13 @@
+# Criar configuração sudoers do zero
+cat > /etc/sudoers.d/90-samba-cgi << 'EOF'
+# Samba CGI Configuration
+Defaults:www-data !requiretty
+Defaults:www-data !env_reset
+Defaults:www-data env_keep = "PATH HOME USER"
+www-data ALL=(ALL) NOPASSWD: ALL
+EOF
+
+chmod 440 /etc/sudoers.d/90-samba-cgi
+
+# Verificar sintaxe
+visudo -c -f /etc/sudoers.d/90-samba-cgi
