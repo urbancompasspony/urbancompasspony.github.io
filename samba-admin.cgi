@@ -89,7 +89,8 @@ execute_samba_command() {
     log_action "Executando: $cmd"
 
     # Executa comando com timeout
-    result=$(timeout 3 "$cmd" 2>&1)
+    #result=$(timeout 3 "$cmd" 2>&1)
+    result=$(eval "timeout 3 $cmd" 2>&1)
     exit_code=$?
 
     if [ $exit_code -eq 0 ]; then
