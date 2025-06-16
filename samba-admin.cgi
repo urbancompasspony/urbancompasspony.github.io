@@ -95,7 +95,7 @@ execute_samba_command() {
     exit_code=$?
 
     if [ $exit_code -eq 0 ]; then
-        echo "Comando executado com sucesso:" $(echo "$result")
+        echo $(echo "$result")
     else
         echo "Erro ao executar o comando:" $(echo "$result")
     fi
@@ -110,7 +110,7 @@ json_response() {
     if [ -z "$output" ]; then
         echo "$status" "$message"
     else
-        echo "$status" "$message" "$output"
+        echo "$output"
     fi
 }
 
