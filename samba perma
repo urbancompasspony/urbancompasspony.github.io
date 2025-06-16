@@ -1,0 +1,17 @@
+# Verificar qual usuário está rodando o Samba
+SAMBA_USER=$(ps aux | grep samba-ad-dc | grep -v grep | awk '{print $1}' | head -1)
+echo "Samba está rodando como: $SAMBA_USER"
+
+# Adicionar www-data ao mesmo grupo do usuário do Samba
+if [ "$SAMBA_USER" = "root" ]; then
+    # Se Samba roda como root, dar permissão de grupo para arquivos
+    chgrp -R root /var/lib/samba/private/
+    chmod g+r /var/lib/samba/private/*.ldb 2>/dev/null || true
+    chmod g+r /var/lib/samba/private/*.tdb 2>/dev/null || true
+    
+    # Garantir que www-data está no grupo root (já está)
+    usermod -a -G root www-data
+fi
+
+# Dar permissão de execução no diretório para o grupo
+chmod g+x /var/lib/samba/private/
