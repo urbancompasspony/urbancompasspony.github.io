@@ -82,17 +82,9 @@ sanitize_input() {
 
 # Função para executar comandos sudo samba-tool com segurança
 execute_samba_command() {
-    local cmd="$1"
-    local result
-    local exit_code
-
-    log_action "Executando: $cmd"
-
-    # Executa comando com timeout
-    #result=$(timeout 3 "$cmd" 2>&1)
-    result=$(eval "timeout 3 $cmd" 2>&1)
+    log_action "Executando: $*"
+    result=$(timeout 3 "$@" 2>&1)
     exit_code=$?
-
     if [ $exit_code -eq 0 ]; then
         echo "$result"
     else
@@ -132,7 +124,7 @@ create_user() {
 }
 
 list_users() {
-    execute_samba_command "sudo samba-tool user list"
+    execute_samba_command sudo samba-tool user list
 }
 
 search_user() {
@@ -151,7 +143,7 @@ check_user() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool user show $USERNAME"
+    execute_samba_command sudo samba-tool user show "$USERNAME"
 }
 
 delete_user() {
@@ -160,7 +152,7 @@ delete_user() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool user delete $USERNAME"
+    execute_samba_command sudo samba-tool user delete "$USERNAME"
 }
 
 enable_user() {
@@ -169,7 +161,7 @@ enable_user() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool user enable $USERNAME"
+    execute_samba_command sudo samba-tool user enable "$USERNAME"
 }
 
 disable_user() {
@@ -178,7 +170,7 @@ disable_user() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool user disable $USERNAME"
+    execute_samba_command sudo samba-tool user disable "$USERNAME"
 }
 
 reset_password() {
@@ -187,7 +179,7 @@ reset_password() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool user setpassword $USERNAME --newpassword=$PASSWORD"
+    execute_samba_command sudo samba-tool user setpassword "$USERNAME" --newpassword="$PASSWORD"
 }
 
 promote_user() {
@@ -226,7 +218,7 @@ show_user_groups() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool user getgroups $USERNAME"
+    execute_samba_command sudo samba-tool user getgroups "$USERNAME"
 }
 
 move_user_ou() {
@@ -235,7 +227,7 @@ move_user_ou() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool user move $USERNAME OU=$OU_NAME"
+    execute_samba_command sudo samba-tool user move "$USERNAME" OU="$OU_NAME"
 }
 
 # === FUNÇÕES DE GRUPOS ===
@@ -246,11 +238,11 @@ create_group() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool group add $GROUP"
+    execute_samba_command sudo samba-tool group add "$GROUP"
 }
 
 list_groups() {
-    execute_samba_command "sudo samba-tool group list"
+    execute_samba_command sudo samba-tool group list
 }
 
 search_group() {
@@ -269,7 +261,7 @@ check_group() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool group show $GROUP"
+    execute_samba_command sudo samba-tool group show "$GROUP"
 }
 
 delete_group() {
@@ -278,7 +270,7 @@ delete_group() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool group delete $GROUP"
+    execute_samba_command sudo samba-tool group delete "$GROUP"
 }
 
 add_user_to_group() {
@@ -287,7 +279,7 @@ add_user_to_group() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool group addmembers $GROUP $USERNAME"
+    execute_samba_command sudo samba-tool group addmembers "$GROUP" "$USERNAME"
 }
 
 remove_user_from_group() {
@@ -296,7 +288,7 @@ remove_user_from_group() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool group removemembers $GROUP $USERNAME"
+    execute_samba_command sudo samba-tool group removemembers "$GROUP" "$USERNAME"
 }
 
 list_group_members() {
@@ -305,7 +297,7 @@ list_group_members() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool group listmembers $GROUP"
+    execute_samba_command sudo samba-tool group listmembers "$GROUP"
 }
 
 move_group_ou() {
@@ -314,7 +306,7 @@ move_group_ou() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool group move $GROUP OU=$OU_NAME"
+    execute_samba_command sudo samba-tool group move "$GROUP" OU="$OU_NAME"
 }
 
 # === FUNÇÕES DE COMPUTADORES ===
@@ -325,11 +317,11 @@ add_computer() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool computer create $COMPUTER"
+    execute_samba_command sudo samba-tool computer create "$COMPUTER"
 }
 
 list_computers() {
-    execute_samba_command "sudo samba-tool computer list"
+    execute_samba_command sudo samba-tool computer list
 }
 
 search_computer() {
@@ -348,7 +340,7 @@ check_computer() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool computer show $COMPUTER\$"
+    execute_samba_command sudo samba-tool computer show "$COMPUTER\$"
 }
 
 delete_computer() {
@@ -357,7 +349,7 @@ delete_computer() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool computer delete $COMPUTER\$"
+    execute_samba_command sudo samba-tool computer delete "$COMPUTER\$"
 }
 
 move_computer_ou() {
@@ -366,7 +358,7 @@ move_computer_ou() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool computer move $COMPUTER OU=$OU_NAME"
+    execute_samba_command sudo samba-tool computer move "$COMPUTER" OU="$OU_NAME"
 }
 
 # === FUNÇÕES DE UNIDADES ORGANIZACIONAIS ===
@@ -377,11 +369,11 @@ create_ou() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool ou create OU=$OU_NAME"
+    execute_samba_command sudo samba-tool ou create OU="$OU_NAME"
 }
 
 list_ous() {
-    execute_samba_command "sudo samba-tool ou list"
+    execute_samba_command sudo samba-tool ou list
 }
 
 delete_ou() {
@@ -390,7 +382,7 @@ delete_ou() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool ou delete OU=$OU_NAME"
+    execute_samba_command sudo samba-tool ou delete OU="$OU_NAME"
 }
 
 list_ou_objects() {
@@ -399,7 +391,7 @@ list_ou_objects() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool ou listobjects OU=$OU_NAME"
+    execute_samba_command sudo samba-tool ou listobjects OU="$OU_NAME"
 }
 
 # === FUNÇÕES DE SILOS ===
@@ -410,11 +402,11 @@ create_silo() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool domain auth silo create --name $SILO_NAME"
+    execute_samba_command sudo samba-tool domain auth silo create --name "$SILO_NAME"
 }
 
 list_silos() {
-    execute_samba_command "sudo samba-tool domain auth silo list"
+    execute_samba_command sudo samba-tool domain auth silo list
 }
 
 check_silo() {
@@ -423,7 +415,7 @@ check_silo() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool domain auth silo view --name $SILO_NAME"
+    execute_samba_command sudo samba-tool domain auth silo view --name "$SILO_NAME"
 }
 
 delete_silo() {
@@ -432,7 +424,7 @@ delete_silo() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool domain auth silo delete --name $SILO_NAME"
+    execute_samba_command sudo samba-tool domain auth silo delete --name "$SILO_NAME"
 }
 
 list_silo_users() {
@@ -441,7 +433,7 @@ list_silo_users() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool domain auth silo member list --name $SILO_NAME"
+    execute_samba_command sudo samba-tool domain auth silo member list --name "$SILO_NAME"
 }
 
 add_user_silo() {
@@ -450,7 +442,7 @@ add_user_silo() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool domain auth silo member add --name $SILO_NAME --member $USERNAME"
+    execute_samba_command sudo samba-tool domain auth silo member add --name "$SILO_NAME" --member "$USERNAME"
 }
 
 remove_user_silo() {
@@ -459,41 +451,41 @@ remove_user_silo() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool domain auth silo member remove --name $SILO_NAME --member $USERNAME"
+    execute_samba_command sudo samba-tool domain auth silo member remove --name "$SILO_NAME" --member "$USERNAME"
 }
 
 # === FUNÇÕES DE INFORMAÇÕES DO DOMÍNIO ===
 
 show_domain_info() {
-    execute_samba_command "sudo samba-tool domain info 127.0.0.1"
+    execute_samba_command sudo samba-tool domain info 127.0.0.1
 }
 
 show_domain_level() {
-    execute_samba_command "sudo samba-tool domain level show"
+    execute_samba_command sudo samba-tool domain level show
 }
 
 show_fsmo_roles() {
-    execute_samba_command "sudo samba-tool fsmo show"
+    execute_samba_command sudo samba-tool fsmo show
 }
 
 show_sites() {
-    execute_samba_command "sudo samba-tool sites list"
+    execute_samba_command sudo samba-tool sites list
 }
 
 show_replication_info() {
-    execute_samba_command "sudo samba-tool drs showrepl"
+    execute_samba_command sudo samba-tool drs showrepl
 }
 
 active_sessions() {
-    execute_samba_command "net status sessions"
+    execute_samba_command net status sessions
 }
 
 active_shares() {
-    execute_samba_command "net status shares"
+    execute_samba_command net status shares
 }
 
 samba_processes() {
-    execute_samba_command "sudo samba-tool processes"
+    execute_samba_command sudo samba-tool processes
 }
 
 # === FUNÇÕES DE COMPARTILHAMENTOS ===
@@ -588,7 +580,7 @@ revalidate_shares() {
 # === FUNÇÕES DE CONFIGURAÇÕES ===
 
 show_password_policy() {
-    execute_samba_command "sudo samba-tool domain passwordsettings show"
+    execute_samba_command sudo samba-tool domain passwordsettings show
 }
 
 enable_complexity() {
@@ -610,23 +602,23 @@ disable_complexity() {
 }
 
 sysvol_check() {
-    execute_samba_command "sudo samba-tool ntacl sysvolcheck -U administrator"
+    execute_samba_command sudo samba-tool ntacl sysvolcheck -U administrator
 }
 
 sysvol_reset() {
-    execute_samba_command "sudo samba-tool ntacl sysvolreset -U Administrator"
+    execute_samba_command sudo samba-tool ntacl sysvolreset -U Administrator
 }
 
 db_check_general() {
-    execute_samba_command "sudo samba-tool dbcheck --cross-ncs --fix --yes"
+    execute_samba_command sudo samba-tool dbcheck --cross-ncs --fix --yes
 }
 
 db_check_acls() {
-    execute_samba_command "sudo samba-tool dbcheck --cross-ncs --reset-well-known-acls --fix --yes"
+    execute_samba_command sudo samba-tool dbcheck --cross-ncs --reset-well-known-acls --fix --yes
 }
 
 check_acl() {
-    execute_samba_command "sudo samba-tool gpo aclcheck -U Administrator"
+    execute_samba_command sudo samba-tool gpo aclcheck -U Administrator
 }
 
 install_admx_w10() {
