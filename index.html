@@ -1480,7 +1480,7 @@ async function submitForm(event, action) {
         try {
             output = JSON.parse(text);
         } catch {
-            output = {status: 'error', message: 'Resposta inválida do servidor', output: text};
+            output = {text};
         }
 
         if(resultContainer) {
@@ -1516,7 +1516,7 @@ async function executeCommand(action) {
         try {
             output = JSON.parse(text);
         } catch {
-            output = {status: 'error', message: 'Resposta inválida do servidor', output: text};
+            output = {text};
         }
         if(resultContainer) {
             resultContainer.style.display = 'block';
