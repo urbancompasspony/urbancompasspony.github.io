@@ -1451,5 +1451,85 @@
         });
 
     </script>
+<script>
+async function submitForm(event, action) {
+    event.preventDefault();
+
+    const form = event.target;
+    const formData = new FormData(form);
+    formData.append('action', action);
+
+    const resultContainer = document.querySelector('.result-container');
+    if(resultContainer) {
+        resultContainer.style.display = 'none';
+        resultContainer.innerHTML = '';
+    }
+
+    // Mostra loading, se houver
+    const loading = document.querySelector('.loading');
+    if(loading) loading.style.display = 'block';
+
+    try {
+        const response = await fetch('/cgi-bin/samba-admin.cgi', {
+            method: 'POST',
+            body: new URLSearchParams(formData)
+        });
+
+        let text = await response.text();
+        let output;
+        try {
+            output = JSON.parse(text);
+        } catch {
+            output = {status: 'error', message: 'Resposta inválida do servidor', output: text};
+        }
+
+        if(resultContainer) {
+            resultContainer.style.display = 'block';
+            resultContainer.innerHTML = `<pre>${JSON.stringify(output, null, 2)}</pre>`;
+        }
+    } catch(e) {
+        if(resultContainer) {
+            resultContainer.style.display = 'block';
+            resultContainer.innerHTML = `<pre>Erro: ${e}</pre>`;
+        }
+    }
+
+    if(loading) loading.style.display = 'none';
+}
+
+// Para comandos que não usam formulário
+async function executeCommand(action) {
+    const resultContainer = document.querySelector('.result-container');
+    if(resultContainer) {
+        resultContainer.style.display = 'none';
+        resultContainer.innerHTML = '';
+    }
+    const loading = document.querySelector('.loading');
+    if(loading) loading.style.display = 'block';
+    try {
+        const response = await fetch('/cgi-bin/samba-admin.cgi', {
+            method: 'POST',
+            body: new URLSearchParams({action})
+        });
+        let text = await response.text();
+        let output;
+        try {
+            output = JSON.parse(text);
+        } catch {
+            output = {status: 'error', message: 'Resposta inválida do servidor', output: text};
+        }
+        if(resultContainer) {
+            resultContainer.style.display = 'block';
+            resultContainer.innerHTML = `<pre>${JSON.stringify(output, null, 2)}</pre>`;
+        }
+    } catch(e) {
+        if(resultContainer) {
+            resultContainer.style.display = 'block';
+            resultContainer.innerHTML = `<pre>Erro: ${e}</pre>`;
+        }
+    }
+    if(loading) loading.style.display = 'none';
+}
+</script>
 </body>
 </html>
