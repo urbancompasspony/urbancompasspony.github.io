@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# samba-admin.cgi - Interface CGI para Active Directory & Domain Controller v7.0
-# Processa comandos da interface web HTML
-
 # Cabeçalho HTTP obrigatório
 echo "Content-Type: application/json; charset=UTF-8"
 echo ""
@@ -35,12 +32,12 @@ parse_cgi_params() {
 
     # Decodifica parâmetros URL
     QUERY_STRING=$(echo "$QUERY_STRING" | sed 's/+/ /g')
-    
+
     IFS='&'
     for param in $QUERY_STRING; do
         key=$(echo "$param" | cut -d'=' -f1)
         value=$(echo "$param" | cut -d'=' -f2- | python3 -c "import sys, urllib.parse; print(urllib.parse.unquote(sys.stdin.read().strip()))")
-        
+
         case "$key" in
             "action") ACTION="$value" ;;
             "username") USERNAME="$value" ;;
@@ -71,12 +68,12 @@ sanitize_input() {
     COMPUTER=$(echo "$COMPUTER" | sed 's/[^a-zA-Z0-9.-]//g')
     OU_NAME=$(echo "$OU_NAME" | sed 's/[^a-zA-Z0-9 ._-]//g')
     SILO_NAME=$(echo "$SILO_NAME" | sed 's/[^a-zA-Z0-9._-]//g')
-    
+
     # Validar email
     if [ -n "$EMAIL" ] && ! [[ "$EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
         EMAIL=""
     fi
-    
+
     # Validar paths seguros
     if [[ "$SHARE_PATH" =~ ^/[a-zA-Z0-9/_.-]+$ ]]; then
         SHARE_PATH="$SHARE_PATH"
@@ -90,17 +87,17 @@ execute_samba_command() {
     local cmd="$1"
     local result
     local exit_code
-    
+
     log_action "Executando: $cmd"
-    
+
     # Executa comando com timeout
-    result=$(timeout 30 sudo "$cmd" 2>&1)
+    result=$(timeout 3 "$cmd" 2>&1)
     exit_code=$?
-    
+
     if [ $exit_code -eq 0 ]; then
-        echo "{\"status\":\"success\",\"message\":\"Comando executado com sucesso\",\"output\":\"$(echo "$result" | sed 's/"/\\"/g' | tr '\n' '\\n')\"}"
+        echo "Comando executado com sucesso:" $(echo "$result")
     else
-        echo "{\"status\":\"error\",\"message\":\"Erro ao executar comando (código: $exit_code)\",\"output\":\"$(echo "$result" | sed 's/"/\\"/g' | tr '\n' '\\n')\"}"
+        echo "Erro ao executar o comando:" $(echo "$result")
     fi
 }
 
@@ -109,11 +106,11 @@ json_response() {
     local status="$1"
     local message="$2"
     local output="$3"
-    
+
     if [ -z "$output" ]; then
-        echo "{\"status\":\"$status\",\"message\":\"$message\"}"
+        echo "$status" "$message"
     else
-        echo "{\"status\":\"$status\",\"message\":\"$message\",\"output\":\"$(echo "$output" | sed 's/"/\\"/g' | tr '\n' '\\n')\"}"
+        echo "$status" "$message" "$output"
     fi
 }
 
@@ -124,14 +121,14 @@ create_user() {
         json_response "error" "Campos obrigatórios: username, display-name, password"
         return
     fi
-    
+
     # Construir comando
-    local cmd="sudo samba-tool user create \"$USERNAME\" \"$PASSWORD\" --surname=\"$FIRSTNAME\""
-    
+    local cmd="sudo samba-tool user create $USERNAME $PASSWORD --surname=$FIRSTNAME"
+
     if [ "$MUST_CHANGE_PASSWORD" = "on" ]; then
         cmd="$cmd --must-change-at-next-login"
     fi
-    
+
     execute_samba_command "$cmd"
 }
 
@@ -144,7 +141,7 @@ search_user() {
         json_response "error" "Termo de busca é obrigatório"
         return
     fi
-    
+
     result=$(sudo samba-tool user list | grep "$SEARCH_TERM")
     json_response "success" "Resultados encontrados" "$result"
 }
@@ -154,8 +151,8 @@ check_user() {
         json_response "error" "Nome do usuário é obrigatório"
         return
     fi
-    
-    execute_samba_command "sudo samba-tool user show \"$USERNAME\""
+
+    execute_samba_command "sudo samba-tool user show $USERNAME"
 }
 
 delete_user() {
@@ -163,7 +160,7 @@ delete_user() {
         json_response "error" "Nome do usuário é obrigatório"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool user delete \"$USERNAME\""
 }
 
@@ -172,7 +169,7 @@ enable_user() {
         json_response "error" "Nome do usuário é obrigatório"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool user enable \"$USERNAME\""
 }
 
@@ -181,7 +178,7 @@ disable_user() {
         json_response "error" "Nome do usuário é obrigatório"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool user disable \"$USERNAME\""
 }
 
@@ -190,7 +187,7 @@ reset_password() {
         json_response "error" "Username e nova senha são obrigatórios"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool user setpassword \"$USERNAME\" --newpassword=\"$PASSWORD\""
 }
 
@@ -199,13 +196,13 @@ promote_user() {
         json_response "error" "Nome do usuário é obrigatório"
         return
     fi
-    
+
     sudo samba-tool group addmembers "Domain Admins" "$USERNAME"
     sudo samba-tool group addmembers "Schema Admins" "$USERNAME"
     sudo samba-tool group addmembers "Enterprise Admins" "$USERNAME"
     sudo samba-tool group addmembers "Group Policy Creator Owners" "$USERNAME"
     sudo samba-tool group addmembers "Administrators" "$USERNAME"
-    
+
     json_response "success" "Usuário $USERNAME promovido a administrador"
 }
 
@@ -214,13 +211,13 @@ demote_user() {
         json_response "error" "Nome do usuário é obrigatório"
         return
     fi
-    
+
     sudo samba-tool group removemembers "Domain Admins" "$USERNAME"
     sudo samba-tool group removemembers "Schema Admins" "$USERNAME"
     sudo samba-tool group removemembers "Enterprise Admins" "$USERNAME"
     sudo samba-tool group removemembers "Group Policy Creator Owners" "$USERNAME"
     sudo samba-tool group removemembers "Administrators" "$USERNAME"
-    
+
     json_response "success" "Usuário $USERNAME removido de administrador"
 }
 
@@ -229,7 +226,7 @@ show_user_groups() {
         json_response "error" "Nome do usuário é obrigatório"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool user getgroups \"$USERNAME\""
 }
 
@@ -238,7 +235,7 @@ move_user_ou() {
         json_response "error" "Username e nome da OU são obrigatórios"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool user move \"$USERNAME\" OU=\"$OU_NAME\""
 }
 
@@ -249,7 +246,7 @@ create_group() {
         json_response "error" "Nome do grupo é obrigatório"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool group add \"$GROUP\""
 }
 
@@ -262,7 +259,7 @@ search_group() {
         json_response "error" "Termo de busca é obrigatório"
         return
     fi
-    
+
     result=$(sudo samba-tool group list | grep "$SEARCH_TERM")
     json_response "success" "Resultados encontrados" "$result"
 }
@@ -272,7 +269,7 @@ check_group() {
         json_response "error" "Nome do grupo é obrigatório"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool group show \"$GROUP\""
 }
 
@@ -281,7 +278,7 @@ delete_group() {
         json_response "error" "Nome do grupo é obrigatório"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool group delete \"$GROUP\""
 }
 
@@ -290,7 +287,7 @@ add_user_to_group() {
         json_response "error" "Username e nome do grupo são obrigatórios"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool group addmembers \"$GROUP\" \"$USERNAME\""
 }
 
@@ -299,7 +296,7 @@ remove_user_from_group() {
         json_response "error" "Username e nome do grupo são obrigatórios"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool group removemembers \"$GROUP\" \"$USERNAME\""
 }
 
@@ -308,7 +305,7 @@ list_group_members() {
         json_response "error" "Nome do grupo é obrigatório"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool group listmembers \"$GROUP\""
 }
 
@@ -317,7 +314,7 @@ move_group_ou() {
         json_response "error" "Nome do grupo e OU são obrigatórios"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool group move \"$GROUP\" OU=\"$OU_NAME\""
 }
 
@@ -328,7 +325,7 @@ add_computer() {
         json_response "error" "Nome do computador é obrigatório"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool computer create \"$COMPUTER\""
 }
 
@@ -341,7 +338,7 @@ search_computer() {
         json_response "error" "Termo de busca é obrigatório"
         return
     fi
-    
+
     result=$(sudo samba-tool computer list | grep "$SEARCH_TERM")
     json_response "success" "Resultados encontrados" "$result"
 }
@@ -351,7 +348,7 @@ check_computer() {
         json_response "error" "Nome do computador é obrigatório"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool computer show \"$COMPUTER\$\""
 }
 
@@ -360,7 +357,7 @@ delete_computer() {
         json_response "error" "Nome do computador é obrigatório"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool computer delete \"$COMPUTER\$\""
 }
 
@@ -369,7 +366,7 @@ move_computer_ou() {
         json_response "error" "Nome do computador e OU são obrigatórios"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool computer move \"$COMPUTER\" OU=\"$OU_NAME\""
 }
 
@@ -380,7 +377,7 @@ create_ou() {
         json_response "error" "Nome da OU é obrigatório"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool ou create OU=\"$OU_NAME\""
 }
 
@@ -393,7 +390,7 @@ delete_ou() {
         json_response "error" "Nome da OU é obrigatório"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool ou delete OU=\"$OU_NAME\""
 }
 
@@ -402,7 +399,7 @@ list_ou_objects() {
         json_response "error" "Nome da OU é obrigatório"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool ou listobjects OU=\"$OU_NAME\""
 }
 
@@ -413,7 +410,7 @@ create_silo() {
         json_response "error" "Nome do silo é obrigatório"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool domain auth silo create --name \"$SILO_NAME\""
 }
 
@@ -426,7 +423,7 @@ check_silo() {
         json_response "error" "Nome do silo é obrigatório"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool domain auth silo view --name \"$SILO_NAME\""
 }
 
@@ -435,7 +432,7 @@ delete_silo() {
         json_response "error" "Nome do silo é obrigatório"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool domain auth silo delete --name \"$SILO_NAME\""
 }
 
@@ -444,7 +441,7 @@ list_silo_users() {
         json_response "error" "Nome do silo é obrigatório"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool domain auth silo member list --name \"$SILO_NAME\""
 }
 
@@ -453,7 +450,7 @@ add_user_silo() {
         json_response "error" "Username e nome do silo são obrigatórios"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool domain auth silo member add --name \"$SILO_NAME\" --member \"$USERNAME\""
 }
 
@@ -462,7 +459,7 @@ remove_user_silo() {
         json_response "error" "Username e nome do silo são obrigatórios"
         return
     fi
-    
+
     execute_samba_command "sudo samba-tool domain auth silo member remove --name \"$SILO_NAME\" --member \"$USERNAME\""
 }
 
@@ -516,10 +513,10 @@ create_share() {
         json_response "error" "Nome, caminho e usuários são obrigatórios"
         return
     fi
-    
+
     mkdir -p /etc/samba/external/smb.conf.d/
     mkdir -p "/mnt$SHARE_PATH"
-    
+
     cat > "/etc/samba/external/smb.conf.d/$SHARE_NAME.conf" << EOF
 [$SHARE_NAME]
 path = /mnt$SHARE_PATH
@@ -533,10 +530,10 @@ force create mode = 0777
 directory mask = 0777
 force directory mode = 0777
 EOF
-    
+
     chmod 777 "/mnt$SHARE_PATH"
     revalidate_shares
-    
+
     json_response "success" "Compartilhamento $SHARE_NAME criado com sucesso"
 }
 
@@ -545,10 +542,10 @@ create_sync_share() {
         json_response "error" "Nome, caminho e usuários são obrigatórios"
         return
     fi
-    
+
     mkdir -p /etc/samba/external/smb.conf.d/
     mkdir -p "/mnt$SHARE_PATH"
-    
+
     cat > "/etc/samba/external/smb.conf.d/$SHARE_NAME.conf" << EOF
 [$SHARE_NAME]
 path = /mnt$SHARE_PATH
@@ -561,10 +558,10 @@ force create mode = 0700
 directory mask = 0700
 force directory mode = 0700
 EOF
-    
+
     chmod 777 "/mnt$SHARE_PATH"
     revalidate_shares
-    
+
     json_response "success" "Compartilhamento sync $SHARE_NAME criado com sucesso"
 }
 
@@ -573,7 +570,7 @@ delete_share() {
         json_response "error" "Nome do compartilhamento é obrigatório"
         return
     fi
-    
+
     if [ -f "/etc/samba/external/smb.conf.d/$SHARE_NAME.conf" ]; then
         rm "/etc/samba/external/smb.conf.d/$SHARE_NAME.conf"
         revalidate_shares
@@ -658,10 +655,10 @@ main() {
     # Parse parâmetros
     parse_cgi_params
     sanitize_input
-    
+
     # Log da ação
     log_action "Ação: $ACTION, Usuário: $USERNAME, Método: $REQUEST_METHOD"
-    
+
     # Executar ação baseada no parâmetro
     case "$ACTION" in
         # Usuários
@@ -677,7 +674,7 @@ main() {
         "demote-user") demote_user ;;
         "show-user-groups") show_user_groups ;;
         "move-user-ou") move_user_ou ;;
-        
+
         # Grupos
         "create-group") create_group ;;
         "list-groups") list_groups ;;
@@ -688,7 +685,7 @@ main() {
         "remove-user-from-group") remove_user_from_group ;;
         "list-group-members") list_group_members ;;
         "move-group-ou") move_group_ou ;;
-        
+
         # Computadores
         "add-computer") add_computer ;;
         "list-computers") list_computers ;;
@@ -696,13 +693,13 @@ main() {
         "check-computer") check_computer ;;
         "delete-computer") delete_computer ;;
         "move-computer-ou") move_computer_ou ;;
-        
+
         # OUs
         "create-ou") create_ou ;;
         "list-ous") list_ous ;;
         "delete-ou") delete_ou ;;
         "list-ou-objects") list_ou_objects ;;
-        
+
         # Silos
         "create-silo") create_silo ;;
         "list-silos") list_silos ;;
@@ -711,14 +708,14 @@ main() {
         "list-silo-users") list_silo_users ;;
         "add-user-silo") add_user_silo ;;
         "remove-user-silo") remove_user_silo ;;
-        
+
         # Compartilhamentos
         "show-shares") show_shares ;;
         "create-share") create_share ;;
         "create-sync-share") create_sync_share ;;
         "delete-share") delete_share ;;
         "revalidate-shares") revalidate_shares ;;
-        
+
         # Informações do domínio
         "show-domain-info") show_domain_info ;;
         "show-domain-level") show_domain_level ;;
@@ -728,7 +725,7 @@ main() {
         "active-sessions") active_sessions ;;
         "active-shares") active_shares ;;
         "samba-processes") samba_processes ;;
-        
+
         # Configurações
         "show-password-policy") show_password_policy ;;
         "enable-complexity") enable_complexity ;;
@@ -742,7 +739,7 @@ main() {
         "install-admx-w11") install_admx_w11 ;;
         "remove-admx") remove_admx ;;
         "update-menu") update_menu ;;
-        
+
         *)
             json_response "error" "Ação não reconhecida: $ACTION"
             ;;
