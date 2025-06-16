@@ -186,7 +186,7 @@ reset_password() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool user setpassword $USERNAME\" --newpassword=$PASSWORD"
+    execute_samba_command "sudo samba-tool user setpassword $USERNAME --newpassword=$PASSWORD"
 }
 
 promote_user() {
@@ -234,7 +234,7 @@ move_user_ou() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool user move $USERNAME\" OU=$OU_NAME"
+    execute_samba_command "sudo samba-tool user move $USERNAME OU=$OU_NAME"
 }
 
 # === FUNÇÕES DE GRUPOS ===
@@ -286,7 +286,7 @@ add_user_to_group() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool group addmembers $GROUP\" $USERNAME"
+    execute_samba_command "sudo samba-tool group addmembers $GROUP $USERNAME"
 }
 
 remove_user_from_group() {
@@ -295,7 +295,7 @@ remove_user_from_group() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool group removemembers $GROUP\" $USERNAME"
+    execute_samba_command "sudo samba-tool group removemembers $GROUP $USERNAME"
 }
 
 list_group_members() {
@@ -313,7 +313,7 @@ move_group_ou() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool group move $GROUP\" OU=$OU_NAME"
+    execute_samba_command "sudo samba-tool group move $GROUP OU=$OU_NAME"
 }
 
 # === FUNÇÕES DE COMPUTADORES ===
@@ -365,7 +365,7 @@ move_computer_ou() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool computer move $COMPUTER\" OU=$OU_NAME"
+    execute_samba_command "sudo samba-tool computer move $COMPUTER OU=$OU_NAME"
 }
 
 # === FUNÇÕES DE UNIDADES ORGANIZACIONAIS ===
@@ -449,7 +449,7 @@ add_user_silo() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool domain auth silo member add --name $SILO_NAME\" --member $USERNAME"
+    execute_samba_command "sudo samba-tool domain auth silo member add --name $SILO_NAME --member $USERNAME"
 }
 
 remove_user_silo() {
@@ -458,7 +458,7 @@ remove_user_silo() {
         return
     fi
 
-    execute_samba_command "sudo samba-tool domain auth silo member remove --name $SILO_NAME\" --member $USERNAME"
+    execute_samba_command "sudo samba-tool domain auth silo member remove --name $SILO_NAME --member $USERNAME"
 }
 
 # === FUNÇÕES DE INFORMAÇÕES DO DOMÍNIO ===
