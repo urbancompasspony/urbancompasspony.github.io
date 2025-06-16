@@ -15,3 +15,10 @@ fi
 
 # Dar permissão de execução no diretório para o grupo
 chmod g+x /var/lib/samba/private/
+
+# Adicionar permissão de leitura para o grupo nos arquivos do Samba
+chmod g+r /var/lib/samba/private/*.ldb
+chmod g+r /var/lib/samba/private/*.tdb
+
+# Verificar se funcionou
+ls -la /var/lib/samba/private/sam.ldb
