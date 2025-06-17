@@ -83,12 +83,20 @@ sanitize_input() {
 # Função para executar comandos sudo samba-tool com segurança
 execute_samba_command() {
     log_action "Executando: $*"
-    result=$(timeout 3 "$@" 2>&1)
+    
+    # Executa o comando diretamente sem timeout se não estiver disponível
+    if command -v timeout >/dev/null 2>&1; then
+        result=$(timeout 30 "$@" 2>&1)
+    else
+        result=$("$@" 2>&1)
+    fi
+    
     exit_code=$?
+    
     if [ $exit_code -eq 0 ]; then
         echo "$result"
     else
-        echo "Erro ao executar o comando:" "$result"
+        echo "Erro ao executar o comando: $result"
     fi
 }
 
@@ -109,18 +117,31 @@ json_response() {
 
 create_user() {
     if [ -z "$USERNAME" ] || [ -z "$FIRSTNAME" ] || [ -z "$PASSWORD" ]; then
-        json_response "error" "Campos obrigatórios: username, display-name, password"
+        echo "{\"status\":\"error\",\"message\":\"Campos obrigatórios: username, display-name, password\"}"
         return
     fi
 
-    # Construir comando
-    local cmd="sudo samba-tool user create $USERNAME $PASSWORD --surname=$FIRSTNAME"
-
-    if [ "$MUST_CHANGE_PASSWORD" = "on" ]; then
-        cmd="$cmd --must-change-at-next-login"
+    # Executar comando de forma mais robusta
+    log_action "Criando usuário: $USERNAME"
+    
+    if command -v samba-tool >/dev/null 2>&1; then
+        # Construir comando com argumentos separados
+        if [ "$MUST_CHANGE_PASSWORD" = "on" ]; then
+            result=$(sudo samba-tool user create "$USERNAME" "$PASSWORD" --surname="$FIRSTNAME" --must-change-at-next-login 2>&1)
+        else
+            result=$(sudo samba-tool user create "$USERNAME" "$PASSWORD" --surname="$FIRSTNAME" 2>&1)
+        fi
+        exit_code=$?
+    else
+        result="samba-tool não encontrado no sistema"
+        exit_code=1
     fi
-
-    execute_samba_command "$cmd"
+    
+    if [ $exit_code -eq 0 ]; then
+        echo "{\"status\":\"success\",\"message\":\"Usuário $USERNAME criado com sucesso\",\"output\":\"$result\"}"
+    else
+        echo "{\"status\":\"error\",\"message\":\"Erro ao criar usuário: $result\"}"
+    fi
 }
 
 list_users() {
