@@ -180,7 +180,6 @@ delete_user() {
     fi
 
     execute_samba_command sudo samba-tool user delete "$USERNAME"
-    json_response "Status:" "Usuario EXCLUIDO!"
 }
 
 enable_user() {
