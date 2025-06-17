@@ -214,6 +214,22 @@
             display: none;
             max-width: 600px;
         }
+        .confirm-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5); z-index: 9999; display: none;
+    align-items: center; justify-content: center;
+}
+.confirm-overlay.active { display: flex; }
+.confirm-box {
+    background: white; border-radius: 10px; padding: 25px;
+    max-width: 400px; width: 90%; text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+.confirm-message { font-size: 18px; color: #2c3e50; margin-bottom: 25px; }
+.confirm-buttons { display: flex; gap: 15px; justify-content: center; }
+.confirm-btn { padding: 12px 25px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; min-width: 80px; }
+.confirm-btn-yes { background: #e74c3c; color: white; }
+.confirm-btn-no { background: #95a5a6; color: white; }
     </style>
 </head>
 <body>
@@ -499,7 +515,7 @@
                     <div class="alert alert-error active">
                         <strong>Atenção!</strong> Esta ação é irreversível.
                     </div>
-                    <form onsubmit="submitForm(event, 'delete-user')">
+                        <form onsubmit="confirmDeleteUser(event)">
                         <div class="form-group">
                             <label for="delete-username">Nome do Usuário:</label>
                             <input type="text" id="delete-username" name="username" required>
@@ -1610,8 +1626,52 @@ async function executeCommand(action) {
     
     if(loading) loading.style.display = 'none';
 }
+    function showConfirmation(message, callback) {
+    const overlay = document.getElementById('confirmOverlay');
+    const messageEl = document.getElementById('confirmMessage');
+    const yesBtn = document.getElementById('confirmYes');
+    const noBtn = document.getElementById('confirmNo');
+    
+    messageEl.textContent = message;
+    overlay.classList.add('active');
+    
+    yesBtn.onclick = function() {
+        overlay.classList.remove('active');
+        callback(true);
+    };
+    
+    noBtn.onclick = function() {
+        overlay.classList.remove('active');
+        callback(false);
+    };
+}
+
+function confirmDeleteUser(event) {
+    event.preventDefault();
+    const username = document.getElementById('delete-username').value;
+    
+    if (!username) {
+        showAlert('Por favor, digite o nome do usuário', 'error');
+        return;
+    }
+    
+    showConfirmation(`Tem certeza que deseja deletar o usuário "${username}"?`, function(confirmed) {
+        if (confirmed) {
+            submitForm(event, 'delete-user');
+        }
+    });
+}
 </script>
 <div class="loading" style="display:none"><div class="spinner"></div>Carregando...</div>
 <div class="result-container" style="display:none"></div>
+    <div id="confirmOverlay" class="confirm-overlay">
+    <div class="confirm-box">
+        <div id="confirmMessage" class="confirm-message">Deseja realizar esta ação?</div>
+        <div class="confirm-buttons">
+            <button id="confirmYes" class="confirm-btn confirm-btn-yes">Sim</button>
+            <button id="confirmNo" class="confirm-btn confirm-btn-no">Não</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
