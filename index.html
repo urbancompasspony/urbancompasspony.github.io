@@ -1452,6 +1452,7 @@
 
     </script>
 <script>
+// Substitua a função submitForm por esta versão melhorada:
 async function submitForm(event, action) {
     event.preventDefault();
 
@@ -1465,7 +1466,6 @@ async function submitForm(event, action) {
         resultContainer.innerHTML = '';
     }
 
-    // Mostra loading, se houver
     const loading = document.querySelector('.loading');
     if(loading) loading.style.display = 'block';
 
@@ -1477,15 +1477,32 @@ async function submitForm(event, action) {
 
         let text = await response.text();
         let output;
+        
         try {
             output = JSON.parse(text);
         } catch {
-            output = {text};
+            output = { text: text };
         }
 
         if(resultContainer) {
             resultContainer.style.display = 'block';
-            resultContainer.innerHTML = `<pre>${JSON.stringify(output, null, 2)}</pre>`;
+            
+            // Melhor processamento do resultado
+            let displayText = '';
+            if (output.text) {
+                displayText = output.text.trim(); // Remove \n e espaços extras
+            } else if (typeof output === 'string') {
+                displayText = output.trim();
+            } else {
+                displayText = JSON.stringify(output, null, 2);
+            }
+            
+            // Se o resultado tem apenas uma linha, exibe simples, senão usa <pre>
+            if (displayText.includes('\n') || displayText.length > 100) {
+                resultContainer.innerHTML = `<pre>${displayText}</pre>`;
+            } else {
+                resultContainer.innerHTML = `<div style="font-family: monospace; padding: 10px; background: white; border-radius: 5px;">${displayText}</div>`;
+            }
         }
     } catch(e) {
         if(resultContainer) {
@@ -1497,35 +1514,58 @@ async function submitForm(event, action) {
     if(loading) loading.style.display = 'none';
 }
 
-// Para comandos que não usam formulário
+// Substitua a função executeCommand por esta versão melhorada:
 async function executeCommand(action) {
     const resultContainer = document.querySelector('.result-container');
     if(resultContainer) {
         resultContainer.style.display = 'none';
         resultContainer.innerHTML = '';
     }
+    
     const loading = document.querySelector('.loading');
     if(loading) loading.style.display = 'block';
+    
     try {
         const response = await fetch('/cgi-bin/samba-admin.cgi', {
             method: 'POST',
             body: new URLSearchParams({action})
         });
+        
         let text = await response.text();
         let output;
+        
         try {
             output = JSON.parse(text);
         } catch {
-            output = {text};
+            output = { text: text };
         }
+        
         if(resultContainer) {
             resultContainer.style.display = 'block';
-if (output.text) {
-    let html = output.text.replace(/\n/g, '<br>');
-    resultContainer.innerHTML = html;
-} else {
-    resultContainer.innerHTML = `<pre>${JSON.stringify(output, null, 2)}</pre>`;
-}
+            
+            // Melhor processamento do resultado
+            let displayText = '';
+            if (output.text) {
+                displayText = output.text.trim(); // Remove \n e espaços extras
+            } else if (typeof output === 'string') {
+                displayText = output.trim();
+            } else {
+                displayText = JSON.stringify(output, null, 2);
+            }
+            
+            // Se o resultado tem múltiplas linhas, usa <pre>, senão exibe simples
+            if (displayText.includes('\n')) {
+                // Para listas, formatar melhor
+                const lines = displayText.split('\n').filter(line => line.trim());
+                if (lines.length > 1) {
+                    const formattedList = lines.map(line => `• ${line.trim()}`).join('<br>');
+                    resultContainer.innerHTML = `<div style="font-family: 'Segoe UI', sans-serif; line-height: 1.6;">${formattedList}</div>`;
+                } else {
+                    resultContainer.innerHTML = `<div style="font-family: monospace; padding: 10px; background: white; border-radius: 5px;">${displayText}</div>`;
+                }
+            } else {
+                resultContainer.innerHTML = `<div style="font-family: monospace; padding: 10px; background: white; border-radius: 5px; font-size: 16px; color: #2c3e50;">${displayText}</div>`;
+            }
         }
     } catch(e) {
         if(resultContainer) {
@@ -1533,6 +1573,7 @@ if (output.text) {
             resultContainer.innerHTML = `<pre>Erro: ${e}</pre>`;
         }
     }
+    
     if(loading) loading.style.display = 'none';
 }
 </script>
