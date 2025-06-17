@@ -907,6 +907,23 @@
                     </form>
                 </div>
 
+<!-- Formulário Copiar Grupos de Usuário -->
+<div id="copy-user-groups-form" class="form-container">
+    <h3>Copiar Grupos de um Usuário</h3>
+    <form onsubmit="submitForm(event, 'copy-user-groups')">
+        <div class="form-group">
+            <label for="source-username">Usuário de Origem (copiar grupos DE):</label>
+            <input type="text" id="source-username" name="source-username" required>
+        </div>
+        <div class="form-group">
+            <label for="target-username">Usuário de Destino (copiar grupos PARA):</label>
+            <input type="text" id="target-username" name="target-username" required>
+        </div>
+        <button type="submit" class="btn btn-success">Copiar Grupos</button>
+        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+    </form>
+</div>
+                
                 <!-- Formulários Adicionais para Usuários -->
                 <div id="show-user-groups-form" class="form-container">
                     <h3>Exibir Grupos do Usuário</h3>
