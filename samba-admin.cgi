@@ -174,6 +174,7 @@ delete_user() {
     fi
 
     execute_samba_command sudo samba-tool user delete "$USERNAME"
+    json_response "Status:" "Usuario EXCLUIDO!"
 }
 
 enable_user() {
@@ -183,6 +184,7 @@ enable_user() {
     fi
 
     execute_samba_command sudo samba-tool user enable "$USERNAME"
+    json_response "Status:" "Usuario Habilitado!"
 }
 
 disable_user() {
@@ -192,6 +194,7 @@ disable_user() {
     fi
 
     execute_samba_command sudo samba-tool user disable "$USERNAME"
+    json_response "Status:" "Usuario Desabilitado!"
 }
 
 reset_password() {
@@ -201,6 +204,7 @@ reset_password() {
     fi
 
     execute_samba_command sudo samba-tool user setpassword "$USERNAME" --newpassword="$PASSWORD"
+    json_response "Status:" "A senha do usuario foi modificada!"
 }
 
 promote_user() {
@@ -230,7 +234,7 @@ demote_user() {
     sudo samba-tool group removemembers "Group Policy Creator Owners" "$USERNAME"
     sudo samba-tool group removemembers "Administrators" "$USERNAME"
 
-    json_response "success" "Usuário $USERNAME removido de administrador"
+    json_response "success" "Usuário $USERNAME deixou de ser administrador"
 }
 
 show_user_groups() {
