@@ -161,7 +161,7 @@ search_user() {
     fi
 
     result=$(sudo samba-tool user list | grep "$SEARCH_TERM")
-    json_response "success" "Resultados encontrados" "$result"
+    json_response "" "Resultados encontrados" "$result"
 }
 
 check_user() {
