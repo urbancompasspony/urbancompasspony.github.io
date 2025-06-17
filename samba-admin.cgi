@@ -18,6 +18,8 @@ SHARE_PATH=""
 OU_NAME=""
 SILO_NAME=""
 SEARCH_TERM=""
+SOURCE_USERNAME=""
+TARGET_USERNAME=""
 
 # Função para log de ações
 log_action() {
@@ -55,6 +57,8 @@ parse_cgi_params() {
             "ou-name") OU_NAME="$value" ;;
             "silo-name") SILO_NAME="$value" ;;
             "search-term") SEARCH_TERM="$value" ;;
+            "source-username") SOURCE_USERNAME="$value" ;;
+            "target-username") TARGET_USERNAME="$value" ;;
         esac
     done
 }
@@ -68,6 +72,8 @@ sanitize_input() {
     COMPUTER=$(echo "$COMPUTER" | sed 's/[^a-zA-Z0-9.-]//g')
     OU_NAME=$(echo "$OU_NAME" | sed 's/[^a-zA-Z0-9 ._-]//g')
     SILO_NAME=$(echo "$SILO_NAME" | sed 's/[^a-zA-Z0-9._-]//g')
+    SOURCE_USERNAME=$(echo "$SOURCE_USERNAME" | sed 's/[^a-zA-Z0-9._-]//g')
+    TARGET_USERNAME=$(echo "$TARGET_USERNAME" | sed 's/[^a-zA-Z0-9._-]//g')
 
     # Validar email
     if [ -n "$EMAIL" ] && ! [[ "$EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
@@ -332,6 +338,47 @@ move_group_ou() {
     fi
 
     execute_samba_command sudo samba-tool group move "$GROUP" OU="$OU_NAME"
+}
+
+copy_user_groups() {
+    if [ -z "$SOURCE_USERNAME" ] || [ -z "$TARGET_USERNAME" ]; then
+        echo "{\"status\":\"error\",\"message\":\"Usuário de origem e destino são obrigatórios\"}"
+        return
+    fi
+
+    log_action "Copiando grupos de $SOURCE_USERNAME para $TARGET_USERNAME"
+    
+    # Obter grupos do usuário de origem
+    groups_result=$(sudo samba-tool user getgroups "$SOURCE_USERNAME" 2>&1)
+    exit_code=$?
+    
+    if [ $exit_code -ne 0 ]; then
+        echo "{\"status\":\"error\",\"message\":\"Erro ao obter grupos do usuário $SOURCE_USERNAME: $groups_result\"}"
+        return
+    fi
+    
+    # Adicionar cada grupo ao usuário de destino
+    success_count=0
+    error_count=0
+    errors=""
+    
+    echo "$groups_result" | while IFS= read -r group; do
+        if [ -n "$group" ] && [ "$group" != "Domain Users" ]; then
+            add_result=$(sudo samba-tool group addmembers "$group" "$TARGET_USERNAME" 2>&1)
+            if [ $? -eq 0 ]; then
+                success_count=$((success_count + 1))
+            else
+                error_count=$((error_count + 1))
+                errors="$errors\n$group: $add_result"
+            fi
+        fi
+    done
+    
+    if [ $error_count -eq 0 ]; then
+        echo "{\"status\":\"success\",\"message\":\"Grupos copiados de $SOURCE_USERNAME para $TARGET_USERNAME\",\"output\":\"$groups_result\"}"
+    else
+        echo "{\"status\":\"warning\",\"message\":\"Grupos copiados com erros. Sucessos: $success_count, Erros: $error_count\",\"output\":\"$errors\"}"
+    fi
 }
 
 # === FUNÇÕES DE COMPUTADORES ===
@@ -701,6 +748,7 @@ main() {
         "remove-user-from-group") remove_user_from_group ;;
         "list-group-members") list_group_members ;;
         "move-group-ou") move_group_ou ;;
+        "copy-user-groups") copy_user_groups ;;
 
         # Computadores
         "add-computer") add_computer ;;
