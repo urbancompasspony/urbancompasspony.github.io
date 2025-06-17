@@ -285,7 +285,7 @@
                     <div class="submenu-item" onclick="showForm('promote-user')">Promover usuário a admin</div>
                     <div class="submenu-item" onclick="showForm('demote-user')">Demover usuário de admin</div>
                     <div class="submenu-item" onclick="showForm('change-password')">Alterar a senha de um usuário</div>
-                    <div class="submenu-item" onclick="showForm('test-password')">Verificar a senha de um usuário</div>
+                    <div class="submenu-item" onclick="showForm('verify-password')">Verificar a senha de um usuário</div>
                     <div class="submenu-item" onclick="showForm('password-expiry')">A senha do usuário deve expirar?</div>
                     <div class="submenu-item" onclick="showForm('password-expiry-days')">Quando a senha usuário vai expirar?</div>
                     <div class="submenu-item" onclick="showForm('force-password-change')">Forçar a troca de senha imediata!</div>
@@ -509,6 +509,23 @@
                     </form>
                 </div>
 
+<!-- Formulário Verificar Senha do Usuário -->
+<div id="verify-password-form" class="form-container">
+    <h3>Verificar Senha do Usuário</h3>
+    <form onsubmit="submitForm(event, 'verify-password')">
+        <div class="form-group">
+            <label for="verify-username">Nome do Usuário:</label>
+            <input type="text" id="verify-username" name="username" required>
+        </div>
+        <div class="form-group">
+            <label for="verify-password">Senha:</label>
+            <input type="password" id="verify-password" name="password" required>
+        </div>
+        <button type="submit" class="btn btn-info">Verificar Senha</button>
+        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+    </form>
+</div>
+                
                 <!-- Formulário Criar Grupo -->
                 <div id="create-group-form" class="form-container">
                     <h3>Criar Grupo</h3>
