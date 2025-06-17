@@ -210,7 +210,6 @@ reset_password() {
     fi
 
     execute_samba_command sudo samba-tool user setpassword "$USERNAME" --newpassword="$PASSWORD"
-    json_response "Status:" "A senha do usuario foi modificada!"
 }
 
 promote_user() {
@@ -259,6 +258,90 @@ move_user_ou() {
     fi
 
     execute_samba_command sudo samba-tool user move "$USERNAME" OU="$OU_NAME"
+}
+
+verify_password() {
+    if [ -z "$USERNAME" ] || [ -z "$PASSWORD" ]; then
+        echo "{\"status\":\"error\",\"message\":\"Nome de usuário e senha são obrigatórios\"}"
+        return
+    fi
+
+    log_action "Verificando senha para usuário: $USERNAME"
+    
+    # Primeiro verifica se o usuário existe
+    user_check=$(sudo samba-tool user list | grep -x "$USERNAME")
+    if [ "$user_check" != "$USERNAME" ]; then
+        echo "{\"status\":\"error\",\"message\":\"Usuário '$USERNAME' não encontrado no domínio\"}"
+        return
+    fi
+    
+    # Método mais direto: usar expect ou echo direto para kinit
+    # Criar script temporário que simula o que você faz manualmente
+    temp_script=$(mktemp)
+    cat > "$temp_script" << 'EOF'
+#!/bin/bash
+USERNAME="$1"
+PASSWORD="$2"
+
+# Obter domínio
+DOMAIN=$(sudo samba-tool domain info 127.0.0.1 2>/dev/null | grep -i "domain.*:" | head -1 | cut -d: -f2 | tr -d ' ' | tr '[:lower:]' '[:upper:]')
+if [ -z "$DOMAIN" ]; then
+    DOMAIN="WORKGROUP"
+fi
+
+# Tentar kinit exatamente como no CLI
+export KRB5_TRACE=/dev/null
+echo "$PASSWORD" | kinit "$USERNAME@$DOMAIN" 2>/dev/null
+RESULT=$?
+
+# Limpar ticket
+kdestroy 2>/dev/null
+
+exit $RESULT
+EOF
+
+    chmod +x "$temp_script"
+    
+    # Executar o script
+    "$temp_script" "$USERNAME" "$PASSWORD"
+    kinit_result=$?
+    
+    # Remover script temporário
+    rm -f "$temp_script"
+    
+    if [ $kinit_result -eq 0 ]; then
+        # Buscar informações do usuário
+        user_info=$(sudo samba-tool user show "$USERNAME" 2>&1)
+        
+        result_info="✓ Senha VÁLIDA para usuário '$USERNAME'"
+        
+        # Extrair informações básicas
+        if echo "$user_info" | grep -q "accountExpires"; then
+            account_expires=$(echo "$user_info" | grep -i "accountExpires" | cut -d: -f2- | tr -d ' ')
+            if [ -n "$account_expires" ] && [ "$account_expires" != "0" ] && [ "$account_expires" != "9223372036854775807" ]; then
+                result_info="$result_info\n• Conta tem data de expiração configurada"
+            fi
+        fi
+        
+        if echo "$user_info" | grep -q "pwdLastSet"; then
+            result_info="$result_info\n• Informações de senha disponíveis no AD"
+        fi
+        
+        echo "{\"status\":\"success\",\"message\":\"Autenticação bem-sucedida\",\"output\":\"$result_info\"}"
+    else
+        # Debug: vamos ver o que está acontecendo
+        debug_info="Falha na autenticação. Debug info:\n"
+        debug_info="$debug_info• Usuário: $USERNAME\n"
+        debug_info="$debug_info• Tamanho da senha: ${#PASSWORD} caracteres\n"
+        
+        # Verificar se conta está ativa
+        user_status=$(sudo samba-tool user show "$USERNAME" 2>&1 | grep -i "userAccountControl" | cut -d: -f2- | tr -d ' ')
+        if [ "$user_status" = "514" ] || [ "$user_status" = "546" ]; then
+            echo "{\"status\":\"error\",\"message\":\"✗ Conta '$USERNAME' está DESABILITADA\",\"output\":\"$debug_info• Status: Conta desabilitada\"}"
+        else
+            echo "{\"status\":\"error\",\"message\":\"✗ Senha INVÁLIDA para usuário '$USERNAME'\",\"output\":\"$debug_info• Teste manual: Execute 'kinit $USERNAME' no terminal para comparar\"}"
+        fi
+    fi
 }
 
 # === FUNÇÕES DE GRUPOS ===
@@ -737,6 +820,7 @@ main() {
         "demote-user") demote_user ;;
         "show-user-groups") show_user_groups ;;
         "move-user-ou") move_user_ou ;;
+        "verify-password") verify_password ;;
 
         # Grupos
         "create-group") create_group ;;
