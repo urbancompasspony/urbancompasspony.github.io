@@ -168,7 +168,7 @@ search_user() {
 
 check_user() {
     if [ -z "$USERNAME" ]; then
-        json_response "error" "Nome do usuário é obrigatório"
+        echo "Erro: Nome do usuário é obrigatório"
         return
     fi
 
@@ -177,7 +177,7 @@ check_user() {
     exit_code=$?
     
     if [ $exit_code -ne 0 ]; then
-        json_response "error" "Usuário não encontrado: $user_info"
+        echo "Erro: Usuário não encontrado: $user_info"
         return
     fi
     
@@ -186,15 +186,36 @@ check_user() {
     user_account_control=$(echo "$user_info" | grep -i "userAccountControl" | cut -d: -f2- | tr -d ' ')
     account_expires=$(echo "$user_info" | grep -i "accountExpires" | cut -d: -f2- | tr -d ' ')
     
-    # Adicionar informações de expiração ao final
-    extended_info="$user_info"
-    extended_info="$extended_info\\n\\n=== INFORMAÇÕES DE EXPIRAÇÃO ==="
+    # Container principal com tipografia melhorada
+    echo "<div style='background: white; padding: 16px; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; line-height: 1.5; max-width: 100%;'>"
+    
+    # Seção de informações básicas - mais compacta
+    echo "<div style='background: #f8f9fa; padding: 14px; border-radius: 6px; margin-bottom: 12px;'>"
+    echo "<h4 style='color: #2c3e50; margin: 0 0 8px 0; font-size: 15px; font-weight: 600;'>📋 Informações do Usuário: $USERNAME</h4>"
+    
+    # Extrair informações principais
+    display_name=$(echo "$user_info" | grep -i "displayName" | cut -d: -f2- | sed 's/^ *//')
+    description=$(echo "$user_info" | grep -i "description" | cut -d: -f2- | sed 's/^ *//')
+    
+    if [ -n "$display_name" ]; then
+        echo "<div style='margin-bottom: 3px; font-size: 13px;'><strong style='color: #495057;'>Nome:</strong> <span style='color: #6c757d;'>$display_name</span></div>"
+    fi
+    if [ -n "$description" ]; then
+        echo "<div style='font-size: 13px;'><strong style='color: #495057;'>Descrição:</strong> <span style='color: #6c757d;'>$description</span></div>"
+    fi
+    
+    echo "</div>"
+    
+    # Seção de expiração com melhor harmonia
+    echo "<div style='background: #f8f9fa; padding: 14px; border-radius: 6px; margin-bottom: 12px;'>"
+    echo "<h4 style='color: #2c3e50; margin: 0 0 10px 0; font-size: 15px; font-weight: 600;'>⏰ Status de Expiração</h4>"
     
     # Verificar expiração da SENHA
     if [ -n "$user_account_control" ]; then
         dont_expire_flag=$((user_account_control & 65536))
         if [ $dont_expire_flag -ne 0 ]; then
-            extended_info="$extended_info\\nSENHA: Configurada para NUNCA EXPIRAR"
+            echo "<div style='padding: 10px 12px; background: #d1ecf1; border-left: 3px solid #17a2b8; margin-bottom: 6px; border-radius: 3px;'>"
+            echo "<span style='font-size: 13px; font-weight: 600; color: #0c5460;'>🔐 SENHA:</span> <span style='color: #0c5460; font-size: 13px;'>Configurada para NUNCA EXPIRAR</span></div>"
         else
             # Obter política de senha do domínio
             password_policy=$(sudo samba-tool domain passwordsettings show 2>/dev/null)
@@ -208,15 +229,36 @@ check_user() {
                 days_since_change=$(((current_time - pwd_set_unix) / 86400))
                 days_remaining=$((max_pwd_age - days_since_change))
                 
-                if [ $days_remaining -gt 0 ]; then
-                    extended_info="$extended_info\\nSENHA: Expira em $days_remaining dias"
-                elif [ $days_remaining -eq 0 ]; then
-                    extended_info="$extended_info\\nSENHA: ⚠️ EXPIRA HOJE!"
+                if [ $days_remaining -gt 7 ]; then
+                    color_bg="#d4edda"
+                    color_border="#28a745"
+                    color_text="#155724"
+                    icon="✅"
+                elif [ $days_remaining -gt 0 ]; then
+                    color_bg="#fff3cd"
+                    color_border="#ffc107"
+                    color_text="#856404"
+                    icon="⚠️"
                 else
-                    extended_info="$extended_info\\nSENHA: ⚠️ EXPIRADA há $((days_remaining * -1)) dias"
+                    color_bg="#f8d7da"
+                    color_border="#dc3545"
+                    color_text="#721c24"
+                    icon="❌"
+                fi
+                
+                echo "<div style='padding: 10px 12px; background: $color_bg; border-left: 3px solid $color_border; margin-bottom: 6px; border-radius: 3px;'>"
+                
+                if [ $days_remaining -gt 0 ]; then
+                    expiry_date=$(date -d "+${days_remaining} days" '+%d/%m/%Y')
+                    echo "<span style='font-size: 13px; font-weight: 600; color: $color_text;'>🔐 SENHA:</span> <span style='color: $color_text; font-size: 13px;'>$icon Expira em $days_remaining dias ($expiry_date)</span></div>"
+                elif [ $days_remaining -eq 0 ]; then
+                    echo "<span style='font-size: 13px; font-weight: 600; color: $color_text;'>🔐 SENHA:</span> <span style='color: $color_text; font-size: 13px;'>$icon EXPIRA HOJE!</span></div>"
+                else
+                    echo "<span style='font-size: 13px; font-weight: 600; color: $color_text;'>🔐 SENHA:</span> <span style='color: $color_text; font-size: 13px;'>$icon EXPIRADA há $((days_remaining * -1)) dias</span></div>"
                 fi
             else
-                extended_info="$extended_info\\nSENHA: Política do domínio = nunca expira"
+                echo "<div style='padding: 10px 12px; background: #d1ecf1; border-left: 3px solid #17a2b8; margin-bottom: 6px; border-radius: 3px;'>"
+                echo "<span style='font-size: 13px; font-weight: 600; color: #0c5460;'>🔐 SENHA:</span> <span style='color: #0c5460; font-size: 13px;'>Política do domínio = nunca expira</span></div>"
             fi
         fi
     fi
@@ -229,23 +271,45 @@ check_user() {
         time_diff=$((account_exp_unix - current_time))
         account_days_remaining=$((time_diff / 86400))
         
-        if [ $account_days_remaining -gt 0 ]; then
-            if [ $account_days_remaining -lt 36500 ]; then
-                expiry_date_only=$(date -d "@$account_exp_unix" '+%Y-%m-%d' 2>/dev/null)
-                extended_info="$extended_info\\nCONTA: Expira em $account_days_remaining dias ($expiry_date_only)"
+        if [ $account_days_remaining -gt 0 ] && [ $account_days_remaining -lt 36500 ]; then
+            if [ $account_days_remaining -gt 30 ]; then
+                color_bg="#d4edda"
+                color_border="#28a745"
+                color_text="#155724"
+                icon="✅"
+            elif [ $account_days_remaining -gt 7 ]; then
+                color_bg="#fff3cd"
+                color_border="#ffc107"
+                color_text="#856404"
+                icon="⚠️"
             else
-                extended_info="$extended_info\\nCONTA: Nunca expira"
+                color_bg="#f8d7da"
+                color_border="#dc3545"
+                color_text="#721c24"
+                icon="🚨"
             fi
-        elif [ $account_days_remaining -eq 0 ]; then
-            extended_info="$extended_info\\nCONTA: ⚠️ EXPIRA HOJE!"
-        else
-            extended_info="$extended_info\\nCONTA: ⚠️ EXPIRADA há $((account_days_remaining * -1)) dias"
+            
+            expiry_date_only=$(date -d "@$account_exp_unix" '+%d/%m/%Y')
+            echo "<div style='padding: 10px 12px; background: $color_bg; border-left: 3px solid $color_border; margin-bottom: 6px; border-radius: 3px;'>"
+            echo "<span style='font-size: 13px; font-weight: 600; color: $color_text;'>👤 CONTA:</span> <span style='color: $color_text; font-size: 13px;'>$icon Expira em $account_days_remaining dias ($expiry_date_only)</span></div>"
+        elif [ $account_days_remaining -le 0 ]; then
+            echo "<div style='padding: 10px 12px; background: #f8d7da; border-left: 3px solid #dc3545; margin-bottom: 6px; border-radius: 3px;'>"
+            echo "<span style='font-size: 13px; font-weight: 600; color: #721c24;'>👤 CONTA:</span> <span style='color: #721c24; font-size: 13px;'>❌ EXPIRADA</span></div>"
         fi
     else
-        extended_info="$extended_info\\nCONTA: Nunca expira"
+        echo "<div style='padding: 10px 12px; background: #d4edda; border-left: 3px solid #28a745; margin-bottom: 6px; border-radius: 3px;'>"
+        echo "<span style='font-size: 13px; font-weight: 600; color: #155724;'>👤 CONTA:</span> <span style='color: #155724; font-size: 13px;'>∞ Nunca expira</span></div>"
     fi
     
-    echo "$extended_info"
+    echo "</div>"
+    
+    # Seção técnica mais harmônica
+    echo "<details style='background: #f8f9fa; padding: 14px; border-radius: 6px; border: 1px solid #e9ecef;'>"
+    echo "<summary style='cursor: pointer; font-weight: 600; color: #495057; font-size: 14px; margin-bottom: 0; outline: none;'>🔧 Informações Técnicas Detalhadas</summary>"
+    echo "<pre style='background: #343a40; color: #f8f9fa; padding: 14px; border-radius: 4px; overflow-x: auto; margin: 10px 0 0 0; font-size: 11px; line-height: 1.4; border: none;'>$user_info</pre>"
+    echo "</details>"
+    
+    echo "</div>"
 }
 
 delete_user() {
