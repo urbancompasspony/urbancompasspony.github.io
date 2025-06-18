@@ -1126,7 +1126,7 @@
                         <div class="submenu-item" onclick="showForm('password-max-age')">Validade máxima das senhas</div>
                         <div class="submenu-item" onclick="showForm('login-attempts')">Tentativas de login antes de bloquear</div>
                     </div>
-                    <button type="button" class="btn" onclick="hideForm()">Voltar</button>
+                    <button type="button" class="btn" onclick="backToDomainSettings()">Voltar</button>
                 </div>
 
                 <!-- Formulários de Permissões -->
@@ -1138,7 +1138,7 @@
                         <div class="submenu-item" onclick="executeCommand('db-check-general')">samba-ad-dc db check: general</div>
                         <div class="submenu-item" onclick="executeCommand('db-check-acls')">samba-ad-dc db check: well-known-acls</div>
                     </div>
-                    <button type="button" class="btn" onclick="hideForm()">Voltar</button>
+                    <button type="button" class="btn" onclick="backToDomainSettings()">Voltar</button>
                 </div>
 
                 <!-- Formulários de ACLs -->
@@ -1152,7 +1152,7 @@
                         <div class="submenu-item" onclick="showForm('get-acls')">Coletar ACLs de arquivo ou pasta</div>
                         <div class="submenu-item" onclick="showForm('set-acls')">PERIGO! Definir uma ACL a um arquivo ou pasta</div>
                     </div>
-                    <button type="button" class="btn" onclick="hideForm()">Voltar</button>
+                    <button type="button" class="btn" onclick="backToDomainSettings()">Voltar</button>
                 </div>
 
             </div>
@@ -1337,21 +1337,33 @@
             if (submenu) submenu.classList.add('active');
         }
 
-        function showMainMenu() {
-            hideAlert();
-            hideResult();
-            
-            document.querySelectorAll('.submenu').forEach(function(sub) {
-                sub.classList.remove('active');
-            });
-            document.querySelectorAll('.form-container').forEach(function(form) {
-                form.classList.remove('active');
-            });
-            document.getElementById('main-menu').style.display = 'grid';
-            document.querySelectorAll('.instruction-panel').forEach(function(panel) {
-                panel.style.display = 'none';
-            });
-        }
+function showMainMenu() {
+    // LIMPAR RESULTADOS quando voltar ao menu principal
+    const resultContainer = document.querySelector('.result-container');
+    if (resultContainer) {
+        resultContainer.style.display = 'none';
+        resultContainer.innerHTML = '';
+    }
+    
+    // Limpar loading também
+    const loading = document.querySelector('.loading');
+    if (loading) {
+        loading.style.display = 'none';
+    }
+    
+    hideAlert();
+    
+    document.querySelectorAll('.submenu').forEach(function(sub) {
+        sub.classList.remove('active');
+    });
+    document.querySelectorAll('.form-container').forEach(function(form) {
+        form.classList.remove('active');
+    });
+    document.getElementById('main-menu').style.display = 'grid';
+    document.querySelectorAll('.instruction-panel').forEach(function(panel) {
+        panel.style.display = 'none';
+    });
+}
 
         function showInstructionPanel(id) {
             document.querySelectorAll('.instruction-panel').forEach(function(panel) {
@@ -1378,11 +1390,36 @@
             });
         }
 
-        function hideForm() {
-            document.querySelectorAll('.form-container').forEach(function(form) {
-                form.classList.remove('active');
-            });
+function hideForm() {
+    // Esconder todos os formulários
+    const forms = document.querySelectorAll('.form-container');
+    forms.forEach(form => {
+        form.style.display = 'none';
+    });
+    
+    // LIMPAR a área de resultados também
+    const resultContainer = document.querySelector('.result-container');
+    if (resultContainer) {
+        resultContainer.style.display = 'none';
+        resultContainer.innerHTML = '';
+    }
+    
+    // Limpar loading
+    const loading = document.querySelector('.loading');
+    if (loading) {
+        loading.style.display = 'none';
+    }
+    
+    // Limpar campos dos formulários
+    const inputs = document.querySelectorAll('input[type="text"], input[type="password"], input[type="date"], textarea, select');
+    inputs.forEach(input => {
+        if (input.type === 'radio' || input.type === 'checkbox') {
+            input.checked = input.defaultChecked;
+        } else {
+            input.value = '';
         }
+    });
+}
 
         // Mapeamento de ações para comandos samba-tool
         const commandMapping = {
@@ -1961,6 +1998,32 @@ function handleAccountExpiry(event) {
     });
 }
 
+// Função para voltar para Configurações do Domínio
+function backToDomainSettings() {
+    // Limpar resultados
+    const resultContainer = document.querySelector('.result-container');
+    if (resultContainer) {
+        resultContainer.style.display = 'none';
+        resultContainer.innerHTML = '';
+    }
+    
+    // Limpar loading
+    const loading = document.querySelector('.loading');
+    if (loading) {
+        loading.style.display = 'none';
+    }
+    
+    hideAlert();
+    
+    // Esconder todos os formulários
+    document.querySelectorAll('.form-container').forEach(function(form) {
+        form.classList.remove('active');
+    });
+    
+    // Mostrar o submenu de configurações do domínio
+    showSubmenu('domain-settings');
+}
+    
 </script>
 <div class="loading" style="display:none"><div class="spinner"></div>Carregando...</div>
 <div class="result-container" style="display:none"></div>
