@@ -59,6 +59,7 @@ parse_cgi_params() {
             "search-term") SEARCH_TERM="$value" ;;
             "source-username") SOURCE_USERNAME="$value" ;;
             "target-username") TARGET_USERNAME="$value" ;;
+            "days") DAYS="$value" ;;
         esac
     done
 }
@@ -608,6 +609,75 @@ remove_user_silo() {
     execute_samba_command sudo samba-tool domain auth silo member remove --name "$SILO_NAME" --member "$USERNAME"
 }
 
+password_expiry() {
+    if [ -z "$USERNAME" ]; then
+        json_response "error" "Nome do usuário é obrigatório"
+        return
+    fi
+
+    # Verifica se usuário existe
+    repeated=$(samba-tool user list | grep -x "$USERNAME")
+    if [ "$repeated" != "$USERNAME" ]; then
+        json_response "error" "Usuário inválido"
+        return
+    fi
+
+    # Configura para não expirar
+    samba-tool user setexpiry "$USERNAME" --noexpiry
+    json_response "success" "A senha de $USERNAME não expira mais!"
+}
+
+password_expiry_days() {
+    if [ -z "$USERNAME" ] || [ -z "$DAYS" ]; then
+        json_response "error" "Username e dias são obrigatórios"
+        return
+    fi
+
+    execute_samba_command sudo samba-tool user setexpiry "$USERNAME" --days="$DAYS"
+}
+
+force_password_change() {
+    if [ -z "$USERNAME" ]; then
+        json_response "error" "Nome do usuário é obrigatório"
+        return
+    fi
+
+    execute_samba_command net sam set pwdmustchangenow "$USERNAME" yes
+}
+
+set_no_expiry() {
+    if [ -z "$USERNAME" ]; then
+        json_response "error" "Nome do usuário é obrigatório"
+        return
+    fi
+
+    repeated=$(samba-tool user list | grep -x "$USERNAME")
+    if [ "$repeated" != "$USERNAME" ]; then
+        json_response "error" "Usuário inválido"
+        return
+    fi
+
+    samba-tool user setexpiry "$USERNAME" --noexpiry
+    json_response "success" "A senha de $USERNAME não expira mais!"
+}
+
+set_default_expiry() {
+    if [ -z "$USERNAME" ]; then
+        json_response "error" "Nome do usuário é obrigatório"
+        return
+    fi
+
+    repeated=$(samba-tool user list | grep -x "$USERNAME")
+    if [ "$repeated" != "$USERNAME" ]; then
+        json_response "error" "Usuário inválido"
+        return
+    fi
+
+    # Define para 90 dias (padrão do domínio)
+    samba-tool user setexpiry "$USERNAME" --days=90
+    json_response "success" "A senha de $USERNAME vai expirar em 90 dias (padrão do domínio)!"
+}
+
 # === FUNÇÕES DE INFORMAÇÕES DO DOMÍNIO ===
 
 show_domain_info() {
@@ -820,6 +890,11 @@ main() {
         "show-user-groups") show_user_groups ;;
         "move-user-ou") move_user_ou ;;
         "verify-password") verify_password ;;
+        "password-expiry") password_expiry ;;
+        "password-expiry-days") password_expiry_days ;;
+        "force-password-change") force_password_change ;;
+        "set-no-expiry") set_no_expiry ;;
+        "set-default-expiry") set_default_expiry ;;
 
         # Grupos
         "create-group") create_group ;;
