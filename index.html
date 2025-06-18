@@ -641,7 +641,7 @@
                     <div class="alert alert-warning active">
                         <strong>Atenção!</strong> Os dados não são apagados, apenas o compartilhamento será removido.
                     </div>
-                    <form onsubmit="submitForm(event, 'delete-share')">
+                    <form onsubmit="confirmDeleteShare(event)">
                         <div class="form-group">
                             <label for="delete-share-name">Nome do Compartilhamento:</label>
                             <input type="text" id="delete-share-name" name="share-name" required>
@@ -683,7 +683,7 @@
                     <div class="alert alert-warning active">
                         <strong>Atenção!</strong> A OU só será removida se estiver vazia.
                     </div>
-                    <form onsubmit="submitForm(event, 'delete-ou')">
+                    <form onsubmit="confirmDeleteOU(event)">
                         <div class="form-group">
                             <label for="delete-ou-name">Nome da OU:</label>
                             <input type="text" id="delete-ou-name" name="ou-name" required>
@@ -789,7 +789,7 @@
                     <div class="alert alert-error active">
                         <strong>Atenção!</strong> Esta ação é irreversível.
                     </div>
-                    <form onsubmit="submitForm(event, 'delete-computer')">
+                    <form onsubmit="confirmDeleteComputer(event)">
                         <div class="form-group">
                             <label for="delete-computer-name">Nome do Computador (sem $):</label>
                             <input type="text" id="delete-computer-name" name="computer" required>
@@ -878,7 +878,7 @@
                     <div class="alert alert-error active">
                         <strong>Atenção!</strong> Esta ação é irreversível.
                     </div>
-                    <form onsubmit="submitForm(event, 'delete-silo')">
+                    <form onsubmit="confirmDeleteSilo(event)">
                         <div class="form-group">
                             <label for="delete-silo-name">Nome do Silo:</label>
                             <input type="text" id="delete-silo-name" name="silo-name" required>
@@ -930,7 +930,7 @@
                     <div class="alert alert-error active">
                         <strong>Atenção!</strong> Esta ação é irreversível.
                     </div>
-                    <form onsubmit="submitForm(event, 'delete-group')">
+                    <form onsubmit="confirmDeleteGroup(event)">
                         <div class="form-group">
                             <label for="delete-group-name">Nome do Grupo:</label>
                             <input type="text" id="delete-group-name" name="group" required>
@@ -1646,6 +1646,71 @@ async function executeCommand(action) {
     };
 }
 
+function confirmDeleteOU(event) {
+    event.preventDefault();
+    const ou = document.getElementById('delete-ou-name').value;
+    
+    showConfirmation(`Excluir a OU "${ou}"?`, function(confirmed) {
+        if (confirmed) {
+            submitForm(event, 'delete-ou');
+        }
+    });
+}
+    
+function confirmDeleteShare(event) {
+    event.preventDefault();
+    const share = document.getElementById('delete-share-name').value;
+    
+    showConfirmation(`Excluir o compartilhamento "${share}"?`, function(confirmed) {
+        if (confirmed) {
+            submitForm(event, 'delete-share');
+        }
+    });
+}
+
+function confirmDeleteSilo(event) {
+    event.preventDefault();
+    const silo = document.getElementById('delete-silo-name').value;
+    
+    showConfirmation(`Tem certeza que deseja excluir o silo "${silo}"?`, function(confirmed) {
+        if (confirmed) {
+            submitForm(event, 'delete-silo');
+        }
+    });
+}
+    
+function confirmDeleteComputer(event) {
+    event.preventDefault();
+    const computer = document.getElementById('delete-computer-name').value;
+    
+    if (!computer) {
+        showAlert('Por favor, digite o nome do computador', 'error');
+        return;
+    }
+    
+    showConfirmation(`Tem certeza que deseja excluir o computador "${computer}"?`, function(confirmed) {
+        if (confirmed) {
+            submitForm(event, 'delete-computer');
+        }
+    });
+}
+
+function confirmDeleteGroup(event) {
+    event.preventDefault();
+    const group = document.getElementById('delete-group-name').value;
+    
+    if (!group) {
+        showAlert('Por favor, digite o nome do grupo', 'error');
+        return;
+    }
+    
+    showConfirmation(`Deseja realmente excluir o grupo "${group}"?`, function(confirmed) {
+        if (confirmed) {
+            submitForm(event, 'delete-group');
+        }
+    });
+}
+    
 function confirmDeleteUser(event) {
     event.preventDefault();
     const username = document.getElementById('delete-username').value;
