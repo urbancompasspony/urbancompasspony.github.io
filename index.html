@@ -229,7 +229,29 @@
 .confirm-buttons { display: flex; gap: 15px; justify-content: center; }
 .confirm-btn { padding: 12px 25px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; min-width: 80px; }
 .confirm-btn-yes { background: #e74c3c; color: white; }
-.confirm-btn-no { background: #95a5a6; color: white; }
+.confirm-btn-no { background: #95a5a6; color: white;
+}
+/* Melhorias para radio buttons */
+.checkbox-group input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+    accent-color: #3498db;
+}
+
+.checkbox-group label {
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-group:hover {
+    background: rgba(52, 152, 219, 0.1);
+    border-radius: 5px;
+    padding: 5px;
+    margin: -5px;
+}
     </style>
 </head>
 <body>
@@ -305,6 +327,7 @@
                     <div class="submenu-item" onclick="showForm('password-expiry')">A senha do usuário deve expirar?</div>
                     <div class="submenu-item" onclick="showForm('password-expiry-days')">Quando a senha usuário vai expirar?</div>
                     <div class="submenu-item" onclick="showForm('force-password-change')">Forçar a troca de senha imediata!</div>
+                    <div class="submenu-item" onclick="showForm('account-expiry')">Usuário deve expirar?</div>
                     <div class="submenu-item" onclick="showForm('move-user-ou')">Mover usuário para OU</div>
                     <div class="submenu-item" onclick="showForm('delete-user')">Cuidado: Excluir um usuário</div>
                 </div>
@@ -555,6 +578,43 @@
         <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
     </form>
 </div>
+
+<!-- Formulário Definir Expiração da Conta -->
+<div id="account-expiry-form" class="form-container">
+    <h3>Usuário deve expirar?</h3>
+    <form onsubmit="handleAccountExpiry(event)">
+        <div class="form-group">
+            <label for="account-expiry-username">Nome do Usuário:</label>
+            <input type="text" id="account-expiry-username" name="username" required>
+        </div>
+        
+        <div class="form-group">
+            <label style="font-weight: 600; color: #2c3e50; margin-bottom: 15px; display: block;">Opções de Expiração:</label>
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <div class="checkbox-group" style="margin-bottom: 15px;">
+                    <input type="radio" id="expiry-date-option" name="expiry-type" value="date" checked onchange="toggleExpiryFields()">
+                    <label for="expiry-date-option" style="font-weight: normal;">📅 Definir data específica de expiração</label>
+                </div>
+                
+                <div id="date-field" style="margin-left: 25px; margin-bottom: 15px;">
+                    <label for="account-expiry-date" style="font-size: 14px; color: #666;">Data de expiração:</label>
+                    <input type="date" id="account-expiry-date" name="expiry-date" style="margin-top: 5px;">
+                    <small style="color: #666; display: block; margin-top: 5px;">A conta será desabilitada nesta data</small>
+                </div>
+                
+                <div class="checkbox-group">
+                    <input type="radio" id="never-expire-option" name="expiry-type" value="never" onchange="toggleExpiryFields()">
+                    <label for="never-expire-option" style="font-weight: normal;">∞ Conta nunca expira</label>
+                </div>
+                <small style="color: #666; display: block; margin-left: 25px; margin-top: 5px;">A conta permanecerá ativa indefinidamente</small>
+            </div>
+        </div>
+        
+        <button type="submit" class="btn btn-success">Configurar Expiração</button>
+        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+    </form>
+</div>        
 
 <!-- Formulário Forçar Troca de Senha -->
 <div id="force-password-change-form" class="form-container">
@@ -1606,7 +1666,7 @@ async function submitForm(event, action) {
 
     if(loading) loading.style.display = 'none';
 }
-
+    
 // Substitua a função executeCommand por esta versão melhorada:
 async function executeCommand(action) {
     const resultContainer = document.querySelector('.result-container');
@@ -1819,6 +1879,88 @@ function confirmDeleteUser(event) {
         }
     });
 }
+
+// Função para mostrar/ocultar campo de data
+function toggleExpiryFields() {
+    const dateField = document.getElementById('date-field');
+    const expiryType = document.querySelector('input[name="expiry-type"]:checked').value;
+    
+    if (expiryType === 'date') {
+        dateField.style.display = 'block';
+        document.getElementById('account-expiry-date').required = true;
+    } else {
+        dateField.style.display = 'none';
+        document.getElementById('account-expiry-date').required = false;
+    }
+}
+
+// Função para definir expiração da conta (modificada)
+function handleAccountExpiry(event) {
+    event.preventDefault();
+    const username = document.getElementById('account-expiry-username').value;
+    const expiryType = document.querySelector('input[name="expiry-type"]:checked').value;
+    let expiryDate = document.getElementById('account-expiry-date').value;
+    
+    if (!username) {
+        showAlert('Por favor, digite o nome do usuário', 'error');
+        return;
+    }
+    
+    if (expiryType === 'date' && !expiryDate) {
+        showAlert('Por favor, selecione a data de expiração', 'error');
+        return;
+    }
+    
+    let confirmMessage;
+    if (expiryType === 'never') {
+        confirmMessage = `Definir que a CONTA do usuário "${username}" NUNCA expire?`;
+        expiryDate = 'never';
+    } else {
+        // Converter DD/MM/YYYY para YYYY-MM-DD se necessário
+        if (expiryDate.includes('/')) {
+            const parts = expiryDate.split('/');
+            if (parts.length === 3) {
+                expiryDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            }
+        }
+        confirmMessage = `Definir que a CONTA do usuário "${username}" expire em ${expiryDate}?`;
+    }
+    
+    showConfirmation(confirmMessage, function(confirmed) {
+        if (confirmed) {
+            const loading = document.querySelector('.loading');
+            if(loading) loading.style.display = 'block';
+            
+            const formData = new FormData();
+            formData.append('action', 'set-account-expiry');
+            formData.append('username', username);
+            formData.append('expiry-date', expiryDate);
+            
+            fetch('/cgi-bin/samba-admin.cgi', {
+                method: 'POST',
+                body: new URLSearchParams(formData)
+            })
+            .then(response => response.text())
+            .then(data => {
+                if(loading) loading.style.display = 'none';
+                
+                const resultContainer = document.querySelector('.result-container');
+                if(resultContainer) {
+                    resultContainer.style.display = 'block';
+                    resultContainer.innerHTML = `<pre>${data}</pre>`;
+                }
+                
+                showAlert('Comando executado', 'success');
+                hideForm();
+            })
+            .catch(error => {
+                if(loading) loading.style.display = 'none';
+                showAlert('Erro: ' + error.message, 'error');
+            });
+        }
+    });
+}
+
 </script>
 <div class="loading" style="display:none"><div class="spinner"></div>Carregando...</div>
 <div class="result-container" style="display:none"></div>
