@@ -526,6 +526,49 @@
                 </div>
 
 <!-- Formulário Verificar Senha do Usuário -->
+<!-- Formulário Expiração de Senha -->
+<div id="password-expiry-form" class="form-container">
+    <h3>Configurar Expiração de Senha</h3>
+    <form onsubmit="handlePasswordExpiry(event)">
+        <div class="form-group">
+            <label for="expiry-username">Nome do Usuário:</label>
+            <input type="text" id="expiry-username" name="username" required>
+        </div>
+        <button type="submit" class="btn btn-success">Configurar Expiração</button>
+        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+    </form>
+</div>
+
+<!-- Formulário Dias para Expirar -->
+<div id="password-expiry-days-form" class="form-container">
+    <h3>Definir Dias para Expiração</h3>
+    <form onsubmit="submitForm(event, 'password-expiry-days')">
+        <div class="form-group">
+            <label for="expiry-days-username">Nome do Usuário:</label>
+            <input type="text" id="expiry-days-username" name="username" required>
+        </div>
+        <div class="form-group">
+            <label for="expiry-days">Dias para expiração:</label>
+            <input type="number" id="expiry-days" name="days" min="0" required>
+        </div>
+        <button type="submit" class="btn btn-success">Definir Prazo</button>
+        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+    </form>
+</div>
+
+<!-- Formulário Forçar Troca de Senha -->
+<div id="force-password-change-form" class="form-container">
+    <h3>Forçar Troca de Senha Imediata</h3>
+    <form onsubmit="submitForm(event, 'force-password-change')">
+        <div class="form-group">
+            <label for="force-change-username">Nome do Usuário:</label>
+            <input type="text" id="force-change-username" name="username" required>
+        </div>
+        <button type="submit" class="btn btn-danger">Forçar Troca Imediata</button>
+        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+    </form>
+</div>
+                
 <div id="verify-password-form" class="form-container">
     <h3>Verificar Senha do Usuário</h3>
     <form onsubmit="submitForm(event, 'verify-password')">
@@ -1646,6 +1689,56 @@ async function executeCommand(action) {
     };
 }
 
+// Função para expiração de senha (sim/não direto)
+function handlePasswordExpiry(event) {
+    event.preventDefault();
+    const username = document.getElementById('expiry-username').value;
+    
+    if (!username) {
+        showAlert('Por favor, digite o nome do usuário', 'error');
+        return;
+    }
+    
+    showConfirmation(`CONFIGURAR EXPIRAÇÃO DE SENHA
+    
+Usuário: "${username}"
+
+A senha deste usuário NÃO deve mais expirar?
+
+- SIM = Senha nunca expira (--noexpiry)
+- NÃO = Senha expira em 90 dias (padrão do domínio)`, function(confirmed) {
+        if (confirmed) {
+            // Se confirmou SIM, senha não expira
+            const formData = new FormData();
+            formData.append('action', 'set-no-expiry');
+            formData.append('username', username);
+            
+            fetch('/cgi-bin/samba-admin.cgi', {
+                method: 'POST',
+                body: new URLSearchParams(formData)
+            }).then(response => response.text())
+              .then(data => {
+                  showAlert(`✓ Senha de "${username}" configurada para NUNCA EXPIRAR`, 'success');
+                  hideForm();
+              });
+        } else {
+            // Se cancelou (NÃO), define prazo padrão
+            const formData = new FormData();
+            formData.append('action', 'set-default-expiry');
+            formData.append('username', username);
+            
+            fetch('/cgi-bin/samba-admin.cgi', {
+                method: 'POST',
+                body: new URLSearchParams(formData)
+            }).then(response => response.text())
+              .then(data => {
+                  showAlert(`✓ Senha de "${username}" vai expirar em 90 dias (padrão)`, 'success');
+                  hideForm();
+              });
+        }
+    });
+}
+    
 function confirmDeleteOU(event) {
     event.preventDefault();
     const ou = document.getElementById('delete-ou-name').value;
