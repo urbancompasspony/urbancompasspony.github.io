@@ -91,16 +91,16 @@ sanitize_input() {
 # Função para executar comandos sudo samba-tool com segurança
 execute_samba_command() {
     log_action "Executando: $*"
-    
+
     # Executa o comando diretamente sem timeout se não estiver disponível
     if command -v timeout >/dev/null 2>&1; then
         result=$(timeout 30 "$@" 2>&1)
     else
         result=$("$@" 2>&1)
     fi
-    
+
     exit_code=$?
-    
+
     if [ $exit_code -eq 0 ]; then
         echo "$result"
     else
@@ -131,7 +131,7 @@ create_user() {
 
     # Executar comando de forma mais robusta
     log_action "Criando usuário: $USERNAME"
-    
+
     if command -v samba-tool >/dev/null 2>&1; then
         # Construir comando com argumentos separados
         if [ "$MUST_CHANGE_PASSWORD" = "on" ]; then
@@ -144,7 +144,7 @@ create_user() {
         result="samba-tool não encontrado no sistema"
         exit_code=1
     fi
-    
+
     if [ $exit_code -eq 0 ]; then
         echo "{\"status\":\"success\",\"message\":\"Usuário $USERNAME criado com sucesso\",\"output\":\"$result\"}"
     else
@@ -175,41 +175,41 @@ check_user() {
     # Obter informações básicas do usuário
     user_info=$(sudo samba-tool user show "$USERNAME" 2>&1)
     exit_code=$?
-    
+
     if [ $exit_code -ne 0 ]; then
         echo "Erro: Usuário não encontrado: $user_info"
         return
     fi
-    
+
     # Extrair dados para cálculos
     pwd_last_set=$(echo "$user_info" | grep -i "pwdLastSet" | cut -d: -f2- | tr -d ' ')
     user_account_control=$(echo "$user_info" | grep -i "userAccountControl" | cut -d: -f2- | tr -d ' ')
     account_expires=$(echo "$user_info" | grep -i "accountExpires" | cut -d: -f2- | tr -d ' ')
-    
+
     # Container principal com tipografia melhorada
     echo "<div style='background: white; padding: 16px; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; line-height: 1.5; max-width: 100%;'>"
-    
+
     # Seção de informações básicas - mais compacta
     echo "<div style='background: #f8f9fa; padding: 14px; border-radius: 6px; margin-bottom: 12px;'>"
     echo "<h4 style='color: #2c3e50; margin: 0 0 8px 0; font-size: 15px; font-weight: 600;'>📋 Informações do Usuário: $USERNAME</h4>"
-    
+
     # Extrair informações principais
     display_name=$(echo "$user_info" | grep -i "displayName" | cut -d: -f2- | sed 's/^ *//')
     description=$(echo "$user_info" | grep -i "description" | cut -d: -f2- | sed 's/^ *//')
-    
+
     if [ -n "$display_name" ]; then
         echo "<div style='margin-bottom: 3px; font-size: 13px;'><strong style='color: #495057;'>Nome:</strong> <span style='color: #6c757d;'>$display_name</span></div>"
     fi
     if [ -n "$description" ]; then
         echo "<div style='font-size: 13px;'><strong style='color: #495057;'>Descrição:</strong> <span style='color: #6c757d;'>$description</span></div>"
     fi
-    
+
     echo "</div>"
-    
+
     # Seção de expiração com melhor harmonia
     echo "<div style='background: #f8f9fa; padding: 14px; border-radius: 6px; margin-bottom: 12px;'>"
     echo "<h4 style='color: #2c3e50; margin: 0 0 10px 0; font-size: 15px; font-weight: 600;'>⏰ Status de Expiração</h4>"
-    
+
     # Verificar expiração da SENHA
     if [ -n "$user_account_control" ]; then
         dont_expire_flag=$((user_account_control & 65536))
@@ -220,7 +220,7 @@ check_user() {
             # Obter política de senha do domínio
             password_policy=$(sudo samba-tool domain passwordsettings show 2>/dev/null)
             max_pwd_age=$(echo "$password_policy" | grep -i "Maximum password age" | grep -o '[0-9]*' | head -1)
-            
+
             if [ -n "$max_pwd_age" ] && [ "$max_pwd_age" != "0" ] && [ -n "$pwd_last_set" ] && [ "$pwd_last_set" != "0" ]; then
                 # Calcular dias restantes para senha expirar
                 epoch_diff=11644473600
@@ -228,7 +228,7 @@ check_user() {
                 current_time=$(date +%s)
                 days_since_change=$(((current_time - pwd_set_unix) / 86400))
                 days_remaining=$((max_pwd_age - days_since_change))
-                
+
                 if [ $days_remaining -gt 7 ]; then
                     color_bg="#d4edda"
                     color_border="#28a745"
@@ -245,9 +245,9 @@ check_user() {
                     color_text="#721c24"
                     icon="❌"
                 fi
-                
+
                 echo "<div style='padding: 10px 12px; background: $color_bg; border-left: 3px solid $color_border; margin-bottom: 6px; border-radius: 3px;'>"
-                
+
                 if [ $days_remaining -gt 0 ]; then
                     expiry_date=$(date -d "+${days_remaining} days" '+%d/%m/%Y')
                     echo "<span style='font-size: 13px; font-weight: 600; color: $color_text;'>🔐 SENHA:</span> <span style='color: $color_text; font-size: 13px;'>$icon Expira em $days_remaining dias ($expiry_date)</span></div>"
@@ -262,7 +262,7 @@ check_user() {
             fi
         fi
     fi
-    
+
     # Verificar expiração da CONTA
     if [ -n "$account_expires" ] && [ "$account_expires" != "0" ] && [ "$account_expires" != "9223372036854775807" ]; then
         epoch_diff=11644473600
@@ -270,7 +270,7 @@ check_user() {
         current_time=$(date +%s)
         time_diff=$((account_exp_unix - current_time))
         account_days_remaining=$((time_diff / 86400))
-        
+
         if [ $account_days_remaining -gt 0 ] && [ $account_days_remaining -lt 36500 ]; then
             if [ $account_days_remaining -gt 30 ]; then
                 color_bg="#d4edda"
@@ -288,7 +288,7 @@ check_user() {
                 color_text="#721c24"
                 icon="🚨"
             fi
-            
+
             expiry_date_only=$(date -d "@$account_exp_unix" '+%d/%m/%Y')
             echo "<div style='padding: 10px 12px; background: $color_bg; border-left: 3px solid $color_border; margin-bottom: 6px; border-radius: 3px;'>"
             echo "<span style='font-size: 13px; font-weight: 600; color: $color_text;'>👤 CONTA:</span> <span style='color: $color_text; font-size: 13px;'>$icon Expira em $account_days_remaining dias ($expiry_date_only)</span></div>"
@@ -300,15 +300,15 @@ check_user() {
         echo "<div style='padding: 10px 12px; background: #d4edda; border-left: 3px solid #28a745; margin-bottom: 6px; border-radius: 3px;'>"
         echo "<span style='font-size: 13px; font-weight: 600; color: #155724;'>👤 CONTA:</span> <span style='color: #155724; font-size: 13px;'>∞ Nunca expira</span></div>"
     fi
-    
+
     echo "</div>"
-    
+
     # Seção técnica mais harmônica
     echo "<details style='background: #f8f9fa; padding: 14px; border-radius: 6px; border: 1px solid #e9ecef;'>"
     echo "<summary style='cursor: pointer; font-weight: 600; color: #495057; font-size: 14px; margin-bottom: 0; outline: none;'>🔧 Informações Técnicas Detalhadas</summary>"
     echo "<pre style='background: #343a40; color: #f8f9fa; padding: 14px; border-radius: 4px; overflow-x: auto; margin: 10px 0 0 0; font-size: 11px; line-height: 1.4; border: none;'>$user_info</pre>"
     echo "</details>"
-    
+
     echo "</div>"
 }
 
@@ -405,14 +405,14 @@ verify_password() {
     fi
 
     log_action "Verificando senha para usuário: $USERNAME"
-    
+
     # Primeiro verifica se o usuário existe
     user_check=$(sudo samba-tool user list | grep -x "$USERNAME")
     if [ "$user_check" != "$USERNAME" ]; then
         echo "{\"status\":\"error\",\"message\":\"Usuário '$USERNAME' não encontrado no domínio\"}"
         return
     fi
-    
+
     # Criar script temporário para kinit
     temp_script=$(mktemp)
     cat > "$temp_script" << 'EOF'
@@ -438,24 +438,24 @@ exit $RESULT
 EOF
 
     chmod +x "$temp_script"
-    
+
     # Executar o script
     "$temp_script" "$USERNAME" "$PASSWORD"
     kinit_result=$?
-    
+
     # Remover script temporário
     rm -f "$temp_script"
-    
+
     if [ $kinit_result -eq 0 ]; then
         # Buscar informações do usuário
         user_info=$(sudo samba-tool user show "$USERNAME" 2>&1)
-        
+
         result_info="✓ SENHA VÁLIDA para usuário '$USERNAME'"
-        
+
         # Extrair dados básicos
         pwd_last_set=$(echo "$user_info" | grep -i "pwdLastSet" | cut -d: -f2- | tr -d ' ')
         user_account_control=$(echo "$user_info" | grep -i "userAccountControl" | cut -d: -f2- | tr -d ' ')
-        
+
         # Verificar se senha não expira (flag DONT_EXPIRE_PASSWORD = 65536)
         if [ -n "$user_account_control" ]; then
             dont_expire_flag=$((user_account_control & 65536))
@@ -465,7 +465,7 @@ EOF
                 # Obter política de senha do domínio
                 password_policy=$(sudo samba-tool domain passwordsettings show 2>/dev/null)
                 max_pwd_age=$(echo "$password_policy" | grep -i "Maximum password age" | grep -o '[0-9]*' | head -1)
-                
+
                 if [ -n "$max_pwd_age" ] && [ "$max_pwd_age" != "0" ] && [ -n "$pwd_last_set" ] && [ "$pwd_last_set" != "0" ]; then
                     # Calcular dias restantes
                     epoch_diff=11644473600
@@ -473,7 +473,7 @@ EOF
                     current_time=$(date +%s)
                     days_since_change=$(((current_time - pwd_set_unix) / 86400))
                     days_remaining=$((max_pwd_age - days_since_change))
-                    
+
                     if [ $days_remaining -gt 0 ]; then
                         expiry_date=$(date -d "+${days_remaining} days" '+%Y-%m-%d')
                         result_info="$result_info\\n• SENHA: Expira em $days_remaining dias ($expiry_date)"
@@ -489,12 +489,12 @@ EOF
                 fi
             fi
         fi
-        
+
         echo "{\"status\":\"success\",\"message\":\"Autenticação bem-sucedida\",\"output\":\"$result_info\"}"
     else
         # Falha na autenticação
         debug_info="✗ SENHA INVÁLIDA para usuário '$USERNAME'"
-        
+
         # Verificar se conta está ativa
         user_status=$(sudo samba-tool user show "$USERNAME" 2>&1 | grep -i "userAccountControl" | cut -d: -f2- | tr -d ' ')
         if [ "$user_status" = "514" ] || [ "$user_status" = "546" ]; then
@@ -510,7 +510,7 @@ set_account_expiry() {
         echo "Erro: Nome do usuário é obrigatório"
         return
     fi
-    
+
     if [ -z "$EXPIRY_DATE" ]; then
         echo "Erro: Data de expiração é obrigatória"
         return
@@ -526,7 +526,7 @@ set_account_expiry() {
     if [ "$EXPIRY_DATE" = "never" ]; then
         result=$(sudo samba-tool user setexpiry "$USERNAME" --noexpiry 2>&1)
         exit_code=$?
-        
+
         if [ $exit_code -eq 0 ]; then
             echo "✓ Conta de $USERNAME configurada para NUNCA EXPIRAR"
         else
@@ -538,24 +538,24 @@ set_account_expiry() {
     # Calcular quantos dias da data atual até a data desejada
     current_date=$(date +%s)
     target_date=$(date -d "$EXPIRY_DATE" +%s 2>/dev/null)
-    
+
     if [ $? -ne 0 ]; then
         echo "Erro: Data inválida '$EXPIRY_DATE'. Use formato YYYY-MM-DD"
         return
     fi
-    
+
     # Calcular diferença em dias
     days_diff=$(( (target_date - current_date) / 86400 ))
-    
+
     if [ $days_diff -lt 0 ]; then
         echo "Erro: A data $EXPIRY_DATE já passou! Use uma data futura."
         return
     fi
-    
+
     # Executar comando
     result=$(sudo samba-tool user setexpiry "$USERNAME" --days="$days_diff" 2>&1)
     exit_code=$?
-    
+
     if [ $exit_code -eq 0 ]; then
         echo "✓ Conta de $USERNAME configurada para expirar em $days_diff dias ($EXPIRY_DATE)"
     else
@@ -649,21 +649,21 @@ copy_user_groups() {
     fi
 
     log_action "Copiando grupos de $SOURCE_USERNAME para $TARGET_USERNAME"
-    
+
     # Obter grupos do usuário de origem
     groups_result=$(sudo samba-tool user getgroups "$SOURCE_USERNAME" 2>&1)
     exit_code=$?
-    
+
     if [ $exit_code -ne 0 ]; then
         echo "{\"status\":\"error\",\"message\":\"Erro ao obter grupos do usuário $SOURCE_USERNAME: $groups_result\"}"
         return
     fi
-    
+
     # Adicionar cada grupo ao usuário de destino
     success_count=0
     error_count=0
     errors=""
-    
+
     echo "$groups_result" | while IFS= read -r group; do
         if [ -n "$group" ] && [ "$group" != "Domain Users" ]; then
             add_result=$(sudo samba-tool group addmembers "$group" "$TARGET_USERNAME" 2>&1)
@@ -675,7 +675,7 @@ copy_user_groups() {
             fi
         fi
     done
-    
+
     if [ $error_count -eq 0 ]; then
         echo "{\"status\":\"success\",\"message\":\"Grupos copiados de $SOURCE_USERNAME para $TARGET_USERNAME\",\"output\":\"$groups_result\"}"
     else
