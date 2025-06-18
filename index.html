@@ -587,22 +587,22 @@
             <label for="account-expiry-username">Nome do Usuário:</label>
             <input type="text" id="account-expiry-username" name="username" required>
         </div>
-        
+
         <div class="form-group">
             <label style="font-weight: 600; color: #2c3e50; margin-bottom: 15px; display: block;">Opções de Expiração:</label>
-            
+
             <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                 <div class="checkbox-group" style="margin-bottom: 15px;">
                     <input type="radio" id="expiry-date-option" name="expiry-type" value="date" checked onchange="toggleExpiryFields()">
                     <label for="expiry-date-option" style="font-weight: normal;">📅 Definir data específica de expiração</label>
                 </div>
-                
+
                 <div id="date-field" style="margin-left: 25px; margin-bottom: 15px;">
                     <label for="account-expiry-date" style="font-size: 14px; color: #666;">Data de expiração:</label>
                     <input type="date" id="account-expiry-date" name="expiry-date" style="margin-top: 5px;">
                     <small style="color: #666; display: block; margin-top: 5px;">A conta será desabilitada nesta data</small>
                 </div>
-                
+
                 <div class="checkbox-group">
                     <input type="radio" id="never-expire-option" name="expiry-type" value="never" onchange="toggleExpiryFields()">
                     <label for="never-expire-option" style="font-weight: normal;">∞ Conta nunca expira</label>
@@ -610,11 +610,11 @@
                 <small style="color: #666; display: block; margin-left: 25px; margin-top: 5px;">A conta permanecerá ativa indefinidamente</small>
             </div>
         </div>
-        
+
         <button type="submit" class="btn btn-success">Configurar Expiração</button>
         <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
     </form>
-</div>        
+</div>
 
 <!-- Formulário Forçar Troca de Senha -->
 <div id="force-password-change-form" class="form-container">
@@ -628,7 +628,7 @@
         <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
     </form>
 </div>
-                
+
 <div id="verify-password-form" class="form-container">
     <h3>Verificar Senha do Usuário</h3>
     <form onsubmit="submitForm(event, 'verify-password')">
@@ -644,7 +644,7 @@
         <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
     </form>
 </div>
-                
+
                 <!-- Formulário Criar Grupo -->
                 <div id="create-group-form" class="form-container">
                     <h3>Criar Grupo</h3>
@@ -1059,7 +1059,7 @@
         <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
     </form>
 </div>
-                
+
                 <!-- Formulários Adicionais para Usuários -->
                 <div id="show-user-groups-form" class="form-container">
                     <h3>Exibir Grupos do Usuário</h3>
@@ -1214,7 +1214,7 @@
             const resultContent = resultContainer.querySelector('.result-content');
             resultContent.innerHTML = content;
             resultContainer.classList.add('active');
-            
+
             if (isError) {
                 resultContainer.style.borderLeftColor = '#e74c3c';
             } else {
@@ -1231,7 +1231,7 @@
         function showAlert(message, type = 'success') {
             alertContainer.textContent = message;
             alertContainer.className = `alert alert-${type} active`;
-            
+
             // Auto-hide após 5 segundos
             setTimeout(() => {
                 hideAlert();
@@ -1246,10 +1246,10 @@
         // Função para executar comandos diretos (sem formulário)
         function executeCommand(action) {
             showLoading();
-            
+
             const params = new URLSearchParams();
             params.append('action', action);
-            
+
             fetch(CGI_URL, {
                 method: 'POST',
                 headers: {
@@ -1260,7 +1260,7 @@
             .then(response => response.json())
             .then(data => {
                 hideLoading();
-                
+
                 if (data.status === 'success') {
                     showAlert('Comando executado com sucesso!', 'success');
                     showResult(`<pre>${data.output || data.message}</pre>`);
@@ -1280,19 +1280,19 @@
         function submitForm(event, formType) {
             event.preventDefault();
             showLoading();
-            
+
             const form = event.target;
             const formData = new FormData(form);
             const params = new URLSearchParams();
-            
+
             // Adicionar ação baseada no tipo de formulário
             params.append('action', formType);
-            
+
             // Adicionar dados do formulário
             for (let [key, value] of formData.entries()) {
                 params.append(key, value);
             }
-            
+
             fetch(CGI_URL, {
                 method: 'POST',
                 headers: {
@@ -1303,7 +1303,7 @@
             .then(response => response.json())
             .then(data => {
                 hideLoading();
-                
+
                 if (data.status === 'success') {
                     showAlert('Operação realizada com sucesso!', 'success');
                     showResult(`<pre>${data.output || data.message}</pre>`);
@@ -1324,7 +1324,7 @@
         function showSubmenu(submenuId) {
             hideAlert();
             hideResult();
-            
+
             document.querySelectorAll('.submenu').forEach(function(sub) {
                 sub.classList.remove('active');
             });
@@ -1332,7 +1332,7 @@
                 panel.style.display = 'none';
             });
             document.getElementById('main-menu').style.display = 'none';
-            
+
             var submenu = document.getElementById(submenuId);
             if (submenu) submenu.classList.add('active');
         }
@@ -1344,15 +1344,15 @@ function showMainMenu() {
         resultContainer.style.display = 'none';
         resultContainer.innerHTML = '';
     }
-    
+
     // Limpar loading também
     const loading = document.querySelector('.loading');
     if (loading) {
         loading.style.display = 'none';
     }
-    
+
     hideAlert();
-    
+
     document.querySelectorAll('.submenu').forEach(function(sub) {
         sub.classList.remove('active');
     });
@@ -1379,7 +1379,7 @@ function showMainMenu() {
         function showForm(formName) {
             hideAlert();
             hideResult();
-            
+
             document.querySelectorAll('.form-container').forEach(function(form) {
                 form.classList.remove('active');
             });
@@ -1396,20 +1396,20 @@ function hideForm() {
     forms.forEach(form => {
         form.style.display = 'none';
     });
-    
+
     // LIMPAR a área de resultados também
     const resultContainer = document.querySelector('.result-container');
     if (resultContainer) {
         resultContainer.style.display = 'none';
         resultContainer.innerHTML = '';
     }
-    
+
     // Limpar loading
     const loading = document.querySelector('.loading');
     if (loading) {
         loading.style.display = 'none';
     }
-    
+
     // Limpar campos dos formulários
     const inputs = document.querySelectorAll('input[type="text"], input[type="password"], input[type="date"], textarea, select');
     inputs.forEach(input => {
@@ -1475,11 +1475,11 @@ function hideForm() {
             const input = prompt(promptMessage);
             if (input) {
                 showLoading();
-                
+
                 const params = new URLSearchParams();
                 params.append('action', action);
                 params.append('input', input);
-                
+
                 fetch(CGI_URL, {
                     method: 'POST',
                     headers: {
@@ -1490,7 +1490,7 @@ function hideForm() {
                 .then(response => response.json())
                 .then(data => {
                     hideLoading();
-                    
+
                     if (data.status === 'success') {
                         showAlert('Operação realizada com sucesso!', 'success');
                         showResult(`<pre>${data.output || data.message}</pre>`);
@@ -1520,7 +1520,7 @@ function hideForm() {
                     }
                 });
             });
-            
+
             // Validação de username
             const usernameInputs = document.querySelectorAll('input[name="username"]');
             usernameInputs.forEach(input => {
@@ -1540,7 +1540,7 @@ function hideForm() {
                 form.addEventListener('submit', function(e) {
                     const requiredFields = this.querySelectorAll('[required]');
                     let hasErrors = false;
-                    
+
                     requiredFields.forEach(field => {
                         if (!field.value.trim()) {
                             field.style.borderColor = '#e74c3c';
@@ -1549,7 +1549,7 @@ function hideForm() {
                             field.style.borderColor = '#ddd';
                         }
                     });
-                    
+
                     if (hasErrors) {
                         e.preventDefault();
                         showAlert('Por favor, preencha todos os campos obrigatórios', 'error');
@@ -1584,7 +1584,7 @@ function hideForm() {
                 hideForm();
                 hideAlert();
             }
-            
+
             // Ctrl+Home para voltar ao menu principal
             if (e.ctrlKey && e.key === 'Home') {
                 showMainMenu();
@@ -1667,7 +1667,7 @@ async function submitForm(event, action) {
 
         let text = await response.text();
         let output;
-        
+
         try {
             output = JSON.parse(text);
         } catch {
@@ -1676,7 +1676,7 @@ async function submitForm(event, action) {
 
         if(resultContainer) {
             resultContainer.style.display = 'block';
-            
+
             // Melhor processamento do resultado
             let displayText = '';
             if (output.text) {
@@ -1686,7 +1686,7 @@ async function submitForm(event, action) {
             } else {
                 displayText = JSON.stringify(output, null, 2);
             }
-            
+
             // Se o resultado tem apenas uma linha, exibe simples, senão usa <pre>
             if (displayText.includes('\n') || displayText.length > 100) {
                 resultContainer.innerHTML = `<pre>${displayText}</pre>`;
@@ -1703,7 +1703,7 @@ async function submitForm(event, action) {
 
     if(loading) loading.style.display = 'none';
 }
-    
+
 // Substitua a função executeCommand por esta versão melhorada:
 async function executeCommand(action) {
     const resultContainer = document.querySelector('.result-container');
@@ -1711,28 +1711,28 @@ async function executeCommand(action) {
         resultContainer.style.display = 'none';
         resultContainer.innerHTML = '';
     }
-    
+
     const loading = document.querySelector('.loading');
     if(loading) loading.style.display = 'block';
-    
+
     try {
         const response = await fetch('/cgi-bin/samba-admin.cgi', {
             method: 'POST',
             body: new URLSearchParams({action})
         });
-        
+
         let text = await response.text();
         let output;
-        
+
         try {
             output = JSON.parse(text);
         } catch {
             output = { text: text };
         }
-        
+
         if(resultContainer) {
             resultContainer.style.display = 'block';
-            
+
             // Melhor processamento do resultado
             let displayText = '';
             if (output.text) {
@@ -1742,7 +1742,7 @@ async function executeCommand(action) {
             } else {
                 displayText = JSON.stringify(output, null, 2);
             }
-            
+
             // Se o resultado tem múltiplas linhas, usa <pre>, senão exibe simples
             if (displayText.includes('\n')) {
                 // Para listas, formatar melhor
@@ -1763,7 +1763,7 @@ async function executeCommand(action) {
             resultContainer.innerHTML = `<pre>Erro: ${e}</pre>`;
         }
     }
-    
+
     if(loading) loading.style.display = 'none';
 }
     function showConfirmation(message, callback) {
@@ -1771,15 +1771,15 @@ async function executeCommand(action) {
     const messageEl = document.getElementById('confirmMessage');
     const yesBtn = document.getElementById('confirmYes');
     const noBtn = document.getElementById('confirmNo');
-    
+
     messageEl.textContent = message;
     overlay.classList.add('active');
-    
+
     yesBtn.onclick = function() {
         overlay.classList.remove('active');
         callback(true);
     };
-    
+
     noBtn.onclick = function() {
         overlay.classList.remove('active');
         callback(false);
@@ -1790,14 +1790,14 @@ async function executeCommand(action) {
 function handlePasswordExpiry(event) {
     event.preventDefault();
     const username = document.getElementById('expiry-username').value;
-    
+
     if (!username) {
         showAlert('Por favor, digite o nome do usuário', 'error');
         return;
     }
-    
+
     showConfirmation(`CONFIGURAR EXPIRAÇÃO DE SENHA
-    
+
 Usuário: "${username}"
 
 A senha deste usuário NÃO deve mais expirar?
@@ -1809,7 +1809,7 @@ A senha deste usuário NÃO deve mais expirar?
             const formData = new FormData();
             formData.append('action', 'set-no-expiry');
             formData.append('username', username);
-            
+
             fetch('/cgi-bin/samba-admin.cgi', {
                 method: 'POST',
                 body: new URLSearchParams(formData)
@@ -1823,7 +1823,7 @@ A senha deste usuário NÃO deve mais expirar?
             const formData = new FormData();
             formData.append('action', 'set-default-expiry');
             formData.append('username', username);
-            
+
             fetch('/cgi-bin/samba-admin.cgi', {
                 method: 'POST',
                 body: new URLSearchParams(formData)
@@ -1835,22 +1835,22 @@ A senha deste usuário NÃO deve mais expirar?
         }
     });
 }
-    
+
 function confirmDeleteOU(event) {
     event.preventDefault();
     const ou = document.getElementById('delete-ou-name').value;
-    
+
     showConfirmation(`Excluir a OU "${ou}"?`, function(confirmed) {
         if (confirmed) {
             submitForm(event, 'delete-ou');
         }
     });
 }
-    
+
 function confirmDeleteShare(event) {
     event.preventDefault();
     const share = document.getElementById('delete-share-name').value;
-    
+
     showConfirmation(`Excluir o compartilhamento "${share}"?`, function(confirmed) {
         if (confirmed) {
             submitForm(event, 'delete-share');
@@ -1861,23 +1861,23 @@ function confirmDeleteShare(event) {
 function confirmDeleteSilo(event) {
     event.preventDefault();
     const silo = document.getElementById('delete-silo-name').value;
-    
+
     showConfirmation(`Tem certeza que deseja excluir o silo "${silo}"?`, function(confirmed) {
         if (confirmed) {
             submitForm(event, 'delete-silo');
         }
     });
 }
-    
+
 function confirmDeleteComputer(event) {
     event.preventDefault();
     const computer = document.getElementById('delete-computer-name').value;
-    
+
     if (!computer) {
         showAlert('Por favor, digite o nome do computador', 'error');
         return;
     }
-    
+
     showConfirmation(`Tem certeza que deseja excluir o computador "${computer}"?`, function(confirmed) {
         if (confirmed) {
             submitForm(event, 'delete-computer');
@@ -1888,28 +1888,28 @@ function confirmDeleteComputer(event) {
 function confirmDeleteGroup(event) {
     event.preventDefault();
     const group = document.getElementById('delete-group-name').value;
-    
+
     if (!group) {
         showAlert('Por favor, digite o nome do grupo', 'error');
         return;
     }
-    
+
     showConfirmation(`Deseja realmente excluir o grupo "${group}"?`, function(confirmed) {
         if (confirmed) {
             submitForm(event, 'delete-group');
         }
     });
 }
-    
+
 function confirmDeleteUser(event) {
     event.preventDefault();
     const username = document.getElementById('delete-username').value;
-    
+
     if (!username) {
         showAlert('Por favor, digite o nome do usuário', 'error');
         return;
     }
-    
+
     showConfirmation(`Tem certeza que deseja deletar o usuário "${username}"?`, function(confirmed) {
         if (confirmed) {
             submitForm(event, 'delete-user');
@@ -1921,7 +1921,7 @@ function confirmDeleteUser(event) {
 function toggleExpiryFields() {
     const dateField = document.getElementById('date-field');
     const expiryType = document.querySelector('input[name="expiry-type"]:checked').value;
-    
+
     if (expiryType === 'date') {
         dateField.style.display = 'block';
         document.getElementById('account-expiry-date').required = true;
@@ -1937,17 +1937,17 @@ function handleAccountExpiry(event) {
     const username = document.getElementById('account-expiry-username').value;
     const expiryType = document.querySelector('input[name="expiry-type"]:checked').value;
     let expiryDate = document.getElementById('account-expiry-date').value;
-    
+
     if (!username) {
         showAlert('Por favor, digite o nome do usuário', 'error');
         return;
     }
-    
+
     if (expiryType === 'date' && !expiryDate) {
         showAlert('Por favor, selecione a data de expiração', 'error');
         return;
     }
-    
+
     let confirmMessage;
     if (expiryType === 'never') {
         confirmMessage = `Definir que a CONTA do usuário "${username}" NUNCA expire?`;
@@ -1962,17 +1962,17 @@ function handleAccountExpiry(event) {
         }
         confirmMessage = `Definir que a CONTA do usuário "${username}" expire em ${expiryDate}?`;
     }
-    
+
     showConfirmation(confirmMessage, function(confirmed) {
         if (confirmed) {
             const loading = document.querySelector('.loading');
             if(loading) loading.style.display = 'block';
-            
+
             const formData = new FormData();
             formData.append('action', 'set-account-expiry');
             formData.append('username', username);
             formData.append('expiry-date', expiryDate);
-            
+
             fetch('/cgi-bin/samba-admin.cgi', {
                 method: 'POST',
                 body: new URLSearchParams(formData)
@@ -1980,13 +1980,13 @@ function handleAccountExpiry(event) {
             .then(response => response.text())
             .then(data => {
                 if(loading) loading.style.display = 'none';
-                
+
                 const resultContainer = document.querySelector('.result-container');
                 if(resultContainer) {
                     resultContainer.style.display = 'block';
                     resultContainer.innerHTML = `<pre>${data}</pre>`;
                 }
-                
+
                 showAlert('Comando executado', 'success');
                 hideForm();
             })
@@ -2006,24 +2006,24 @@ function backToDomainSettings() {
         resultContainer.style.display = 'none';
         resultContainer.innerHTML = '';
     }
-    
+
     // Limpar loading
     const loading = document.querySelector('.loading');
     if (loading) {
         loading.style.display = 'none';
     }
-    
+
     hideAlert();
-    
+
     // Esconder todos os formulários
     document.querySelectorAll('.form-container').forEach(function(form) {
         form.classList.remove('active');
     });
-    
+
     // Mostrar o submenu de configurações do domínio
     showSubmenu('domain-settings');
 }
-    
+
 </script>
 <div class="loading" style="display:none"><div class="spinner"></div>Carregando...</div>
 <div class="result-container" style="display:none"></div>
