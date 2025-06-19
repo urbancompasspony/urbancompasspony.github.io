@@ -385,7 +385,7 @@ move_user_ou() {
 
 verify_password() {
     if [ -z "$USERNAME" ] || [ -z "$PASSWORD" ]; then
-        echo "{\"status\":\"error\",\"message\":\"Nome de usuário e senha são obrigatórios\"}"
+        echo "Erro: Nome de usuário e senha são obrigatórios"
         return
     fi
 
@@ -394,7 +394,7 @@ verify_password() {
     # Primeiro verifica se o usuário existe
     user_check=$(sudo samba-tool user list | grep -x "$USERNAME")
     if [ "$user_check" != "$USERNAME" ]; then
-        echo "{\"status\":\"error\",\"message\":\"Usuário '$USERNAME' não encontrado no domínio\"}"
+        echo "Erro: Usuário '$USERNAME' não encontrado no domínio"
         return
     fi
 
@@ -435,7 +435,9 @@ EOF
         # Buscar informações do usuário
         user_info=$(sudo samba-tool user show "$USERNAME" 2>&1)
 
-        result_info="✓ SENHA VÁLIDA para usuário '$USERNAME'"
+        # NOVO FORMATO DE SAÍDA - SEM JSON
+        echo "✅ SENHA VÁLIDA para usuário '$USERNAME'"
+        echo ""
 
         # Extrair dados básicos
         pwd_last_set=$(echo "$user_info" | grep -i "pwdLastSet" | cut -d: -f2- | tr -d ' ')
@@ -445,7 +447,7 @@ EOF
         if [ -n "$user_account_control" ]; then
             dont_expire_flag=$((user_account_control & 65536))
             if [ $dont_expire_flag -ne 0 ]; then
-                result_info="$result_info\\n• SENHA: NUNCA EXPIRA"
+                echo "🔐 SENHA: Configurada para NUNCA EXPIRAR"
             else
                 # Obter política de senha do domínio
                 password_policy=$(sudo samba-tool domain passwordsettings show 2>/dev/null)
@@ -460,32 +462,29 @@ EOF
                     days_remaining=$((max_pwd_age - days_since_change))
 
                     if [ $days_remaining -gt 0 ]; then
-                        expiry_date=$(date -d "+${days_remaining} days" '+%Y-%m-%d')
-                        result_info="$result_info\\n• SENHA: Expira em $days_remaining dias ($expiry_date)"
+                        expiry_date=$(date -d "+${days_remaining} days" '+%d/%m/%Y')
+                        echo "🔐 SENHA: Expira em $days_remaining dias ($expiry_date)"
                     elif [ $days_remaining -eq 0 ]; then
-                        result_info="$result_info\\n• ⚠️ SENHA: EXPIRA HOJE!"
+                        echo "⚠️ SENHA: EXPIRA HOJE!"
                     else
-                        result_info="$result_info\\n• ⚠️ SENHA: EXPIRADA há $((days_remaining * -1)) dias"
+                        echo "❌ SENHA: EXPIRADA há $((days_remaining * -1)) dias"
                     fi
                 elif [ "$max_pwd_age" = "0" ]; then
-                    result_info="$result_info\\n• SENHA: Política do domínio = nunca expira"
+                    echo "🔐 SENHA: Política do domínio = nunca expira"
                 else
-                    result_info="$result_info\\n• SENHA: Não foi possível calcular expiração"
+                    echo "🔐 SENHA: Não foi possível calcular expiração"
                 fi
             fi
         fi
-
-        echo "{\"status\":\"success\",\"message\":\"Autenticação bem-sucedida\",\"output\":\"$result_info\"}"
     else
         # Falha na autenticação
-        debug_info="✗ SENHA INVÁLIDA para usuário '$USERNAME'"
+        echo "❌ SENHA INVÁLIDA para usuário '$USERNAME'"
+        echo ""
 
         # Verificar se conta está ativa
         user_status=$(sudo samba-tool user show "$USERNAME" 2>&1 | grep -i "userAccountControl" | cut -d: -f2- | tr -d ' ')
         if [ "$user_status" = "514" ] || [ "$user_status" = "546" ]; then
-            echo "{\"status\":\"error\",\"message\":\"✗ Conta '$USERNAME' está DESABILITADA\"}"
-        else
-            echo "{\"status\":\"error\",\"message\":\"$debug_info\"}"
+            echo "⚠️ Conta '$USERNAME' está DESABILITADA"
         fi
     fi
 }
