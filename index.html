@@ -1397,18 +1397,15 @@ function hideForm() {
         form.style.display = 'none';
     });
 
-    // LIMPAR a área de resultados também
-    const resultContainer = document.querySelector('.result-container');
-    if (resultContainer) {
-        resultContainer.style.display = 'none';
-        resultContainer.innerHTML = '';
-    }
-
     // Limpar loading
     const loading = document.querySelector('.loading');
     if (loading) {
         loading.style.display = 'none';
     }
+
+    // NÃO MEXER NO resultContainer - deixar resultado visível
+    // Comentado: resultContainer.style.display = 'none';
+    // Comentado: resultContainer.innerHTML = '';
 
     // Limpar campos dos formulários
     const inputs = document.querySelectorAll('input[type="text"], input[type="password"], input[type="date"], textarea, select');
@@ -1988,7 +1985,6 @@ function handleAccountExpiry(event) {
                 }
 
                 showAlert('Comando executado', 'success');
-                hideForm();
             })
             .catch(error => {
                 if(loading) loading.style.display = 'none';
