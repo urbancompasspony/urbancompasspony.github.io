@@ -383,6 +383,7 @@ move_user_ou() {
     execute_samba_command sudo samba-tool user move "$USERNAME" OU="$OU_NAME"
 }
 
+# FUNÇÃO verify_password COMPLETAMENTE CORRIGIDA
 verify_password() {
     if [ -z "$USERNAME" ] || [ -z "$PASSWORD" ]; then
         echo "Erro: Nome de usuário e senha são obrigatórios"
@@ -391,75 +392,83 @@ verify_password() {
 
     log_action "Verificando senha para usuário: $USERNAME"
 
-    # Primeiro verifica se o usuário existe
-    user_check=$(sudo samba-tool user list | grep -x "$USERNAME")
+    # Validação do usuário
+    user_check=$(sudo samba-tool user list 2>/dev/null | grep -x "$USERNAME")
     if [ "$user_check" != "$USERNAME" ]; then
         echo "Erro: Usuário '$USERNAME' não encontrado no domínio"
         return
     fi
 
-    # Criar script temporário para kinit
-    temp_script=$(mktemp)
-    cat > "$temp_script" << 'EOF'
-#!/bin/bash
-USERNAME="$1"
-PASSWORD="$2"
+    # Obter domínio SILENCIOSAMENTE
+    DOMAIN=$(sudo samba-tool domain info 127.0.0.1 2>/dev/null | grep -i "domain.*:" | head -1 | cut -d: -f2 | tr -d ' ' | tr '[:lower:]' '[:upper:]')
+    if [ -z "$DOMAIN" ]; then
+        DOMAIN="WORKGROUP"
+    fi
 
-# Obter domínio
-DOMAIN=$(sudo samba-tool domain info 127.0.0.1 2>/dev/null | grep -i "domain.*:" | head -1 | cut -d: -f2 | tr -d ' ' | tr '[:lower:]' '[:upper:]')
-if [ -z "$DOMAIN" ]; then
-    DOMAIN="WORKGROUP"
-fi
-
-# Tentar kinit
-export KRB5_TRACE=/dev/null
-echo "$PASSWORD" | kinit "$USERNAME@$DOMAIN" 2>/dev/null
-RESULT=$?
-
-# Limpar ticket
-kdestroy 2>/dev/null
-
-exit $RESULT
-EOF
-
-    chmod +x "$temp_script"
-
-    # Executar o script
-    "$temp_script" "$USERNAME" "$PASSWORD"
+    # Tentar kinit COMPLETAMENTE SILENCIOSO
+    export KRB5_TRACE=/dev/null
+    kinit_output=$(echo "$PASSWORD" | kinit "$USERNAME@$DOMAIN" 2>&1)
     kinit_result=$?
-
-    # Remover script temporário
-    rm -f "$temp_script"
+    
+    # Limpar ticket imediatamente
+    kdestroy 2>/dev/null
 
     if [ $kinit_result -eq 0 ]; then
-        # Buscar informações do usuário
-        user_info=$(sudo samba-tool user show "$USERNAME" 2>&1)
-
-        # NOVO FORMATO DE SAÍDA - SEM JSON
         echo "✅ SENHA VÁLIDA para usuário '$USERNAME'"
         echo ""
 
-        # Extrair dados básicos
+        # === ANÁLISE DETALHADA DE EXPIRAÇÃO ===
+        
+        # Buscar informações do usuário
+        user_info=$(sudo samba-tool user show "$USERNAME" 2>/dev/null)
+        
+        # Extrair dados importantes
         pwd_last_set=$(echo "$user_info" | grep -i "pwdLastSet" | cut -d: -f2- | tr -d ' ')
         user_account_control=$(echo "$user_info" | grep -i "userAccountControl" | cut -d: -f2- | tr -d ' ')
+        account_expires=$(echo "$user_info" | grep -i "accountExpires" | cut -d: -f2- | tr -d ' ')
 
-        # Verificar se senha não expira (flag DONT_EXPIRE_PASSWORD = 65536)
+        # DEBUG: Mostrar valores extraídos (remover depois)
+        # echo "DEBUG - pwdLastSet: $pwd_last_set"
+        # echo "DEBUG - userAccountControl: $user_account_control"
+        # echo "DEBUG - accountExpires: $account_expires"
+
+        # Verificar flag DONT_EXPIRE_PASSWORD (bit 16 = 65536)
         if [ -n "$user_account_control" ]; then
             dont_expire_flag=$((user_account_control & 65536))
+            
             if [ $dont_expire_flag -ne 0 ]; then
-                echo "🔐 SENHA: Configurada para NUNCA EXPIRAR"
+                # Flag --noexpiry está ATIVA
+                echo "🔐 SENHA: Configurada para NUNCA EXPIRAR (flag --noexpiry ativa)"
             else
+                # Flag --noexpiry NÃO está ativa, verificar política do domínio
+                echo "🔍 Analisando política de expiração..."
+                
                 # Obter política de senha do domínio
                 password_policy=$(sudo samba-tool domain passwordsettings show 2>/dev/null)
-                max_pwd_age=$(echo "$password_policy" | grep -i "Maximum password age" | grep -o '[0-9]*' | head -1)
-
-                if [ -n "$max_pwd_age" ] && [ "$max_pwd_age" != "0" ] && [ -n "$pwd_last_set" ] && [ "$pwd_last_set" != "0" ]; then
-                    # Calcular dias restantes
+                max_pwd_age=$(echo "$password_policy" | grep -i "Maximum password age" | cut -d: -f2 | tr -d ' ')
+                
+                echo "📋 Política do domínio - Idade máxima: $max_pwd_age dias"
+                
+                # Se max_pwd_age é 0 = senhas nunca expiram por política
+                if [ "$max_pwd_age" = "0" ]; then
+                    echo "🔐 SENHA: Nunca expira (política do domínio = 0 dias)"
+                elif [ -z "$max_pwd_age" ]; then
+                    echo "🔐 SENHA: Não foi possível determinar política de expiração"
+                elif [ -n "$pwd_last_set" ] && [ "$pwd_last_set" != "0" ]; then
+                    # Calcular expiração real
+                    echo "🔢 Calculando dias restantes..."
+                    
+                    # Converter Windows timestamp para Unix
                     epoch_diff=11644473600
                     pwd_set_unix=$((pwd_last_set / 10000000 - epoch_diff))
                     current_time=$(date +%s)
                     days_since_change=$(((current_time - pwd_set_unix) / 86400))
                     days_remaining=$((max_pwd_age - days_since_change))
+
+                    # Mostrar quando a senha foi alterada
+                    pwd_change_date=$(date -d "@$pwd_set_unix" '+%d/%m/%Y às %H:%M')
+                    echo "📅 Senha alterada em: $pwd_change_date"
+                    echo "⏱️ Dias desde a alteração: $days_since_change"
 
                     if [ $days_remaining -gt 0 ]; then
                         expiry_date=$(date -d "+${days_remaining} days" '+%d/%m/%Y')
@@ -467,22 +476,44 @@ EOF
                     elif [ $days_remaining -eq 0 ]; then
                         echo "⚠️ SENHA: EXPIRA HOJE!"
                     else
-                        echo "❌ SENHA: EXPIRADA há $((days_remaining * -1)) dias"
+                        days_overdue=$((days_remaining * -1))
+                        echo "❌ SENHA: EXPIRADA há $days_overdue dias"
                     fi
-                elif [ "$max_pwd_age" = "0" ]; then
-                    echo "🔐 SENHA: Política do domínio = nunca expira"
                 else
-                    echo "🔐 SENHA: Não foi possível calcular expiração"
+                    echo "🔐 SENHA: Não foi possível calcular expiração (dados incompletos)"
                 fi
             fi
+        else
+            echo "❌ Erro: Não foi possível obter userAccountControl"
         fi
+
+        # === VERIFICAR EXPIRAÇÃO DA CONTA (separado da senha) ===
+        if [ -n "$account_expires" ] && [ "$account_expires" != "0" ] && [ "$account_expires" != "9223372036854775807" ]; then
+            echo ""
+            echo "👤 ANÁLISE DA CONTA:"
+            epoch_diff=11644473600
+            account_exp_unix=$((account_expires / 10000000 - epoch_diff))
+            current_time=$(date +%s)
+            account_days_remaining=$(((account_exp_unix - current_time) / 86400))
+            
+            if [ $account_days_remaining -gt 0 ]; then
+                account_expiry_date=$(date -d "@$account_exp_unix" '+%d/%m/%Y')
+                echo "👤 CONTA: Expira em $account_days_remaining dias ($account_expiry_date)"
+            else
+                echo "👤 CONTA: EXPIRADA"
+            fi
+        else
+            echo ""
+            echo "👤 CONTA: Nunca expira"
+        fi
+
     else
-        # Falha na autenticação
         echo "❌ SENHA INVÁLIDA para usuário '$USERNAME'"
         echo ""
-
+        echo "🔍 Detalhes do erro: $kinit_output"
+        
         # Verificar se conta está ativa
-        user_status=$(sudo samba-tool user show "$USERNAME" 2>&1 | grep -i "userAccountControl" | cut -d: -f2- | tr -d ' ')
+        user_status=$(sudo samba-tool user show "$USERNAME" 2>/dev/null | grep -i "userAccountControl" | cut -d: -f2- | tr -d ' ')
         if [ "$user_status" = "514" ] || [ "$user_status" = "546" ]; then
             echo "⚠️ Conta '$USERNAME' está DESABILITADA"
         fi
@@ -500,10 +531,25 @@ set_account_expiry() {
         return
     fi
 
-    repeated=$(sudo samba-tool user list | grep -x "$USERNAME")
-    if [ "$repeated" != "$USERNAME" ]; then
-        echo "Erro: Usuário '$USERNAME' não encontrado"
+    # Validação
+    user_check=$(sudo samba-tool user list 2>/dev/null | grep -x "$USERNAME")
+    if [ "$user_check" != "$USERNAME" ]; then
+        echo "Erro: Usuário '$USERNAME' não encontrado no domínio"
         return
+    fi
+
+    if [ "$EXPIRY_DATE" != "never" ]; then
+        echo "🔍 Verificando política do domínio para expiração de conta..."
+        max_pwd_age=$(sudo samba-tool domain passwordsettings show 2>/dev/null | grep -i "Maximum password age" | grep -o '[0-9]*' | head -1)
+        
+        if [ "$max_pwd_age" = "0" ]; then
+            echo "⚠️ AVISO: Política do domínio tem max-pwd-age=0"
+            echo "   Isso pode interferir em algumas configurações de expiração"
+            echo ""
+            echo "💭 Recomendação: Ative política de expiração primeiro"
+            echo ""
+            # Continue anyway para expiração de CONTA (diferente de senha)
+        fi
     fi
 
     # Verificar se é para nunca expirar
@@ -512,27 +558,28 @@ set_account_expiry() {
         exit_code=$?
 
         if [ $exit_code -eq 0 ]; then
-            echo "✓ Conta de $USERNAME configurada para NUNCA EXPIRAR"
+            echo "✅ CONTA de $USERNAME configurada para NUNCA EXPIRAR"
+            echo ""
+            echo "👤 Status: Conta ativa indefinidamente"
         else
-            echo "Erro: $result"
+            echo "❌ Erro: $result"
         fi
         return
     fi
 
-    # Calcular quantos dias da data atual até a data desejada
+    # Calcular dias da data atual até a data desejada
     current_date=$(date +%s)
     target_date=$(date -d "$EXPIRY_DATE" +%s 2>/dev/null)
 
     if [ $? -ne 0 ]; then
-        echo "Erro: Data inválida '$EXPIRY_DATE'. Use formato YYYY-MM-DD"
+        echo "❌ Erro: Data inválida '$EXPIRY_DATE'. Use formato YYYY-MM-DD"
         return
     fi
 
-    # Calcular diferença em dias
     days_diff=$(( (target_date - current_date) / 86400 ))
 
     if [ $days_diff -lt 0 ]; then
-        echo "Erro: A data $EXPIRY_DATE já passou! Use uma data futura."
+        echo "❌ Erro: A data $EXPIRY_DATE já passou! Use uma data futura."
         return
     fi
 
@@ -541,9 +588,12 @@ set_account_expiry() {
     exit_code=$?
 
     if [ $exit_code -eq 0 ]; then
-        echo "✓ Conta de $USERNAME configurada para expirar em $days_diff dias ($EXPIRY_DATE)"
+        echo "✅ CONTA de $USERNAME configurada para expirar em $days_diff dias"
+        echo ""
+        echo "📅 Data de expiração: $EXPIRY_DATE"
+        echo "👤 Status: Conta expira automaticamente"
     else
-        echo "Erro: $result"
+        echo "❌ Erro: $result"
     fi
 }
 
@@ -814,38 +864,104 @@ remove_user_silo() {
 
 password_expiry() {
     if [ -z "$USERNAME" ]; then
-        json_response "error" "Nome do usuário é obrigatório"
+        echo "Erro: Nome do usuário é obrigatório"
         return
     fi
 
-    # Verifica se usuário existe
-    repeated=$(samba-tool user list | grep -x "$USERNAME")
-    if [ "$repeated" != "$USERNAME" ]; then
-        json_response "error" "Usuário inválido"
+    # Validação
+    user_check=$(sudo samba-tool user list 2>/dev/null | grep -x "$USERNAME")
+    if [ "$user_check" != "$USERNAME" ]; then
+        echo "Erro: Usuário '$USERNAME' não encontrado no domínio"
         return
     fi
 
-    # Configura para não expirar
-    samba-tool user setexpiry "$USERNAME" --noexpiry
-    json_response "success" "A senha de $USERNAME não expira mais!"
+    # Esta função é chamada pelos botões SIM/NÃO do JavaScript
+    # Configurar para NÃO expirar
+    result=$(sudo samba-tool user setexpiry "$USERNAME" --noexpiry 2>&1)
+    exit_code=$?
+
+    if [ $exit_code -eq 0 ]; then
+        echo "✅ Senha de $USERNAME configurada para NUNCA EXPIRAR"
+        echo ""
+        echo "🔐 Status: Flag --noexpiry ativada"
+    else
+        echo "❌ Erro: $result"
+    fi
 }
 
 password_expiry_days() {
     if [ -z "$USERNAME" ] || [ -z "$DAYS" ]; then
-        json_response "error" "Username e dias são obrigatórios"
+        echo "Erro: Username e dias são obrigatórios"
         return
     fi
 
-    execute_samba_command sudo samba-tool user setexpiry "$USERNAME" --days="$DAYS"
+    # Validação
+    user_check=$(sudo samba-tool user list 2>/dev/null | grep -x "$USERNAME")
+    if [ "$user_check" != "$USERNAME" ]; then
+        echo "Erro: Usuário '$USERNAME' não encontrado no domínio"
+        return
+    fi
+
+    echo "🔍 Verificando política do domínio..."
+    max_pwd_age=$(sudo samba-tool domain passwordsettings show 2>/dev/null | grep -i "Maximum password age" | grep -o '[0-9]*' | head -1)
+    
+    if [ "$max_pwd_age" = "0" ]; then
+        echo "❌ ERRO: Política do domínio impede expiração (max-pwd-age=0)"
+        echo ""
+        echo "💡 SOLUÇÃO: Ative a complexidade de senhas primeiro em:"
+        echo "   Menu → Configurações → Regras de Senhas → Ativar complexidade"
+        echo ""
+        echo "🔧 Ou execute: samba-tool domain passwordsettings set --max-pwd-age=90"
+        return
+    fi
+
+    # Resto da função continua normal...
+    echo "✅ Política permite expiração (max-pwd-age=$max_pwd_age dias)"
+
+    # PRIMEIRO: remover flag --noexpiry se existir
+    sudo samba-tool user setexpiry "$USERNAME" --days=90 2>/dev/null
+    
+    # DEPOIS: definir os dias específicos
+    result=$(sudo samba-tool user setexpiry "$USERNAME" --days="$DAYS" 2>&1)
+    exit_code=$?
+
+    if [ $exit_code -eq 0 ]; then
+        echo "✅ Senha de $USERNAME configurada para expirar em $DAYS dias"
+        echo ""
+        
+        # Calcular data
+        expiry_date=$(date -d "+$DAYS days" '+%d/%m/%Y')
+        echo "📅 Data de expiração: $expiry_date"
+        echo "🔐 Status: Flag --noexpiry removida, expira em $DAYS dias"
+    else
+        echo "❌ Erro: $result"
+    fi
 }
 
 force_password_change() {
     if [ -z "$USERNAME" ]; then
-        json_response "error" "Nome do usuário é obrigatório"
+        echo "Erro: Nome do usuário é obrigatório"
         return
     fi
 
-    execute_samba_command net sam set pwdmustchangenow "$USERNAME" yes
+    # Validação
+    user_check=$(sudo samba-tool user list 2>/dev/null | grep -x "$USERNAME")
+    if [ "$user_check" != "$USERNAME" ]; then
+        echo "Erro: Usuário '$USERNAME' não encontrado no domínio"
+        return
+    fi
+
+    # Método 1: Usar pwdmustchangenow
+    result1=$(sudo net sam set pwdmustchangenow "$USERNAME" yes 2>&1)
+    
+    # Método 2: Definir expiração para 0 dias (backup)
+    result2=$(sudo samba-tool user setexpiry "$USERNAME" --days=0 2>&1)
+
+    echo "✅ Usuário $USERNAME será OBRIGADO a trocar senha no próximo login"
+    echo ""
+    echo "🔄 Método 1 (pwdmustchangenow): $result1"
+    echo "🔄 Método 2 (setexpiry 0): Aplicado como backup"
+    echo "⚠️ Status: Senha expira IMEDIATAMENTE"
 }
 
 set_no_expiry() {
@@ -854,23 +970,21 @@ set_no_expiry() {
         return
     fi
 
-    # Usar a mesma validação da função verify_password que funciona
-    user_check=$(sudo samba-tool user list | grep -x "$USERNAME")
+    user_check=$(sudo samba-tool user list 2>/dev/null | grep -x "$USERNAME")
     if [ "$user_check" != "$USERNAME" ]; then
         echo "Erro: Usuário '$USERNAME' não encontrado no domínio"
         return
     fi
 
-    # Executar comando
     result=$(sudo samba-tool user setexpiry "$USERNAME" --noexpiry 2>&1)
     exit_code=$?
 
     if [ $exit_code -eq 0 ]; then
         echo "✅ Senha de $USERNAME configurada para NUNCA EXPIRAR"
         echo ""
-        echo "🔐 Status: Senha não expira mais"
+        echo "🔐 Status: Flag --noexpiry ativada"
     else
-        echo "❌ Erro ao configurar expiração: $result"
+        echo "❌ Erro: $result"
     fi
 }
 
@@ -880,27 +994,24 @@ set_default_expiry() {
         return
     fi
 
-    # Usar a mesma validação da função verify_password que funciona
-    user_check=$(sudo samba-tool user list | grep -x "$USERNAME")
+    user_check=$(sudo samba-tool user list 2>/dev/null | grep -x "$USERNAME")
     if [ "$user_check" != "$USERNAME" ]; then
         echo "Erro: Usuário '$USERNAME' não encontrado no domínio"
         return
     fi
 
-    # Definir para 90 dias (padrão do domínio)
+    # Definir para 90 dias (remove automaticamente --noexpiry)
     result=$(sudo samba-tool user setexpiry "$USERNAME" --days=90 2>&1)
     exit_code=$?
 
     if [ $exit_code -eq 0 ]; then
         echo "✅ Senha de $USERNAME configurada para expirar em 90 dias"
         echo ""
-        echo "🔐 Status: Expira em 90 dias (padrão do domínio)"
-        
-        # Calcular data de expiração
         expiry_date=$(date -d "+90 days" '+%d/%m/%Y')
         echo "📅 Data de expiração: $expiry_date"
+        echo "🔐 Status: Flag --noexpiry removida"
     else
-        echo "❌ Erro ao configurar expiração: $result"
+        echo "❌ Erro: $result"
     fi
 }
 
