@@ -850,35 +850,58 @@ force_password_change() {
 
 set_no_expiry() {
     if [ -z "$USERNAME" ]; then
-        json_response "error" "Nome do usuário é obrigatório"
+        echo "Erro: Nome do usuário é obrigatório"
         return
     fi
 
-    repeated=$(samba-tool user list | grep -x "$USERNAME")
-    if [ "$repeated" != "$USERNAME" ]; then
-        json_response "error" "Usuário inválido"
+    # Usar a mesma validação da função verify_password que funciona
+    user_check=$(sudo samba-tool user list | grep -x "$USERNAME")
+    if [ "$user_check" != "$USERNAME" ]; then
+        echo "Erro: Usuário '$USERNAME' não encontrado no domínio"
         return
     fi
 
-    samba-tool user setexpiry "$USERNAME" --noexpiry
-    json_response "success" "A senha de $USERNAME não expira mais!"
+    # Executar comando
+    result=$(sudo samba-tool user setexpiry "$USERNAME" --noexpiry 2>&1)
+    exit_code=$?
+
+    if [ $exit_code -eq 0 ]; then
+        echo "✅ Senha de $USERNAME configurada para NUNCA EXPIRAR"
+        echo ""
+        echo "🔐 Status: Senha não expira mais"
+    else
+        echo "❌ Erro ao configurar expiração: $result"
+    fi
 }
 
 set_default_expiry() {
     if [ -z "$USERNAME" ]; then
-        json_response "error" "Nome do usuário é obrigatório"
+        echo "Erro: Nome do usuário é obrigatório"
         return
     fi
 
-    repeated=$(samba-tool user list | grep -x "$USERNAME")
-    if [ "$repeated" != "$USERNAME" ]; then
-        json_response "error" "Usuário inválido"
+    # Usar a mesma validação da função verify_password que funciona
+    user_check=$(sudo samba-tool user list | grep -x "$USERNAME")
+    if [ "$user_check" != "$USERNAME" ]; then
+        echo "Erro: Usuário '$USERNAME' não encontrado no domínio"
         return
     fi
 
-    # Define para 90 dias (padrão do domínio)
-    samba-tool user setexpiry "$USERNAME" --days=90
-    json_response "success" "A senha de $USERNAME vai expirar em 90 dias (padrão do domínio)!"
+    # Definir para 90 dias (padrão do domínio)
+    result=$(sudo samba-tool user setexpiry "$USERNAME" --days=90 2>&1)
+    exit_code=$?
+
+    if [ $exit_code -eq 0 ]; then
+        echo "✅ Senha de $USERNAME configurada para expirar em 90 dias"
+        echo ""
+        echo "🔐 Status: Expira em 90 dias (padrão do domínio)"
+        
+        # Calcular data de expiração
+        expiry_date=$(date -d "+90 days" '+%d/%m/%Y')
+        echo "📅 Data de expiração: $expiry_date"
+    else
+        echo "❌ Erro ao configurar expiração: $result"
+    fi
 }
 
 # === FUNÇÕES DE INFORMAÇÕES DO DOMÍNIO ===
