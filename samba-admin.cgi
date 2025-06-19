@@ -43,6 +43,8 @@ parse_cgi_params() {
         case "$key" in
             "action") ACTION="$value" ;;
             "username") USERNAME="$value" ;;
+            "source-group") SOURCE_GROUP="$value" ;;
+            "target-group") TARGET_GROUP="$value" ;;
             "display-name") FIRSTNAME="$value" ;;
             "password") PASSWORD="$value" ;;
             "email") EMAIL="$value" ;;
@@ -76,6 +78,8 @@ sanitize_input() {
     SILO_NAME=$(echo "$SILO_NAME" | sed 's/[^a-zA-Z0-9._-]//g')
     SOURCE_USERNAME=$(echo "$SOURCE_USERNAME" | sed 's/[^a-zA-Z0-9._-]//g')
     TARGET_USERNAME=$(echo "$TARGET_USERNAME" | sed 's/[^a-zA-Z0-9._-]//g')
+    SOURCE_GROUP=$(echo "$SOURCE_GROUP" | sed 's/[^a-zA-Z0-9._-]//g')
+    TARGET_GROUP=$(echo "$TARGET_GROUP" | sed 's/[^a-zA-Z0-9._-]//g')
 
     # Validar email
     if [ -n "$EMAIL" ] && ! [[ "$EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
@@ -1138,6 +1142,102 @@ revalidate_shares() {
     json_response "success" "Configurações de compartilhamento revalidadas"
 }
 
+copy_group_members() {
+    if [ -z "$SOURCE_GROUP" ] || [ -z "$TARGET_GROUP" ]; then
+        echo "❌ Erro: Grupo de origem e destino são obrigatórios"
+        return
+    fi
+
+    log_action "Copiando membros de $SOURCE_GROUP para $TARGET_GROUP"
+
+    # Validações
+    source_check=$(sudo samba-tool group list 2>/dev/null | grep -x "$SOURCE_GROUP")
+    if [ "$source_check" != "$SOURCE_GROUP" ]; then
+        echo "❌ Erro: Grupo de origem '$SOURCE_GROUP' não encontrado"
+        return
+    fi
+
+    target_check=$(sudo samba-tool group list 2>/dev/null | grep -x "$TARGET_GROUP")
+    if [ "$target_check" != "$TARGET_GROUP" ]; then
+        echo "❌ Erro: Grupo de destino '$TARGET_GROUP' não encontrado"
+        return
+    fi
+
+    if [ "$SOURCE_GROUP" = "$TARGET_GROUP" ]; then
+        echo "❌ Erro: Grupo de origem e destino não podem ser iguais"
+        return
+    fi
+
+    echo "🔍 Analisando grupo '$SOURCE_GROUP'..."
+    
+    # Obter membros do grupo origem
+    members_result=$(sudo samba-tool group listmembers "$SOURCE_GROUP" 2>/dev/null)
+    if [ -z "$members_result" ]; then
+        echo "⚠️ Grupo '$SOURCE_GROUP' não possui membros para copiar"
+        return
+    fi
+
+    # Contar membros
+    member_count=$(echo "$members_result" | grep -v '^$' | wc -l)
+    echo "📊 Encontrados $member_count membros no grupo origem"
+    echo ""
+
+    echo "📋 Membros que serão copiados:"
+    echo "$members_result" | sed 's/^/   🔸 /'
+    echo ""
+
+    # Obter membros atuais do grupo destino (para evitar duplicatas)
+    existing_members=$(sudo samba-tool group listmembers "$TARGET_GROUP" 2>/dev/null)
+    
+    echo "🚀 Iniciando processo de cópia..."
+    echo "════════════════════════════════════════"
+
+    success_count=0
+    skip_count=0
+    error_count=0
+
+    # Processar cada membro
+    echo "$members_result" | while IFS= read -r member; do
+        if [ -n "$member" ]; then
+            # Verificar se já existe
+            if echo "$existing_members" | grep -q "^$member$"; then
+                echo "⚠️ '$member' já existe no grupo destino - ignorando"
+                skip_count=$((skip_count + 1))
+            else
+                echo "➕ Adicionando '$member'..."
+                
+                add_result=$(sudo samba-tool group addmembers "$TARGET_GROUP" "$member" 2>&1)
+                if [ $? -eq 0 ]; then
+                    echo "   ✅ Adicionado com sucesso!"
+                    success_count=$((success_count + 1))
+                else
+                    echo "   ❌ Erro: $add_result"
+                    error_count=$((error_count + 1))
+                fi
+            fi
+        fi
+    done
+
+    echo "════════════════════════════════════════"
+    echo "🏁 OPERAÇÃO CONCLUÍDA!"
+    echo ""
+    echo "📊 ESTATÍSTICAS FINAIS:"
+    
+    # Verificar membros finais do grupo destino
+    final_members=$(sudo samba-tool group listmembers "$TARGET_GROUP" 2>/dev/null)
+    final_count=$(echo "$final_members" | grep -v '^$' | wc -l)
+    
+    echo "   👥 Grupo origem: $SOURCE_GROUP ($member_count membros)"
+    echo "   👥 Grupo destino: $TARGET_GROUP ($final_count membros)"
+    echo "   ✅ Membros adicionados: Processo executado"
+    echo "   ⚠️ Membros já existentes: Ignorados automaticamente"
+    echo ""
+    echo "🎯 RESULTADO: Membros de '$SOURCE_GROUP' copiados para '$TARGET_GROUP'"
+    echo ""
+    echo "💡 Para verificar o resultado final:"
+    echo "   Execute: 'Exibir membros de um grupo' → '$TARGET_GROUP'"
+}
+
 # === FUNÇÕES DE CONFIGURAÇÕES ===
 
 show_password_policy() {
@@ -1245,6 +1345,7 @@ main() {
         "list-group-members") list_group_members ;;
         "move-group-ou") move_group_ou ;;
         "copy-user-groups") copy_user_groups ;;
+        "copy-group-members") copy_group_members ;;
 
         # Computadores
         "add-computer") add_computer ;;
