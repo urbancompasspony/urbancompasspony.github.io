@@ -1197,35 +1197,42 @@
             alertContainer = document.querySelector('.alert');
         }
 
-        // Mostrar loading
-        function showLoading() {
-            hideAlert();
-            hideResult();
-            loadingElement.classList.add('active');
-        }
+function showLoading() {
+    const loading = document.querySelector('.loading');
+    if (loading) {
+        loading.style.display = 'block';
+    }
+    hideAlert();
+    hideResult();
+}
 
-        // Ocultar loading
-        function hideLoading() {
-            loadingElement.classList.remove('active');
-        }
+function hideLoading() {
+    const loading = document.querySelector('.loading');
+    if (loading) {
+        loading.style.display = 'none';
+    }
+}
 
-        // Mostrar resultado
-        function showResult(content, isError = false) {
-            const resultContent = resultContainer.querySelector('.result-content');
-            resultContent.innerHTML = content;
-            resultContainer.classList.add('active');
-
-            if (isError) {
-                resultContainer.style.borderLeftColor = '#e74c3c';
-            } else {
-                resultContainer.style.borderLeftColor = '#3498db';
-            }
+function showResult(content, isError = false) {
+    const resultContainer = document.querySelector('.result-container');
+    if (resultContainer) {
+        resultContainer.style.display = 'block';
+        resultContainer.innerHTML = `<h4>Resultado:</h4><div class="result-content">${content}</div>`;
+        
+        if (isError) {
+            resultContainer.style.borderLeftColor = '#e74c3c';
+        } else {
+            resultContainer.style.borderLeftColor = '#3498db';
         }
+    }
+}
 
-        // Ocultar resultado
-        function hideResult() {
-            resultContainer.classList.remove('active');
-        }
+function hideResult() {
+    const resultContainer = document.querySelector('.result-container');
+    if (resultContainer) {
+        resultContainer.style.display = 'none';
+    }
+}
 
         // Mostrar alerta
         function showAlert(message, type = 'success') {
@@ -1763,14 +1770,19 @@ async function executeCommand(action) {
 
     if(loading) loading.style.display = 'none';
 }
-    function showConfirmation(message, callback) {
+
+function showConfirmation(message, callback) {
     const overlay = document.getElementById('confirmOverlay');
     const messageEl = document.getElementById('confirmMessage');
     const yesBtn = document.getElementById('confirmYes');
     const noBtn = document.getElementById('confirmNo');
 
-    messageEl.textContent = message;
+    messageEl.innerHTML = message;
     overlay.classList.add('active');
+
+    // Remover event listeners anteriores
+    yesBtn.onclick = null;
+    noBtn.onclick = null;
 
     yesBtn.onclick = function() {
         overlay.classList.remove('active');
@@ -1793,44 +1805,76 @@ function handlePasswordExpiry(event) {
         return;
     }
 
-    showConfirmation(`CONFIGURAR EXPIRAÇÃO DE SENHA
+    // Usar o modal de confirmação que já existe
+    const overlay = document.getElementById('confirmOverlay');
+    const messageEl = document.getElementById('confirmMessage');
+    const yesBtn = document.getElementById('confirmYes');
+    const noBtn = document.getElementById('confirmNo');
 
-Usuário: "${username}"
+    messageEl.innerHTML = `<strong>CONFIGURAR EXPIRAÇÃO DE SENHA</strong><br><br>Usuário: "${username}"<br><br>A senha deste usuário NÃO deve mais expirar?<br><br>• <strong>SIM</strong> = Senha nunca expira (--noexpiry)<br>• <strong>NÃO</strong> = Senha expira em 90 dias (padrão do domínio)`;
+    overlay.classList.add('active');
 
-A senha deste usuário NÃO deve mais expirar?
+    // Remover event listeners anteriores para evitar conflitos
+    yesBtn.onclick = null;
+    noBtn.onclick = null;
 
-- SIM = Senha nunca expira (--noexpiry)
-- NÃO = Senha expira em 90 dias (padrão do domínio)`, function(confirmed) {
-        if (confirmed) {
-            // Se confirmou SIM, senha não expira
-            const formData = new FormData();
-            formData.append('action', 'set-no-expiry');
-            formData.append('username', username);
+    yesBtn.onclick = function() {
+        overlay.classList.remove('active');
+        
+        // Se confirmou SIM, senha não expira
+        showLoading();
+        
+        const formData = new URLSearchParams();
+        formData.append('action', 'set-no-expiry');
+        formData.append('username', username);
 
-            fetch('/cgi-bin/samba-admin.cgi', {
-                method: 'POST',
-                body: new URLSearchParams(formData)
-            }).then(response => response.text())
-              .then(data => {
-                  showAlert(`✓ Senha de "${username}" configurada para NUNCA EXPIRAR`, 'success');
-                  hideForm();
-              });
-        } else {
-            // Se cancelou (NÃO), define prazo padrão
-            const formData = new FormData();
-            formData.append('action', 'set-default-expiry');
-            formData.append('username', username);
+        fetch('/cgi-bin/samba-admin.cgi', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.text())
+        .then(data => {
+            hideLoading();
+            showResult(`<pre>${data}</pre>`);
+            showAlert(`✓ Senha de "${username}" configurada para NUNCA EXPIRAR`, 'success');
+            
+            // Limpar o formulário
+            document.getElementById('expiry-username').value = '';
+        })
+        .catch(error => {
+            hideLoading();
+            showAlert('Erro: ' + error.message, 'error');
+        });
+    };
 
-            fetch('/cgi-bin/samba-admin.cgi', {
-                method: 'POST',
-                body: new URLSearchParams(formData)
-            }).then(response => response.text())
-              .then(data => {
-                  showAlert(`✓ Senha de "${username}" vai expirar em 90 dias (padrão)`, 'success');
-                  hideForm();
-              });
-        }
-    });
+    noBtn.onclick = function() {
+        overlay.classList.remove('active');
+        
+        // Se cancelou (NÃO), define prazo padrão
+        showLoading();
+        
+        const formData = new URLSearchParams();
+        formData.append('action', 'set-default-expiry');
+        formData.append('username', username);
+
+        fetch('/cgi-bin/samba-admin.cgi', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.text())
+        .then(data => {
+            hideLoading();
+            showResult(`<pre>${data}</pre>`);
+            showAlert(`✓ Senha de "${username}" vai expirar em 90 dias (padrão)`, 'success');
+            
+            // Limpar o formulário
+            document.getElementById('expiry-username').value = '';
+        })
+        .catch(error => {
+            hideLoading();
+            showAlert('Erro: ' + error.message, 'error');
+        });
+    };
 }
 
 function confirmDeleteOU(event) {
