@@ -1459,64 +1459,15 @@ show_shares() {
     fi
 }
 
-# Função interna para revalidar (baseada no código original) - com sudo
 revalidate_shares_internal() {
-    echo "🔄 Gerando includes.conf..."
+    for conf_file in /etc/samba/external/smb.conf.d/*.conf; do
+        if [ -f "$conf_file" ]; then
+            echo "include = $conf_file" | sudo tee -a /etc/samba/external/includes.conf > /dev/null
+        fi
+    done
     
-    # Garantir que o diretório existe
-    sudo mkdir -p /etc/samba/external/smb.conf.d/
-    
-    # Método 1: Tentar o comando original primeiro
-    echo "Método 1: Comando original..."
-    sudo find /etc/samba/external/smb.conf.d/ -type f -name "*.conf" -print | sed -e 's/^/include = /' | sudo tee /etc/samba/external/includes.conf > /dev/null
-    
-    # Verificar se funcionou
-    if [ -f "/etc/samba/external/includes.conf" ] && [ -s "/etc/samba/external/includes.conf" ]; then
-        echo "✅ Método 1 funcionou!"
-    else
-        echo "⚠️ Método 1 falhou, tentando método 2..."
-        
-        # Método 2: Fazer em etapas
-        echo "Método 2: Em etapas..."
-        
-        # Encontrar arquivos
-        conf_files=$(sudo find /etc/samba/external/smb.conf.d/ -name "*.conf" -type f)
-        
-        # Criar includes.conf vazio
-        sudo touch /etc/samba/external/includes.conf
-        sudo chmod 644 /etc/samba/external/includes.conf
-        
-        # Limpar arquivo
-        sudo tee /etc/samba/external/includes.conf > /dev/null << EOF
-# Compartilhamentos dinâmicos - gerado automaticamente
-EOF
-        
-        # Adicionar cada arquivo
-        for conf_file in $conf_files; do
-            if [ -f "$conf_file" ]; then
-                echo "include = $conf_file" | sudo tee -a /etc/samba/external/includes.conf > /dev/null
-            fi
-        done
-        
-        echo "✅ Método 2 concluído!"
-    fi
-    
-    # Mostrar resultado final
-    echo ""
-    echo "📄 Conteúdo final do includes.conf:"
-    echo "=================================="
-    if [ -f "/etc/samba/external/includes.conf" ]; then
-        cat /etc/samba/external/includes.conf
-    else
-        echo "❌ Arquivo não existe!"
-    fi
-    echo "=================================="
-    
-    # Recarregar Samba
-    echo ""
-    echo "🔧 Recarregando Samba..."
+    # Mostrar resultado
     sudo smbcontrol all reload-config 2>/dev/null
-    echo "✅ Samba recarregado!"
 }
 
 create_share() {
