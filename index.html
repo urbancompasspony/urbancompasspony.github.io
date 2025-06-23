@@ -427,13 +427,11 @@
                 <button class="back-btn" onclick="showMainMenu()">← Voltar</button>
                 <h3>Configurações do Domínio</h3>
                 <div class="submenu-grid">
-                    <div class="submenu-item" onclick="showForm('password-policy')">Regras de Senhas</div>
-                    <div class="submenu-item" onclick="showForm('permissions')">Permissões Comuns</div>
-                    <div class="submenu-item" onclick="showForm('acls')">Cuidado: ACLs</div>
-                    <div class="submenu-item" onclick="executeCommand('install-admx-w10')">Instalar ADMX Templates extras W 10</div>
-                    <div class="submenu-item" onclick="executeCommand('install-admx-w11')">Instalar ADMX Templates extras W 11</div>
-                    <div class="submenu-item" onclick="executeCommand('remove-admx')">Remover ADMX Templates extras</div>
-                    <div class="submenu-item" onclick="executeCommand('update-menu')">Atualizar este Menu!</div>
+                    <div class="submenu-item" onclick="showForm('password-policy')">Configurar Regras de Senhas</div>
+                    <div class="submenu-item" onclick="showForm('permissions')">Corrigir Permissões do AD</div>
+                    <div class="submenu-item" onclick="executeCommand('install-admx-w10')">Instalar ADMX Templates extras: Windows 10</div>
+                    <div class="submenu-item" onclick="executeCommand('install-admx-w11')">Instalar ADMX Templates extras: Windows 11</div>
+                    <div class="submenu-item" onclick="executeCommand('remove-admx')">Remover as ADMX Templates Extras</div>
                 </div>
             </div>
 
@@ -1225,20 +1223,6 @@
                     <button type="button" class="btn" onclick="backToDomainSettings()">Voltar</button>
                 </div>
 
-                <!-- Formulários de ACLs -->
-                <div id="acls-form" class="form-container">
-                    <h3>Gerenciamento de ACLs</h3>
-                    <div class="alert alert-warning active">
-                        <strong>Cuidado!</strong> Prefira rodar este comando nas máquinas locais: icacls C:\caminho\do\usuario /reset /t /c
-                    </div>
-                    <div class="submenu-grid">
-                        <div class="submenu-item" onclick="executeCommand('check-acl')">Verificar ACL padrão (Administrator!)</div>
-                        <div class="submenu-item" onclick="showForm('get-acls')">Coletar ACLs de arquivo ou pasta</div>
-                        <div class="submenu-item" onclick="showForm('set-acls')">PERIGO! Definir uma ACL a um arquivo ou pasta</div>
-                    </div>
-                    <button type="button" class="btn" onclick="backToDomainSettings()">Voltar</button>
-                </div>
-
             </div>
 
             <!-- Loading -->
@@ -1529,7 +1513,6 @@ function hideForm() {
             'install-admx-w10': 'install-admx-w10',
             'install-admx-w11': 'install-admx-w11',
             'remove-admx': 'remove-admx',
-            'update-menu': 'update-menu',
             'show-password-policy': 'show-password-policy',
             'enable-complexity': 'enable-complexity',
             'disable-complexity': 'disable-complexity',
@@ -1537,7 +1520,6 @@ function hideForm() {
             'sysvol-reset': 'sysvol-reset',
             'db-check-general': 'db-check-general',
             'db-check-acls': 'db-check-acls',
-            'check-acl': 'check-acl'
         };
 
         // Funções específicas para validação
