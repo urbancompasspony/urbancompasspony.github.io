@@ -1358,11 +1358,11 @@ show_replication_info() {
 }
 
 active_sessions() {
-    execute_samba_command net status sessions
+    execute_samba_command sudo net status sessions
 }
 
 active_shares() {
-    execute_samba_command net status shares
+    execute_samba_command sudo net status shares
 }
 
 samba_processes() {
