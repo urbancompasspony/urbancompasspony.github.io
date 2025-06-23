@@ -69,18 +69,33 @@ parse_cgi_params() {
 
 # Função de validação e sanitização
 sanitize_input() {
-    # Remove caracteres perigosos
-    USERNAME=$(echo "$USERNAME" | sed 's/[^a-zA-Z0-9._-]//g')
-    FIRSTNAME=$(echo "$FIRSTNAME" | sed 's/[^a-zA-Z0-9 ._-]//g')
-    GROUP=$(echo "$GROUP" | sed 's/[^a-zA-Z0-9._-]//g')
-    COMPUTER=$(echo "$COMPUTER" | sed 's/[^a-zA-Z0-9.-]//g')
-    OU_NAME=$(echo "$OU_NAME" | sed 's/[^a-zA-Z0-9 ._-]//g')
-    SILO_NAME=$(echo "$SILO_NAME" | sed 's/[^a-zA-Z0-9._-]//g')
-    SOURCE_USERNAME=$(echo "$SOURCE_USERNAME" | sed 's/[^a-zA-Z0-9._-]//g')
-    TARGET_USERNAME=$(echo "$TARGET_USERNAME" | sed 's/[^a-zA-Z0-9._-]//g')
-    SOURCE_GROUP=$(echo "$SOURCE_GROUP" | sed 's/[^a-zA-Z0-9._-]//g')
-    TARGET_GROUP=$(echo "$TARGET_GROUP" | sed 's/[^a-zA-Z0-9._-]//g')
+    # Remove apenas caracteres perigosos para comandos shell
+    # USUÁRIOS: Remove $ (não devem ter $)
+    USERNAME=$(echo "$USERNAME" | sed 's/[;&|`$(){}[\]*?<>]//g' | tr -d '\n\r')
+    SOURCE_USERNAME=$(echo "$SOURCE_USERNAME" | sed 's/[;&|`$(){}[\]*?<>]//g' | tr -d '\n\r')
+    TARGET_USERNAME=$(echo "$TARGET_USERNAME" | sed 's/[;&|`$(){}[\]*?<>]//g' | tr -d '\n\r')
+    
+    # GRUPOS: Remove $ (grupos padrão não têm $)
+    GROUP=$(echo "$GROUP" | sed 's/[;&|`$(){}[\]*?<>]//g' | tr -d '\n\r')
+    SOURCE_GROUP=$(echo "$SOURCE_GROUP" | sed 's/[;&|`$(){}[\]*?<>]//g' | tr -d '\n\r')
+    TARGET_GROUP=$(echo "$TARGET_GROUP" | sed 's/[;&|`$(){}[\]*?<>]//g' | tr -d '\n\r')
+    
+    # COMPUTADORES: Preserva $ porque o código adiciona automaticamente
+    COMPUTER=$(echo "$COMPUTER" | sed 's/[;&|`(){}[\]*?<>]//g' | tr -d '\n\r')
+    
+    # OUTROS: Remove caracteres perigosos mas preserva espaços e acentos
+    FIRSTNAME=$(echo "$FIRSTNAME" | sed 's/[;&|`(){}[\]*?<>]//g' | tr -d '\n\r')
+    OU_NAME=$(echo "$OU_NAME" | sed 's/[;&|`(){}[\]*?<>]//g' | tr -d '\n\r')
+    SILO_NAME=$(echo "$SILO_NAME" | sed 's/[;&|`(){}[\]*?<>]//g' | tr -d '\n\r')
+    SEARCH_TERM=$(echo "$SEARCH_TERM" | sed 's/[;&|`(){}[\]*?<>]//g' | tr -d '\n\r')
 
+    # Limitar tamanho para evitar buffer overflow
+    USERNAME=$(echo "$USERNAME" | cut -c1-64)
+    GROUP=$(echo "$GROUP" | cut -c1-64)
+    SOURCE_GROUP=$(echo "$SOURCE_GROUP" | cut -c1-64)
+    TARGET_GROUP=$(echo "$TARGET_GROUP" | cut -c1-64)
+    COMPUTER=$(echo "$COMPUTER" | cut -c1-15)  # Computadores têm limite menor
+    
     # Validar email
     if [ -n "$EMAIL" ] && ! [[ "$EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
         EMAIL=""
