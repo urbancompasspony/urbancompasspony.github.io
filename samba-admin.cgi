@@ -1460,11 +1460,7 @@ show_shares() {
 }
 
 revalidate_shares_internal() {
-    for conf_file in /etc/samba/external/smb.conf.d/*.conf; do
-        if [ -f "$conf_file" ]; then
-            echo "include = $conf_file" | sudo tee -a /etc/samba/external/includes.conf > /dev/null
-        fi
-    done
+    find /etc/samba/external/smb.conf.d/ -type f -print | sed -e 's/^/include = /' > /etc/samba/external/includes.conf
     
     # Mostrar resultado
     sudo smbcontrol all reload-config 2>/dev/null
