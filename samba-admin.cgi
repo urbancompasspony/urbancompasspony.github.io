@@ -100,7 +100,15 @@ sanitize_input() {
     SOURCE_GROUP=$(echo "$SOURCE_GROUP" | cut -c1-64)
     TARGET_GROUP=$(echo "$TARGET_GROUP" | cut -c1-64)
     COMPUTER=$(echo "$COMPUTER" | cut -c1-15)  # Computadores têm limite menor
-    
+
+    # Shares
+    SHARE_NAME=$(echo "$SHARE_NAME" | sed 's/[^a-zA-Z0-9._-]//g')
+    SHARE_PATH=$(echo "$SHARE_PATH" | sed 's|[^a-zA-Z0-9/_.-]||g')
+    # Validar path seguro
+    if ! [[ "$SHARE_PATH" =~ ^/?[a-zA-Z0-9/_.-]*$ ]]; then
+      SHARE_PATH=""
+    fi
+
     # Validar email
     if [ -n "$EMAIL" ] && ! [[ "$EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
         EMAIL=""
@@ -1361,26 +1369,60 @@ samba_processes() {
     execute_samba_command sudo samba-tool processes
 }
 
-# === FUNÇÕES DE COMPARTILHAMENTOS ===
+# === FUNÇÕES DE COMPARTILHAMENTOS CORRIGIDAS ===
 
 show_shares() {
+    # Verificar se o diretório existe
     if [ -d "/etc/samba/external/smb.conf.d/" ]; then
-        result=$(find /etc/samba/external/smb.conf.d/ -name "*.conf" -exec basename {} \; 2>/dev/null | sed 's/.conf$//')
-        json_response "success" "Compartilhamentos encontrados" "$result"
+        # Listar arquivos .conf e mostrar conteúdo
+        output=""
+        for conf_file in /etc/samba/external/smb.conf.d/*.conf; do
+            if [ -f "$conf_file" ]; then
+                share_name=$(basename "$conf_file" .conf)
+                output="$output\n=== COMPARTILHAMENTO: $share_name ===\n"
+                output="$output$(cat "$conf_file")\n"
+            fi
+        done
+        
+        if [ -n "$output" ]; then
+            echo "$output"
+        else
+            echo "Nenhum compartilhamento encontrado em /etc/samba/external/smb.conf.d/"
+        fi
     else
-        json_response "success" "Nenhum compartilhamento encontrado" ""
+        echo "Diretório /etc/samba/external/smb.conf.d/ não existe"
+        echo "Criando estrutura de diretórios..."
+        mkdir -p /etc/samba/external/smb.conf.d/
+        touch /etc/samba/external/includes.conf
+        echo "Estrutura criada. Execute novamente para ver compartilhamentos."
     fi
 }
 
 create_share() {
     if [ -z "$SHARE_NAME" ] || [ -z "$SHARE_PATH" ] || [ -z "$SHARE_USERS" ]; then
-        json_response "error" "Nome, caminho e usuários são obrigatórios"
+        echo "Erro: Nome, caminho e usuários são obrigatórios"
         return
     fi
 
+    # Validar se não contém espaços (baseado no código original)
+    if [[ $SHARE_NAME = *" "* ]] || [[ $SHARE_PATH = *" "* ]] || [[ $SHARE_NAME = "" ]]; then
+        echo "Erro: Não crie compartilhamentos com espaços nos nomes ou nomes vazios!"
+        return
+    fi
+
+    # Verificar se já existe
+    if [ -f "/etc/samba/external/smb.conf.d/$SHARE_NAME.conf" ]; then
+        echo "Erro: Um compartilhamento com este nome já existe na rede!"
+        return
+    fi
+
+    # Criar estrutura de diretórios se não existir
     mkdir -p /etc/samba/external/smb.conf.d/
+
+    # Criar a pasta no sistema (baseado no código original)
     mkdir -p "/mnt$SHARE_PATH"
 
+    # Criar arquivo de configuração (baseado no código original)
     cat > "/etc/samba/external/smb.conf.d/$SHARE_NAME.conf" << EOF
 [$SHARE_NAME]
 path = /mnt$SHARE_PATH
@@ -1395,21 +1437,43 @@ directory mask = 0777
 force directory mode = 0777
 EOF
 
+    # Aplicar permissões (sem -R, baseado no código original)
     chmod 777 "/mnt$SHARE_PATH"
-    revalidate_shares
 
-    json_response "success" "Compartilhamento $SHARE_NAME criado com sucesso"
+    # Revalidar configurações
+    revalidate_shares_internal
+
+    echo "✅ Compartilhamento '$SHARE_NAME' criado com sucesso!"
+    echo "📁 Pasta: /mnt$SHARE_PATH"
+    echo "👥 Usuários: $SHARE_USERS"
+    echo "📝 Configuração salva em: /etc/samba/external/smb.conf.d/$SHARE_NAME.conf"
 }
 
 create_sync_share() {
     if [ -z "$SHARE_NAME" ] || [ -z "$SHARE_PATH" ] || [ -z "$SHARE_USERS" ]; then
-        json_response "error" "Nome, caminho e usuários são obrigatórios"
+        echo "Erro: Nome, caminho e usuários são obrigatórios"
         return
     fi
 
+    # Validar se não contém espaços
+    if [[ $SHARE_NAME = *" "* ]] || [[ $SHARE_PATH = *" "* ]] || [[ $SHARE_NAME = "" ]]; then
+        echo "Erro: Não crie compartilhamentos com espaços nos nomes ou nomes vazios!"
+        return
+    fi
+
+    # Verificar se já existe
+    if [ -f "/etc/samba/external/smb.conf.d/$SHARE_NAME.conf" ]; then
+        echo "Erro: Um compartilhamento com este nome já existe na rede!"
+        return
+    fi
+
+    # Criar estrutura de diretórios se não existir
     mkdir -p /etc/samba/external/smb.conf.d/
+
+    # Criar a pasta no sistema
     mkdir -p "/mnt$SHARE_PATH"
 
+    # Criar arquivo de configuração para Sync (baseado no código original)
     cat > "/etc/samba/external/smb.conf.d/$SHARE_NAME.conf" << EOF
 [$SHARE_NAME]
 path = /mnt$SHARE_PATH
@@ -1423,31 +1487,72 @@ directory mask = 0700
 force directory mode = 0700
 EOF
 
+    # Aplicar permissões (sem -R, baseado no código original)
     chmod 777 "/mnt$SHARE_PATH"
-    revalidate_shares
 
-    json_response "success" "Compartilhamento sync $SHARE_NAME criado com sucesso"
+    # Revalidar configurações
+    revalidate_shares_internal
+
+    echo "✅ Compartilhamento Sync '$SHARE_NAME' criado com sucesso!"
+    echo "📁 Pasta: /mnt$SHARE_PATH"
+    echo "👥 Usuários: $SHARE_USERS"
+    echo "🔒 Tipo: Estruturado para Sync Center"
+    echo "📝 Configuração salva em: /etc/samba/external/smb.conf.d/$SHARE_NAME.conf"
 }
 
 delete_share() {
     if [ -z "$SHARE_NAME" ]; then
-        json_response "error" "Nome do compartilhamento é obrigatório"
+        echo "Erro: Nome do compartilhamento é obrigatório"
         return
     fi
 
-    if [ -f "/etc/samba/external/smb.conf.d/$SHARE_NAME.conf" ]; then
-        rm "/etc/samba/external/smb.conf.d/$SHARE_NAME.conf"
-        revalidate_shares
-        json_response "success" "Compartilhamento $SHARE_NAME removido com sucesso"
-    else
-        json_response "error" "Compartilhamento não encontrado"
+    # Verificar se o arquivo de configuração existe
+    if [ ! -f "/etc/samba/external/smb.conf.d/$SHARE_NAME.conf" ]; then
+        echo "Erro: O compartilhamento '$SHARE_NAME' não existe!"
+        return
     fi
+
+    # Obter caminho da pasta antes de remover (para informar ao usuário)
+    share_path=$(grep "^path" "/etc/samba/external/smb.conf.d/$SHARE_NAME.conf" | cut -d= -f2 | tr -d ' ')
+
+    # Remover APENAS o arquivo de configuração (não a pasta)
+    rm "/etc/samba/external/smb.conf.d/$SHARE_NAME.conf"
+
+    # Revalidar configurações
+    revalidate_shares_internal
+
+    echo "✅ Compartilhamento '$SHARE_NAME' removido com sucesso!"
+    echo "📁 Pasta '$share_path' foi PRESERVADA no disco"
+    echo "🗑️ Apenas a configuração de compartilhamento foi removida"
+    echo ""
+    echo "💡 Para remover a pasta também, execute manualmente:"
+    echo "   rm -rf '$share_path'"
+}
+
+# Função interna para revalidar (baseada no código original)
+revalidate_shares_internal() {
+    # Criar includes.conf com todos os arquivos .conf
+    find /etc/samba/external/smb.conf.d/ -type f -name "*.conf" -print | sed -e 's/^/include = /' > /etc/samba/external/includes.conf 2>/dev/null
+    
+    # Recarregar configuração do Samba
+    smbcontrol all reload-config 2>/dev/null
 }
 
 revalidate_shares() {
-    find /etc/samba/external/smb.conf.d/ -type f -print | sed -e 's/^/include = /' > /etc/samba/external/includes.conf 2>/dev/null
-    smbcontrol all reload-config
-    json_response "success" "Configurações de compartilhamento revalidadas"
+    echo "🔄 Revalidando configurações de compartilhamento..."
+    
+    # Verificar se diretório existe
+    if [ ! -d "/etc/samba/external/smb.conf.d/" ]; then
+        echo "⚠️ Criando estrutura de diretórios..."
+        mkdir -p /etc/samba/external/smb.conf.d/
+    fi
+    
+    # Executar revalidação
+    revalidate_shares_internal
+    
+    echo "✅ Configurações revalidadas com sucesso!"
+    echo "📋 Arquivo includes.conf atualizado"
+    echo "🔧 Samba recarregado"
 }
 
 copy_group_members() {
@@ -1826,6 +1931,11 @@ main() {
         "create-sync-share") create_sync_share ;;
         "delete-share") delete_share ;;
         "revalidate-shares") revalidate_shares ;;
+        "share-name") SHARE_NAME="$value" ;;
+        "share-path") SHARE_PATH="$value" ;;
+        "share-users") SHARE_USERS="$value" ;;
+        "writable") WRITABLE="$value" ;;
+        "browsable") BROWSABLE="$value" ;;
 
         # Informações do domínio
         "show-domain-info") show_domain_info ;;
