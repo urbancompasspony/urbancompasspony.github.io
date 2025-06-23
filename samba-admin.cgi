@@ -63,6 +63,11 @@ parse_cgi_params() {
             "target-username") TARGET_USERNAME="$value" ;;
             "expiry-date") EXPIRY_DATE="$value" ;;
             "days") DAYS="$value" ;;
+            "history-length") HISTORY_LENGTH="$value" ;;
+            "min-length") MIN_LENGTH="$value" ;;
+            "min-age") MIN_AGE="$value" ;;
+            "max-age") MAX_AGE="$value" ;;
+            "max-attempts") MAX_ATTEMPTS="$value" ;;
         esac
     done
 }
@@ -1591,6 +1596,157 @@ update_menu() {
     json_response "success" "Menu atualizado com sucesso"
 }
 
+# === FUNÇÕES DE POLÍTICA DE SENHA INDIVIDUAIS ===
+
+set_password_history() {
+    if [ -z "$HISTORY_LENGTH" ]; then
+        echo "Erro: Tamanho do histórico é obrigatório"
+        return
+    fi
+
+    echo "🔍 Configurando histórico de senhas para: $HISTORY_LENGTH senhas"
+    echo ""
+
+    # Validar valor
+    if [ "$HISTORY_LENGTH" -lt 0 ] || [ "$HISTORY_LENGTH" -gt 1024 ]; then
+        echo "❌ Erro: Valor deve estar entre 0 e 1024"
+        return
+    fi
+
+    # Executar comando
+    result=$(sudo samba-tool domain passwordsettings set --history-length="$HISTORY_LENGTH" 2>&1)
+    exit_code=$?
+
+    if [ $exit_code -eq 0 ]; then
+        echo "✅ Histórico de senhas configurado para $HISTORY_LENGTH senhas"
+        echo ""
+        
+        if [ "$HISTORY_LENGTH" -eq 0 ]; then
+            echo "⚠️ CONFIGURAÇÃO: Usuários podem reutilizar a mesma senha imediatamente"
+            echo "🔓 SEGURANÇA: Baixa (não recomendado para ambientes corporativos)"
+        else
+            echo "🔐 CONFIGURAÇÃO: Usuários devem criar $HISTORY_LENGTH senhas diferentes antes de reutilizar"
+            echo "✅ SEGURANÇA: Melhorada"
+        fi
+        
+        echo ""
+        echo "💡 EFEITO: Aplica-se a TODOS os usuários do domínio"
+        
+    else
+        echo "❌ Erro ao configurar histórico: $result"
+    fi
+}
+
+set_password_min_length() {
+    if [ -z "$MIN_LENGTH" ]; then
+        echo "Erro: Tamanho mínimo é obrigatório"
+        return
+    fi
+
+    echo "🔍 Configurando tamanho mínimo de senhas para: $MIN_LENGTH caracteres"
+    
+    result=$(sudo samba-tool domain passwordsettings set --min-pwd-length="$MIN_LENGTH" 2>&1)
+    exit_code=$?
+
+    if [ $exit_code -eq 0 ]; then
+        echo "✅ Tamanho mínimo de senhas configurado para $MIN_LENGTH caracteres"
+        echo ""
+        
+        if [ "$MIN_LENGTH" -eq 0 ]; then
+            echo "⚠️ AVISO: Senhas podem estar vazias (muito inseguro)"
+        elif [ "$MIN_LENGTH" -lt 8 ]; then
+            echo "⚠️ AVISO: Tamanho abaixo do recomendado (mínimo 8 caracteres)"
+        else
+            echo "✅ SEGURANÇA: Tamanho adequado"
+        fi
+        
+    else
+        echo "❌ Erro: $result"
+    fi
+}
+
+set_password_min_age() {
+    if [ -z "$MIN_AGE" ]; then
+        echo "Erro: Validade mínima é obrigatória"
+        return
+    fi
+
+    echo "🔍 Configurando validade mínima de senhas para: $MIN_AGE dias"
+    
+    result=$(sudo samba-tool domain passwordsettings set --min-pwd-age="$MIN_AGE" 2>&1)
+    exit_code=$?
+
+    if [ $exit_code -eq 0 ]; then
+        echo "✅ Validade mínima configurada para $MIN_AGE dias"
+        echo ""
+        
+        if [ "$MIN_AGE" -eq 0 ]; then
+            echo "🔓 CONFIGURAÇÃO: Usuários podem trocar senha imediatamente"
+        else
+            echo "🔐 CONFIGURAÇÃO: Usuários devem esperar $MIN_AGE dias para trocar senha novamente"
+        fi
+        
+    else
+        echo "❌ Erro: $result"
+    fi
+}
+
+set_password_max_age() {
+    if [ -z "$MAX_AGE" ]; then
+        echo "Erro: Validade máxima é obrigatória"
+        return
+    fi
+
+    echo "🔍 Configurando validade máxima de senhas para: $MAX_AGE dias"
+    
+    result=$(sudo samba-tool domain passwordsettings set --max-pwd-age="$MAX_AGE" 2>&1)
+    exit_code=$?
+
+    if [ $exit_code -eq 0 ]; then
+        echo "✅ Validade máxima configurada para $MAX_AGE dias"
+        echo ""
+        
+        if [ "$MAX_AGE" -eq 0 ]; then
+            echo "∞ CONFIGURAÇÃO: Senhas nunca expiram"
+            echo "⚠️ SEGURANÇA: Pode ser um risco em ambientes corporativos"
+        else
+            echo "⏰ CONFIGURAÇÃO: Senhas expiram após $MAX_AGE dias"
+            echo "✅ SEGURANÇA: Usuários serão forçados a trocar senhas periodicamente"
+        fi
+        
+    else
+        echo "❌ Erro: $result"
+    fi
+}
+
+set_login_attempts() {
+    if [ -z "$MAX_ATTEMPTS" ]; then
+        echo "Erro: Número máximo de tentativas é obrigatório"
+        return
+    fi
+
+    echo "🔍 Configurando tentativas de login para: $MAX_ATTEMPTS tentativas"
+    
+    result=$(sudo samba-tool domain passwordsettings set --account-lockout-threshold="$MAX_ATTEMPTS" 2>&1)
+    exit_code=$?
+
+    if [ $exit_code -eq 0 ]; then
+        echo "✅ Tentativas de login configuradas para $MAX_ATTEMPTS tentativas"
+        echo ""
+        
+        if [ "$MAX_ATTEMPTS" -eq 0 ]; then
+            echo "🔓 CONFIGURAÇÃO: Sem limite de tentativas (contas nunca são bloqueadas)"
+            echo "⚠️ SEGURANÇA: Vulnerável a ataques de força bruta"
+        else
+            echo "🔒 CONFIGURAÇÃO: Contas bloqueadas após $MAX_ATTEMPTS tentativas incorretas"
+            echo "✅ SEGURANÇA: Protegido contra ataques de força bruta"
+        fi
+        
+    else
+        echo "❌ Erro: $result"
+    fi
+}
+
 # === FUNÇÃO PRINCIPAL ===
 
 main() {
@@ -1691,6 +1847,11 @@ main() {
         "db-check-acls") db_check_acls ;;
         "check-acl") check_acl ;;
         "update-menu") update_menu ;;
+        "set-password-history") set_password_history ;;
+        "set-password-min-length") set_password_min_length ;;
+        "set-password-min-age") set_password_min_age ;;
+        "set-password-max-age") set_password_max_age ;;
+        "set-login-attempts") set_login_attempts ;;
 
         *)
             json_response "error" "Ação não reconhecida: $ACTION"
