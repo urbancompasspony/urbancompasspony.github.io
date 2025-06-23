@@ -278,15 +278,15 @@
                     <h3>💻 Ferramentas de Computadores</h3>
                     <p>Gerenciar computadores do domínio, adicionar, remover e mover entre OUs.</p>
                 </div>
-
-                <div class="menu-card" onclick="showSubmenu('shared-folders')">
-                    <h3>📁 Gestão de Pastas Compartilhadas</h3>
-                    <p>Criar e gerenciar compartilhamentos de rede, definir permissões e ACLs.</p>
-                </div>
-
+                
                 <div class="menu-card" onclick="showSubmenu('ou-tools')">
                     <h3>🏢 Unidades Organizacionais</h3>
                     <p>Criar e gerenciar OUs para organizar objetos do Active Directory.</p>
+                </div>
+                
+                <div class="menu-card" onclick="showSubmenu('shared-folders')">
+                    <h3>📁 Gestão de Pastas Compartilhadas</h3>
+                    <p>Criar e gerenciar compartilhamentos de rede, definir permissões e ACLs.</p>
                 </div>
 
                 <div class="menu-card" onclick="showSubmenu('auth-silos')">
@@ -676,6 +676,51 @@
                     </form>
                 </div>
 
+<!-- Formulário Adicionar Grupo ao Grupo -->
+<div id="add-group-to-group-form" class="form-container">
+    <h3>Adicionar Grupo a outro Grupo</h3>
+    <form onsubmit="submitForm(event, 'add-group-to-group')">
+        <div class="form-group">
+            <label for="source-group-name">Grupo de Origem (que será adicionado):</label>
+            <input type="text" id="source-group-name" name="source-group" placeholder="ex: TI_Desenvolvedores" required>
+            <small style="color: #666;">Nome do grupo que será membro de outro grupo</small>
+        </div>
+        <div class="form-group">
+            <label for="target-group-name">Grupo de Destino (que receberá o grupo):</label>
+            <input type="text" id="target-group-name" name="target-group" placeholder="ex: TI_Todos" required>
+            <small style="color: #666;">Nome do grupo que receberá o novo membro</small>
+        </div>
+        <div style="background: #e8f4fd; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #2196F3;">
+            <h5 style="color: #1976D2; margin: 0 0 8px 0;">💡 Exemplo:</h5>
+            <p style="color: #1976D2; margin: 0; font-size: 14px;">
+                Origem: "TI_Desenvolvedores" → Destino: "TI_Todos"<br>
+                <strong>Resultado:</strong> Grupo "TI_Desenvolvedores" se torna membro de "TI_Todos"
+            </p>
+        </div>
+        <button type="submit" class="btn btn-success">Adicionar Grupo ao Grupo</button>
+        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+    </form>
+</div>
+
+<!-- Formulário Remover Grupo do Grupo -->
+<div id="remove-group-from-group-form" class="form-container">
+    <h3>Remover Grupo de outro Grupo</h3>
+    <form onsubmit="submitForm(event, 'remove-group-from-group')">
+        <div class="form-group">
+            <label for="remove-source-group">Grupo a ser Removido:</label>
+            <input type="text" id="remove-source-group" name="source-group" placeholder="ex: TI_Desenvolvedores" required>
+            <small style="color: #666;">Nome do grupo que será removido</small>
+        </div>
+        <div class="form-group">
+            <label for="remove-target-group">Grupo Principal:</label>
+            <input type="text" id="remove-target-group" name="target-group" placeholder="ex: TI_Todos" required>
+            <small style="color: #666;">Nome do grupo do qual o outro será removido</small>
+        </div>
+        <button type="submit" class="btn btn-danger">Remover Grupo do Grupo</button>
+        <button type="button" class="btn" onclick="hideForm()">Cancelar</button>
+    </form>
+</div>
+                
                 <!-- Formulário Copiar Membros de Grupo -->
 <div id="copy-group-members-form" class="form-container">
     <h3>Copiar Membros de um Grupo</h3>
