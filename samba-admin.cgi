@@ -1369,7 +1369,9 @@ samba_processes() {
     execute_samba_command sudo samba-tool processes
 }
 
-# === FUNÇÕES DE COMPARTILHAMENTOS CORRIGIDAS ===
+# === FUNÇÕES DE COMPARTILHAMENTOS - VERSÃO ROBUSTA ===
+
+# === FUNÇÕES DE COMPARTILHAMENTOS COM SUDO (Seguindo o padrão do código original) ===
 
 show_shares() {
     # Verificar se o diretório existe
@@ -1391,9 +1393,8 @@ show_shares() {
         fi
     else
         echo "Diretório /etc/samba/external/smb.conf.d/ não existe"
-        echo "Criando estrutura de diretórios..."
-        mkdir -p /etc/samba/external/smb.conf.d/
-        touch /etc/samba/external/includes.conf
+        echo "Criando estrutura..."
+        sudo mkdir -p /etc/samba/external/smb.conf.d/
         echo "Estrutura criada. Execute novamente para ver compartilhamentos."
     fi
 }
@@ -1416,14 +1417,14 @@ create_share() {
         return
     fi
 
-    # Criar estrutura de diretórios se não existir
-    mkdir -p /etc/samba/external/smb.conf.d/
+    # Criar estrutura de diretórios se não existir (com sudo)
+    sudo mkdir -p /etc/samba/external/smb.conf.d/
 
     # Criar a pasta no sistema (baseado no código original)
-    mkdir -p "/mnt$SHARE_PATH"
+    sudo mkdir -p "/mnt$SHARE_PATH"
 
-    # Criar arquivo de configuração (baseado no código original)
-    cat > "/etc/samba/external/smb.conf.d/$SHARE_NAME.conf" << EOF
+    # Criar arquivo de configuração (com sudo - usando tee)
+    sudo tee "/etc/samba/external/smb.conf.d/$SHARE_NAME.conf" > /dev/null << EOF
 [$SHARE_NAME]
 path = /mnt$SHARE_PATH
 valid users = $SHARE_USERS
@@ -1438,7 +1439,7 @@ force directory mode = 0777
 EOF
 
     # Aplicar permissões (sem -R, baseado no código original)
-    chmod 777 "/mnt$SHARE_PATH"
+    sudo chmod 777 "/mnt$SHARE_PATH"
 
     # Revalidar configurações
     revalidate_shares_internal
@@ -1467,14 +1468,14 @@ create_sync_share() {
         return
     fi
 
-    # Criar estrutura de diretórios se não existir
-    mkdir -p /etc/samba/external/smb.conf.d/
+    # Criar estrutura de diretórios se não existir (com sudo)
+    sudo mkdir -p /etc/samba/external/smb.conf.d/
 
     # Criar a pasta no sistema
-    mkdir -p "/mnt$SHARE_PATH"
+    sudo mkdir -p "/mnt$SHARE_PATH"
 
-    # Criar arquivo de configuração para Sync (baseado no código original)
-    cat > "/etc/samba/external/smb.conf.d/$SHARE_NAME.conf" << EOF
+    # Criar arquivo de configuração para Sync (com sudo - usando tee)
+    sudo tee "/etc/samba/external/smb.conf.d/$SHARE_NAME.conf" > /dev/null << EOF
 [$SHARE_NAME]
 path = /mnt$SHARE_PATH
 valid users = $SHARE_USERS
@@ -1488,7 +1489,7 @@ force directory mode = 0700
 EOF
 
     # Aplicar permissões (sem -R, baseado no código original)
-    chmod 777 "/mnt$SHARE_PATH"
+    sudo chmod 777 "/mnt$SHARE_PATH"
 
     # Revalidar configurações
     revalidate_shares_internal
@@ -1515,8 +1516,8 @@ delete_share() {
     # Obter caminho da pasta antes de remover (para informar ao usuário)
     share_path=$(grep "^path" "/etc/samba/external/smb.conf.d/$SHARE_NAME.conf" | cut -d= -f2 | tr -d ' ')
 
-    # Remover APENAS o arquivo de configuração (não a pasta)
-    rm "/etc/samba/external/smb.conf.d/$SHARE_NAME.conf"
+    # Remover APENAS o arquivo de configuração (não a pasta) - com sudo
+    sudo rm "/etc/samba/external/smb.conf.d/$SHARE_NAME.conf"
 
     # Revalidar configurações
     revalidate_shares_internal
@@ -1529,22 +1530,22 @@ delete_share() {
     echo "   rm -rf '$share_path'"
 }
 
-# Função interna para revalidar (baseada no código original)
+# Função interna para revalidar (baseada no código original) - com sudo
 revalidate_shares_internal() {
-    # Criar includes.conf com todos os arquivos .conf
-    find /etc/samba/external/smb.conf.d/ -type f -name "*.conf" -print | sed -e 's/^/include = /' > /etc/samba/external/includes.conf 2>/dev/null
+    # Criar includes.conf com todos os arquivos .conf (com sudo)
+    sudo find /etc/samba/external/smb.conf.d/ -type f -name "*.conf" -print | sed -e 's/^/include = /' | sudo tee /etc/samba/external/includes.conf > /dev/null 2>&1
     
-    # Recarregar configuração do Samba
-    smbcontrol all reload-config 2>/dev/null
+    # Recarregar configuração do Samba (com sudo)
+    sudo smbcontrol all reload-config 2>/dev/null
 }
 
 revalidate_shares() {
     echo "🔄 Revalidando configurações de compartilhamento..."
     
-    # Verificar se diretório existe
+    # Verificar se diretório existe (criar com sudo se necessário)
     if [ ! -d "/etc/samba/external/smb.conf.d/" ]; then
         echo "⚠️ Criando estrutura de diretórios..."
-        mkdir -p /etc/samba/external/smb.conf.d/
+        sudo mkdir -p /etc/samba/external/smb.conf.d/
     fi
     
     # Executar revalidação
@@ -1554,6 +1555,8 @@ revalidate_shares() {
     echo "📋 Arquivo includes.conf atualizado"
     echo "🔧 Samba recarregado"
 }
+
+# FIM DOS COMPARTILHAMENTOS
 
 copy_group_members() {
     if [ -z "$SOURCE_GROUP" ] || [ -z "$TARGET_GROUP" ]; then
