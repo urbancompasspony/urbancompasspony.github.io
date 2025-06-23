@@ -1585,19 +1585,6 @@ check_acl() {
     execute_samba_command sudo samba-tool gpo aclcheck -U Administrator
 }
 
-install_admx_w10() {
-    json_response "success" "Instalação de templates ADMX W10 iniciada (pode levar alguns minutos)"
-}
-
-install_admx_w11() {
-    json_response "success" "Instalação de templates ADMX W11 iniciada (pode levar alguns minutos)"
-}
-
-remove_admx() {
-    rm -rf /var/lib/samba/sysvol/*/Policies/PolicyDefinitions
-    json_response "success" "Templates ADMX removidos"
-}
-
 update_menu() {
     wget -q https://raw.githubusercontent.com/urbancompasspony/server/main/dominio -O /root/.dominio
     chmod +x /root/.dominio
@@ -1703,9 +1690,6 @@ main() {
         "db-check-general") db_check_general ;;
         "db-check-acls") db_check_acls ;;
         "check-acl") check_acl ;;
-        "install-admx-w10") install_admx_w10 ;;
-        "install-admx-w11") install_admx_w11 ;;
-        "remove-admx") remove_admx ;;
         "update-menu") update_menu ;;
 
         *)
