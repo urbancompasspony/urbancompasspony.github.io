@@ -434,6 +434,136 @@
 
             <!-- Área de Formulários -->
             <div id="form-area">
+<!-- Formulário Histórico de Senhas -->
+<div id="password-history-form" class="form-container">
+    <h3>Configurar Histórico de Senhas</h3>
+    <div class="instruction-panel" style="display: block; background: #e8f4fd; border-left: 4px solid #2196F3;">
+        <h4 style="color: #1976D2; margin-bottom: 10px;">💡 Como funciona:</h4>
+        <p style="margin-bottom: 8px;">• <strong>Histórico = 0:</strong> Usuários podem reutilizar a mesma senha imediatamente</p>
+        <p style="margin-bottom: 8px;">• <strong>Histórico = 24:</strong> Usuários devem usar 24 senhas diferentes antes de reutilizar</p>
+        <p style="color: #666; font-size: 14px;">⚠️ Valor recomendado: entre 12 e 24 senhas</p>
+    </div>
+    
+    <form onsubmit="submitForm(event, 'set-password-history')">
+        <div class="form-group">
+            <label for="history-length">Tamanho do histórico (número de senhas):</label>
+            <input type="number" id="history-length" name="history-length" min="0" max="1024" placeholder="24" required>
+            <small style="color: #666;">Entre 0 (sem histórico) e 1024 senhas</small>
+        </div>
+        
+        <div style="background: #fff3cd; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #ffc107;">
+            <h5 style="color: #856404; margin: 0 0 8px 0;">⚠️ Exemplos práticos:</h5>
+            <p style="color: #856404; margin: 0; font-size: 14px;">
+                <strong>0:</strong> Pode usar sempre a mesma senha<br>
+                <strong>12:</strong> Deve criar 12 senhas diferentes antes de reutilizar<br>
+                <strong>24:</strong> Deve criar 24 senhas diferentes (recomendado)
+            </p>
+        </div>
+        
+        <button type="submit" class="btn btn-success">Definir Histórico</button>
+        <button type="button" class="btn" onclick="backToDomainSettings()">Voltar</button>
+    </form>
+</div>
+
+<!-- Formulário Tamanho Mínimo de Senha -->
+<div id="password-min-length-form" class="form-container">
+    <h3>Configurar Tamanho Mínimo de Senhas</h3>
+    <form onsubmit="submitForm(event, 'set-password-min-length')">
+        <div class="form-group">
+            <label for="min-length">Tamanho mínimo da senha (caracteres):</label>
+            <input type="number" id="min-length" name="min-length" min="0" max="255" placeholder="7" required>
+            <small style="color: #666;">Entre 0 (sem limite) e 255 caracteres</small>
+        </div>
+        
+        <div style="background: #d4edda; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #28a745;">
+            <h5 style="color: #155724; margin: 0 0 8px 0;">💡 Recomendações:</h5>
+            <p style="color: #155724; margin: 0; font-size: 14px;">
+                <strong>7-8:</strong> Mínimo básico<br>
+                <strong>12:</strong> Recomendado para segurança média<br>
+                <strong>16+:</strong> Alta segurança
+            </p>
+        </div>
+        
+        <button type="submit" class="btn btn-success">Definir Tamanho Mínimo</button>
+        <button type="button" class="btn" onclick="backToDomainSettings()">Voltar</button>
+    </form>
+</div>
+
+<!-- Formulário Validade Mínima de Senhas -->
+<div id="password-min-age-form" class="form-container">
+    <h3>Configurar Validade Mínima de Senhas</h3>
+    <div class="instruction-panel" style="display: block; background: #fff3cd; border-left: 4px solid #ffc107;">
+        <h4 style="color: #856404; margin-bottom: 10px;">⚠️ Atenção:</h4>
+        <p style="margin-bottom: 8px;">• <strong>Validade mínima:</strong> Tempo que o usuário deve esperar antes de trocar a senha novamente</p>
+        <p style="color: #666; font-size: 14px;">Evita que usuários troquem rapidamente para voltar à senha antiga</p>
+    </div>
+    
+    <form onsubmit="submitForm(event, 'set-password-min-age')">
+        <div class="form-group">
+            <label for="min-age">Validade mínima (dias):</label>
+            <input type="number" id="min-age" name="min-age" min="0" max="999" placeholder="1" required>
+            <small style="color: #666;">Entre 0 (pode trocar imediatamente) e 999 dias</small>
+        </div>
+        
+        <button type="submit" class="btn btn-success">Definir Validade Mínima</button>
+        <button type="button" class="btn" onclick="backToDomainSettings()">Voltar</button>
+    </form>
+</div>
+
+<!-- Formulário Validade Máxima de Senhas -->
+<div id="password-max-age-form" class="form-container">
+    <h3>Configurar Validade Máxima de Senhas</h3>
+    <form onsubmit="submitForm(event, 'set-password-max-age')">
+        <div class="form-group">
+            <label for="max-age">Validade máxima (dias):</label>
+            <input type="number" id="max-age" name="max-age" min="0" max="999" placeholder="90" required>
+            <small style="color: #666;">Entre 0 (nunca expira) e 999 dias</small>
+        </div>
+        
+        <div style="background: #f8d7da; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #dc3545;">
+            <h5 style="color: #721c24; margin: 0 0 8px 0;">🚨 Importante:</h5>
+            <p style="color: #721c24; margin: 0; font-size: 14px;">
+                <strong>0:</strong> Senhas nunca expiram (menos seguro)<br>
+                <strong>90:</strong> Recomendado para empresas<br>
+                <strong>30-60:</strong> Alta segurança
+            </p>
+        </div>
+        
+        <button type="submit" class="btn btn-success">Definir Validade Máxima</button>
+        <button type="button" class="btn" onclick="backToDomainSettings()">Voltar</button>
+    </form>
+</div>
+
+<!-- Formulário Tentativas de Login -->
+<div id="login-attempts-form" class="form-container">
+    <h3>Configurar Tentativas de Login</h3>
+    <div class="instruction-panel" style="display: block; background: #f8d7da; border-left: 4px solid #dc3545;">
+        <h4 style="color: #721c24; margin-bottom: 10px;">🔒 Bloqueio de Conta:</h4>
+        <p style="margin-bottom: 8px;">• Define quantas tentativas de senha incorreta antes de bloquear a conta</p>
+        <p style="color: #666; font-size: 14px;">⚠️ 0 = sem bloqueio (menos seguro)</p>
+    </div>
+    
+    <form onsubmit="submitForm(event, 'set-login-attempts')">
+        <div class="form-group">
+            <label for="max-attempts">Máximo de tentativas incorretas:</label>
+            <input type="number" id="max-attempts" name="max-attempts" min="0" max="999" placeholder="5" required>
+            <small style="color: #666;">Entre 0 (sem limite) e 999 tentativas</small>
+        </div>
+        
+        <div style="background: #d4edda; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #28a745;">
+            <h5 style="color: #155724; margin: 0 0 8px 0;">💡 Recomendações:</h5>
+            <p style="color: #155724; margin: 0; font-size: 14px;">
+                <strong>3:</strong> Muito restritivo<br>
+                <strong>5:</strong> Recomendado para empresas<br>
+                <strong>10:</strong> Mais flexível
+            </p>
+        </div>
+        
+        <button type="submit" class="btn btn-success">Definir Tentativas</button>
+        <button type="button" class="btn" onclick="backToDomainSettings()">Voltar</button>
+    </form>
+</div>
+                
                 <!-- Formulário Criar Usuário -->
                 <div id="create-user-form" class="form-container">
                     <h3>Criar Usuário</h3>
