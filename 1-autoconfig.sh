@@ -53,6 +53,15 @@ cat > /etc/sudoers.d/samba-cgi << 'EOF'
 www-data ALL=(root) NOPASSWD: /usr/bin/samba-tool
 www-data ALL=(root) NOPASSWD: /usr/bin/net
 www-data ALL=(root) NOPASSWD: /usr/sbin/smbcontrol
+
+# Comandos adicionais para compartilhamentos
+www-data ALL=(root) NOPASSWD: /bin/mkdir -p /etc/samba/external*
+www-data ALL=(root) NOPASSWD: /bin/mkdir -p /mnt/*
+www-data ALL=(root) NOPASSWD: /bin/chmod * /mnt/*
+www-data ALL=(root) NOPASSWD: /usr/bin/tee /etc/samba/external/smb.conf.d/*.conf
+www-data ALL=(root) NOPASSWD: /usr/bin/tee /etc/samba/external/includes.conf
+www-data ALL=(root) NOPASSWD: /bin/rm /etc/samba/external/smb.conf.d/*.conf
+www-data ALL=(root) NOPASSWD: /usr/bin/find /etc/samba/external* -name "*.conf"
 EOF
 
 chmod 440 /etc/sudoers.d/samba-cgi
