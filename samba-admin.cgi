@@ -647,6 +647,89 @@ create_group() {
 }
 
 list_groups() {
+    # Lista de grupos padrão para filtrar (uma por linha para grep)
+    temp_filter="/tmp/samba_default_groups.txt"
+    
+    cat > "$temp_filter" << 'EOF'
+^Administrators$
+^Enterprise Admins$
+^Schema Admins$
+^Domain Admins$
+^Domain Users$
+^Domain Guests$
+^Domain Controllers$
+^Domain Computers$
+^Enterprise Read-only Domain Controllers$
+^Read-only Domain Controllers$
+^Group Policy Creator Owners$
+^RAS and IAS Servers$
+^Terminal Server License Servers$
+^Windows Authorization Access Group$
+^Network Configuration Operators$
+^Performance Monitor Users$
+^Performance Log Users$
+^Distributed COM Users$
+^IIS_IUSRS$
+^Cryptographic Operators$
+^Event Log Readers$
+^Certificate Service DCOM Access$
+^Incoming Forest Trust Builders$
+^Account Operators$
+^Server Operators$
+^Print Operators$
+^Backup Operators$
+^Replicator$
+^Remote Desktop Users$
+^Guests$
+^Users$
+^Pre-Windows 2000 Compatible Access$
+^Allowed RODC Password Replication Group$
+^Denied RODC Password Replication Group$
+^Cert Publishers$
+^DnsAdmins$
+^DnsUpdateProxy$
+^Protected Users$
+EOF
+
+    # Obter todos os grupos e filtrar
+    all_groups=$(sudo samba-tool group list 2>/dev/null)
+    
+    if [ $? -ne 0 ]; then
+        echo "Erro ao obter lista de grupos"
+        rm -f "$temp_filter"
+        return
+    fi
+    
+    # Filtrar grupos customizados
+    custom_groups=$(echo "$all_groups" | grep -v -f "$temp_filter")
+    
+    echo "=== GRUPOS CUSTOMIZADOS ==="
+    echo ""
+    
+    if [ -n "$custom_groups" ]; then
+        echo "$custom_groups" | sed 's/^/• /'
+        echo ""
+        
+        # Estatísticas
+        total_count=$(echo "$all_groups" | grep -v '^$' | wc -l)
+        custom_count=$(echo "$custom_groups" | grep -v '^$' | wc -l)
+        
+        echo "📊 ESTATÍSTICAS:"
+        echo "   👥 Grupos customizados: $custom_count"
+        echo "   🏢 Grupos padrão (ocultos): $((total_count - custom_count))"
+        echo "   📋 Total de grupos: $total_count"
+    else
+        echo "⚠️ Nenhum grupo customizado encontrado"
+        echo ""
+        total_count=$(echo "$all_groups" | grep -v '^$' | wc -l)
+        echo "📊 Total de grupos padrão: $total_count"
+    fi
+    
+    # Limpar arquivo temporário
+    rm -f "$temp_filter"
+}
+
+list_all_groups() {
     execute_samba_command sudo samba-tool group list
 }
 
@@ -1378,6 +1461,7 @@ main() {
         "move-group-ou") move_group_ou ;;
         "copy-user-groups") copy_user_groups ;;
         "copy-group-members") copy_group_members ;;
+        "list-all-groups") list_all_groups ;;
 
         # Computadores
         "add-computer") add_computer ;;
