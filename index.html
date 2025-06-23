@@ -301,7 +301,7 @@
 
                 <div class="menu-card" onclick="showSubmenu('domain-settings')">
                     <h3>⚙️ Configurações do Domínio</h3>
-                    <p>Definir políticas de senha, ACLs, instalar templates ADMX e muito mais.</p>
+                    <p>Definir políticas de senha e outros.</p>
                 </div>
             </div>
 
@@ -429,9 +429,6 @@
                 <div class="submenu-grid">
                     <div class="submenu-item" onclick="showForm('password-policy')">Configurar Regras de Senhas</div>
                     <div class="submenu-item" onclick="showForm('permissions')">Corrigir Permissões do AD</div>
-                    <div class="submenu-item" onclick="executeCommand('install-admx-w10')">Instalar ADMX Templates extras: Windows 10</div>
-                    <div class="submenu-item" onclick="executeCommand('install-admx-w11')">Instalar ADMX Templates extras: Windows 11</div>
-                    <div class="submenu-item" onclick="executeCommand('remove-admx')">Remover as ADMX Templates Extras</div>
                 </div>
             </div>
 
@@ -1510,9 +1507,6 @@ function hideForm() {
             'samba-processes': 'samba-processes',
             'show-shares': 'show-shares',
             'revalidate-shares': 'revalidate-shares',
-            'install-admx-w10': 'install-admx-w10',
-            'install-admx-w11': 'install-admx-w11',
-            'remove-admx': 'remove-admx',
             'show-password-policy': 'show-password-policy',
             'enable-complexity': 'enable-complexity',
             'disable-complexity': 'disable-complexity',
