@@ -52,7 +52,8 @@ cat > /etc/sudoers.d/samba-cgi << 'EOF'
 # Permitir que www-data execute comandos samba-tool
 www-data ALL=(root) NOPASSWD: /usr/bin/samba-tool
 www-data ALL=(root) NOPASSWD: /usr/bin/net
-www-data ALL=(root) NOPASSWD: /usr/sbin/smbcontrol
+www-data ALL=(root) NOPASSWD: /usr/bin/smbcontrol
+
 
 # Comandos adicionais para compartilhamentos
 www-data ALL=(root) NOPASSWD: /bin/mkdir -p /etc/samba/external*
