@@ -335,6 +335,63 @@ echo "<span style='font-size: 16px; font-weight: 600; color: $block_color_text;'
     echo "</div>"
 }
 
+show_group_hierarchy() {
+    if [ -z "$GROUP" ]; then
+        echo "Erro: Nome do grupo é obrigatório"
+        return
+    fi
+
+    echo "🏗️ HIERARQUIA DO GRUPO: $GROUP"
+    echo ""
+    
+    # Mostrar grupos pai (onde este grupo é membro)
+    echo "📈 GRUPOS PAIS (este grupo é membro de):"
+    parent_groups=$(sudo samba-tool group list 2>/dev/null | while read parent; do
+        if [ -n "$parent" ]; then
+            members=$(sudo samba-tool group listmembers "$parent" 2>/dev/null)
+            if echo "$members" | grep -q "^$GROUP$"; then
+                echo "   └── $parent"
+            fi
+        fi
+    done)
+    
+    if [ -n "$parent_groups" ]; then
+        echo "$parent_groups"
+    else
+        echo "   (nenhum - grupo raiz)"
+    fi
+    
+    echo ""
+    
+    # Mostrar membros diretos
+    echo "👥 MEMBROS DIRETOS:"
+    members=$(sudo samba-tool group listmembers "$GROUP" 2>/dev/null)
+    if [ -n "$members" ]; then
+        echo "$members" | sed 's/^/   ├── /'
+    else
+        echo "   (nenhum membro)"
+    fi
+    
+    echo ""
+    
+    # Mostrar grupos filhos
+    echo "📉 GRUPOS FILHOS (grupos que são membros deste):"
+    child_groups=$(echo "$members" | while read member; do
+        if [ -n "$member" ]; then
+            # Verificar se o membro é um grupo
+            if sudo samba-tool group list 2>/dev/null | grep -q "^$member$"; then
+                echo "   └── $member (grupo)"
+            fi
+        fi
+    done)
+    
+    if [ -n "$child_groups" ]; then
+        echo "$child_groups"
+    else
+        echo "   (nenhum grupo filho)"
+    fi
+}
+
 delete_user() {
     if [ -z "$USERNAME" ]; then
         json_response "error" "Nome do usuário é obrigatório"
@@ -835,6 +892,122 @@ copy_user_groups() {
         echo "{\"status\":\"success\",\"message\":\"Grupos copiados de $SOURCE_USERNAME para $TARGET_USERNAME\",\"output\":\"$groups_result\"}"
     else
         echo "{\"status\":\"warning\",\"message\":\"Grupos copiados com erros. Sucessos: $success_count, Erros: $error_count\",\"output\":\"$errors\"}"
+    fi
+}
+
+# === FUNÇÃO PARA ADICIONAR GRUPO A GRUPO ===
+add_group_to_group() {
+    if [ -z "$SOURCE_GROUP" ] || [ -z "$TARGET_GROUP" ]; then
+        echo "❌ Erro: Grupo de origem e destino são obrigatórios"
+        return
+    fi
+
+    log_action "Adicionando grupo $SOURCE_GROUP ao grupo $TARGET_GROUP"
+
+    # Validações
+    source_check=$(sudo samba-tool group list 2>/dev/null | grep -x "$SOURCE_GROUP")
+    if [ "$source_check" != "$SOURCE_GROUP" ]; then
+        echo "❌ Erro: Grupo de origem '$SOURCE_GROUP' não encontrado"
+        return
+    fi
+
+    target_check=$(sudo samba-tool group list 2>/dev/null | grep -x "$TARGET_GROUP")
+    if [ "$target_check" != "$TARGET_GROUP" ]; then
+        echo "❌ Erro: Grupo de destino '$TARGET_GROUP' não encontrado"
+        return
+    fi
+
+    if [ "$SOURCE_GROUP" = "$TARGET_GROUP" ]; then
+        echo "❌ Erro: Grupo de origem e destino não podem ser iguais"
+        return
+    fi
+
+    echo "🔍 Verificando se '$SOURCE_GROUP' já é membro de '$TARGET_GROUP'..."
+    
+    # Verificar se já é membro
+    existing_members=$(sudo samba-tool group listmembers "$TARGET_GROUP" 2>/dev/null)
+    if echo "$existing_members" | grep -q "^$SOURCE_GROUP$"; then
+        echo "⚠️ Grupo '$SOURCE_GROUP' já é membro de '$TARGET_GROUP'"
+        return
+    fi
+
+    echo "➕ Adicionando grupo '$SOURCE_GROUP' ao grupo '$TARGET_GROUP'..."
+    
+    # Executar comando
+    result=$(sudo samba-tool group addmembers "$TARGET_GROUP" "$SOURCE_GROUP" 2>&1)
+    exit_code=$?
+
+    if [ $exit_code -eq 0 ]; then
+        echo "✅ SUCESSO! Grupo '$SOURCE_GROUP' adicionado ao grupo '$TARGET_GROUP'"
+        echo ""
+        echo "🏗️ HIERARQUIA CRIADA:"
+        echo "   📂 $TARGET_GROUP (grupo pai)"
+        echo "   └── 👥 $SOURCE_GROUP (grupo filho)"
+        echo ""
+        echo "💡 RESULTADO:"
+        echo "   • Membros de '$SOURCE_GROUP' herdam permissões de '$TARGET_GROUP'"
+        echo "   • Para ver membros: Menu → Grupos → Exibir membros de '$TARGET_GROUP'"
+    else
+        echo "❌ Erro ao adicionar grupo: $result"
+    fi
+}
+
+# === FUNÇÃO PARA REMOVER GRUPO DE GRUPO ===
+remove_group_from_group() {
+    if [ -z "$SOURCE_GROUP" ] || [ -z "$TARGET_GROUP" ]; then
+        echo "❌ Erro: Grupo de origem e destino são obrigatórios"
+        return
+    fi
+
+    log_action "Removendo grupo $SOURCE_GROUP do grupo $TARGET_GROUP"
+
+    # Validações
+    source_check=$(sudo samba-tool group list 2>/dev/null | grep -x "$SOURCE_GROUP")
+    if [ "$source_check" != "$SOURCE_GROUP" ]; then
+        echo "❌ Erro: Grupo '$SOURCE_GROUP' não encontrado"
+        return
+    fi
+
+    target_check=$(sudo samba-tool group list 2>/dev/null | grep -x "$TARGET_GROUP")
+    if [ "$target_check" != "$TARGET_GROUP" ]; then
+        echo "❌ Erro: Grupo '$TARGET_GROUP' não encontrado"
+        return
+    fi
+
+    echo "🔍 Verificando se '$SOURCE_GROUP' é membro de '$TARGET_GROUP'..."
+    
+    # Verificar se é membro
+    existing_members=$(sudo samba-tool group listmembers "$TARGET_GROUP" 2>/dev/null)
+    if ! echo "$existing_members" | grep -q "^$SOURCE_GROUP$"; then
+        echo "⚠️ Grupo '$SOURCE_GROUP' NÃO é membro de '$TARGET_GROUP'"
+        echo ""
+        echo "📋 Membros atuais de '$TARGET_GROUP':"
+        if [ -n "$existing_members" ]; then
+            echo "$existing_members" | sed 's/^/   • /'
+        else
+            echo "   (nenhum membro)"
+        fi
+        return
+    fi
+
+    echo "➖ Removendo grupo '$SOURCE_GROUP' do grupo '$TARGET_GROUP'..."
+    
+    # Executar comando
+    result=$(sudo samba-tool group removemembers "$TARGET_GROUP" "$SOURCE_GROUP" 2>&1)
+    exit_code=$?
+
+    if [ $exit_code -eq 0 ]; then
+        echo "✅ SUCESSO! Grupo '$SOURCE_GROUP' removido do grupo '$TARGET_GROUP'"
+        echo ""
+        echo "🔓 HIERARQUIA DESFEITA:"
+        echo "   📂 $TARGET_GROUP (não é mais pai)"
+        echo "   🔸 $SOURCE_GROUP (agora independente)"
+        echo ""
+        echo "💡 RESULTADO:"
+        echo "   • Membros de '$SOURCE_GROUP' não herdam mais permissões de '$TARGET_GROUP'"
+        echo "   • Ambos os grupos continuam existindo independentemente"
+    else
+        echo "❌ Erro ao remover grupo: $result"
     fi
 }
 
@@ -1462,6 +1635,9 @@ main() {
         "copy-user-groups") copy_user_groups ;;
         "copy-group-members") copy_group_members ;;
         "list-all-groups") list_all_groups ;;
+        "show-group-hierarchy") show_group_hierarchy ;;
+        "add-group-to-group") add_group_to_group ;;
+        "remove-group-from-group") remove_group_from_group ;;
 
         # Computadores
         "add-computer") add_computer ;;
