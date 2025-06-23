@@ -189,15 +189,49 @@ check_user() {
     pwd_last_set=$(echo "$user_info" | grep -i "pwdLastSet" | cut -d: -f2- | tr -d ' ')
     user_account_control=$(echo "$user_info" | grep -i "userAccountControl" | cut -d: -f2- | tr -d ' ')
     account_expires=$(echo "$user_info" | grep -i "accountExpires" | cut -d: -f2- | tr -d ' ')
-    
+
+# Verificar se o usuário está bloqueado (após extrair user_account_control)
+user_account_control=$(echo "$user_info" | grep -i "userAccountControl" | cut -d: -f2- | tr -d ' ')
+
+# Verificar status de bloqueio (bit 2 = 2 significa conta desabilitada)
+if [ -n "$user_account_control" ]; then
+    disabled_flag=$((user_account_control & 2))
+    if [ $disabled_flag -ne 0 ]; then
+        user_blocked="true"
+        block_status="BLOQUEADO"
+        block_color_bg="#f8d7da"
+        block_color_border="#dc3545"
+        block_color_text="#721c24"
+        block_icon="🚫"
+    else
+        user_blocked="false"
+        block_status="ATIVO"
+        block_color_bg="#d4edda"
+        block_color_border="#28a745"
+        block_color_text="#155724"
+        block_icon="✅"
+    fi
+else
+    user_blocked="unknown"
+    block_status="INDETERMINADO"
+    block_color_bg="#fff3cd"
+    block_color_border="#ffc107"
+    block_color_text="#856404"
+    block_icon="❓"
+fi
+
     # Container principal com tipografia melhorada
     echo "<div style='background: white; padding: 16px; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; line-height: 1.5; max-width: 100%;'>"
     
     # Título principal sem os dois pontos
     echo "<h4 style='color: #e67e22; margin: 0 0 20px 0; font-size: 18px; font-weight: 600;'>📋 Informações do Usuário $USERNAME</h4>"
     
-    # Blocos de expiração diretos (sem título da seção)
+    # Blocos de status diretos
     echo "<div style='margin-bottom: 16px;'>"
+
+# Exibir status de bloqueio da conta
+echo "<div style='padding: 8px 12px; background: $block_color_bg; border-left: 3px solid $block_color_border; margin-bottom: 8px; border-radius: 3px;'>"
+echo "<span style='font-size: 16px; font-weight: 600; color: $block_color_text;'>🔒 STATUS:</span> <span style='color: $block_color_text; font-size: 16px;'>$block_icon $block_status</span></div>"
     
     # Verificar expiração da SENHA - bloco menor, fonte maior
     if [ -n "$user_account_control" ]; then
