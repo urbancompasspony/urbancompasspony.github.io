@@ -940,37 +940,35 @@ password_expiry_days() {
         return
     fi
 
-    echo "🔍 Verificando política do domínio..."
+    echo "🔍 Configurando expiração individual para: $USERNAME"
+    echo ""
+    echo "⚠️ IMPORTANTE: No Samba, só é possível definir expiração de CONTA individual"
+    echo "   Para expiração de SENHA individual, seria necessário alterar toda a política do domínio"
+    echo ""
+
+    # Verificar política atual
     max_pwd_age=$(sudo samba-tool domain passwordsettings show 2>/dev/null | grep -i "Maximum password age" | grep -o '[0-9]*' | head -1)
-    
-    if [ "$max_pwd_age" = "0" ]; then
-        echo "❌ ERRO: Política do domínio impede expiração (max-pwd-age=0)"
-        echo ""
-        echo "💡 SOLUÇÃO: Ative a complexidade de senhas primeiro em:"
-        echo "   Menu → Configurações → Regras de Senhas → Ativar complexidade"
-        echo ""
-        echo "🔧 Ou execute: samba-tool domain passwordsettings set --max-pwd-age=90"
-        return
-    fi
+    echo "📋 Política atual de senhas do domínio: $max_pwd_age dias"
+    echo ""
 
-    # Resto da função continua normal...
-    echo "✅ Política permite expiração (max-pwd-age=$max_pwd_age dias)"
-
-    # PRIMEIRO: remover flag --noexpiry se existir
-    sudo samba-tool user setexpiry "$USERNAME" --days=90 2>/dev/null
-    
-    # DEPOIS: definir os dias específicos
+    # Executar comando
     result=$(sudo samba-tool user setexpiry "$USERNAME" --days="$DAYS" 2>&1)
     exit_code=$?
 
     if [ $exit_code -eq 0 ]; then
-        echo "✅ Senha de $USERNAME configurada para expirar em $DAYS dias"
+        echo "✅ CONTA de $USERNAME configurada para expirar em $DAYS dias"
         echo ""
         
         # Calcular data
         expiry_date=$(date -d "+$DAYS days" '+%d/%m/%Y')
-        echo "📅 Data de expiração: $expiry_date"
-        echo "🔐 Status: Flag --noexpiry removida, expira em $DAYS dias"
+        echo "📊 RESUMO:"
+        echo "   👤 Usuário: $USERNAME"
+        echo "   🏢 CONTA expira: $expiry_date ($DAYS dias)"
+        echo "   🔐 SENHA expira: Segue política do domínio ($max_pwd_age dias após alteração)"
+        echo ""
+        echo "💡 DIFERENÇA:"
+        echo "   • Conta expirada = usuário não consegue fazer login"
+        echo "   • Senha expirada = usuário deve trocar a senha no próximo login"
     else
         echo "❌ Erro: $result"
     fi
