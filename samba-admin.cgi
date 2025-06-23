@@ -1376,27 +1376,147 @@ samba_processes() {
 show_shares() {
     # Verificar se o diretório existe
     if [ -d "/etc/samba/external/smb.conf.d/" ]; then
-        # Listar arquivos .conf e mostrar conteúdo
-        output=""
+        # Contar compartilhamentos primeiro
+        share_count=0
         for conf_file in /etc/samba/external/smb.conf.d/*.conf; do
             if [ -f "$conf_file" ]; then
-                share_name=$(basename "$conf_file" .conf)
-                output="$output\n=== COMPARTILHAMENTO: $share_name ===\n"
-                output="$output$(cat "$conf_file")\n"
+                share_count=$((share_count + 1))
             fi
         done
         
-        if [ -n "$output" ]; then
-            echo "$output"
-        else
-            echo "Nenhum compartilhamento encontrado em /etc/samba/external/smb.conf.d/"
+        if [ $share_count -eq 0 ]; then
+            echo "📭 Nenhum compartilhamento encontrado em /etc/samba/external/smb.conf.d/"
+            echo ""
+            echo "💡 Para criar um compartilhamento, use:"
+            echo "   Menu → Gestão de Pastas → Criar nova pasta compartilhada"
+            return
         fi
+        
+        echo "📊 COMPARTILHAMENTOS ENCONTRADOS: $share_count"
+        echo ""
+        
+        # Listar cada compartilhamento com formatação adequada
+        count=0
+        for conf_file in /etc/samba/external/smb.conf.d/*.conf; do
+            if [ -f "$conf_file" ]; then
+                count=$((count + 1))
+                share_name=$(basename "$conf_file" .conf)
+                
+                echo "==========================================="
+                echo "📂 COMPARTILHAMENTO #$count: $share_name"
+                echo "==========================================="
+                
+                # Verificar se arquivo não está vazio
+                if [ -s "$conf_file" ]; then
+                    # Extrair informações principais primeiro
+                    path=$(grep "^path" "$conf_file" | cut -d= -f2- | sed 's/^ *//' | head -1)
+                    users=$(grep "^valid users" "$conf_file" | cut -d= -f2- | sed 's/^ *//' | head -1)
+                    writable=$(grep "^writable" "$conf_file" | cut -d= -f2- | sed 's/^ *//' | head -1)
+                    browsable=$(grep "^browsable" "$conf_file" | cut -d= -f2- | sed 's/^ *//' | head -1)
+                    
+                    echo "📁 Caminho: $path"
+                    echo "👥 Usuários: $users"
+                    echo "✏️ Gravável: $writable"
+                    echo "👁️ Navegável: $browsable"
+                    
+                    # Verificar se a pasta existe
+                    if [ -n "$path" ] && [ -d "$path" ]; then
+                        echo "✅ Pasta existe no disco"
+                        if command -v du >/dev/null 2>&1; then
+                            folder_size=$(du -sh "$path" 2>/dev/null | cut -f1)
+                            echo "📊 Tamanho: $folder_size"
+                        fi
+                    else
+                        echo "❌ Pasta não existe no disco!"
+                    fi
+                    
+                    echo ""
+                    echo "🔧 Configuração completa:"
+                    echo "-------------------------------------------"
+                    cat "$conf_file"
+                else
+                    echo "⚠️ Arquivo de configuração vazio!"
+                fi
+                
+                echo ""
+            fi
+        done
+        
+        echo "🌐 ACESSO VIA REDE:"
+        echo "   \\\\SERVIDOR\\NOME_DO_COMPARTILHAMENTO"
+        echo ""
+        echo "🔧 COMANDOS ÚTEIS:"
+        echo "   smbclient -L localhost        # Listar compartilhamentos"
+        echo "   smbstatus --shares            # Ver conexões ativas"
+        echo "   testparm                      # Testar configuração"
+        
     else
-        echo "Diretório /etc/samba/external/smb.conf.d/ não existe"
-        echo "Criando estrutura..."
+        echo "❌ Diretório /etc/samba/external/smb.conf.d/ não existe"
+        echo ""
+        echo "🔧 Criando estrutura..."
         sudo mkdir -p /etc/samba/external/smb.conf.d/
-        echo "Estrutura criada. Execute novamente para ver compartilhamentos."
+        echo "✅ Estrutura criada. Execute novamente para ver compartilhamentos."
     fi
+}
+
+# Função interna para revalidar (baseada no código original) - com sudo
+revalidate_shares_internal() {
+    echo "🔄 Gerando includes.conf..."
+    
+    # Garantir que o diretório existe
+    sudo mkdir -p /etc/samba/external/smb.conf.d/
+    
+    # Método 1: Tentar o comando original primeiro
+    echo "Método 1: Comando original..."
+    sudo find /etc/samba/external/smb.conf.d/ -type f -name "*.conf" -print | sed -e 's/^/include = /' | sudo tee /etc/samba/external/includes.conf > /dev/null
+    
+    # Verificar se funcionou
+    if [ -f "/etc/samba/external/includes.conf" ] && [ -s "/etc/samba/external/includes.conf" ]; then
+        echo "✅ Método 1 funcionou!"
+    else
+        echo "⚠️ Método 1 falhou, tentando método 2..."
+        
+        # Método 2: Fazer em etapas
+        echo "Método 2: Em etapas..."
+        
+        # Encontrar arquivos
+        conf_files=$(sudo find /etc/samba/external/smb.conf.d/ -name "*.conf" -type f)
+        
+        # Criar includes.conf vazio
+        sudo touch /etc/samba/external/includes.conf
+        sudo chmod 644 /etc/samba/external/includes.conf
+        
+        # Limpar arquivo
+        sudo tee /etc/samba/external/includes.conf > /dev/null << EOF
+# Compartilhamentos dinâmicos - gerado automaticamente
+EOF
+        
+        # Adicionar cada arquivo
+        for conf_file in $conf_files; do
+            if [ -f "$conf_file" ]; then
+                echo "include = $conf_file" | sudo tee -a /etc/samba/external/includes.conf > /dev/null
+            fi
+        done
+        
+        echo "✅ Método 2 concluído!"
+    fi
+    
+    # Mostrar resultado final
+    echo ""
+    echo "📄 Conteúdo final do includes.conf:"
+    echo "=================================="
+    if [ -f "/etc/samba/external/includes.conf" ]; then
+        cat /etc/samba/external/includes.conf
+    else
+        echo "❌ Arquivo não existe!"
+    fi
+    echo "=================================="
+    
+    # Recarregar Samba
+    echo ""
+    echo "🔧 Recarregando Samba..."
+    sudo smbcontrol all reload-config 2>/dev/null
+    echo "✅ Samba recarregado!"
 }
 
 create_share() {
@@ -1528,15 +1648,6 @@ delete_share() {
     echo ""
     echo "💡 Para remover a pasta também, execute manualmente:"
     echo "   rm -rf '$share_path'"
-}
-
-# Função interna para revalidar (baseada no código original) - com sudo
-revalidate_shares_internal() {
-    # Criar includes.conf com todos os arquivos .conf (com sudo)
-    sudo find /etc/samba/external/smb.conf.d/ -type f -name "*.conf" -print | sed -e 's/^/include = /' | sudo tee /etc/samba/external/includes.conf > /dev/null 2>&1
-    
-    # Recarregar configuração do Samba (com sudo)
-    sudo smbcontrol all reload-config 2>/dev/null
 }
 
 revalidate_shares() {
