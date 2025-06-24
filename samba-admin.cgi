@@ -20,6 +20,8 @@ SILO_NAME=""
 SEARCH_TERM=""
 SOURCE_USERNAME=""
 TARGET_USERNAME=""
+LOCKOUT_DURATION=""
+RESET_TIME=""
 
 # Função para log de ações
 log_action() {
@@ -68,6 +70,8 @@ parse_cgi_params() {
             "min-age") MIN_AGE="$value" ;;
             "max-age") MAX_AGE="$value" ;;
             "max-attempts") MAX_ATTEMPTS="$value" ;;
+            "lockout-duration") LOCKOUT_DURATION="$value" ;;
+            "reset-time") RESET_TIME="$value" ;;
         esac
     done
 }
@@ -1913,6 +1917,62 @@ set_login_attempts() {
     fi
 }
 
+set_lockout_duration() {
+    if [ -z "$LOCKOUT_DURATION" ]; then
+        echo "Erro: Duração do bloqueio é obrigatória"
+        return
+    fi
+
+    echo "🔍 Configurando duração do bloqueio para: $LOCKOUT_DURATION minutos"
+    
+    result=$(sudo samba-tool domain passwordsettings set --account-lockout-duration="$LOCKOUT_DURATION" 2>&1)
+    exit_code=$?
+
+    if [ $exit_code -eq 0 ]; then
+        echo "✅ Duração do bloqueio configurada para $LOCKOUT_DURATION minutos"
+        echo ""
+        
+        if [ "$LOCKOUT_DURATION" -eq 0 ]; then
+            echo "∞ CONFIGURAÇÃO: Bloqueio permanente até desbloqueio manual"
+            echo "⚠️ ATENÇÃO: Administrador deve desbloquear manualmente"
+        else
+            echo "⏰ CONFIGURAÇÃO: Conta desbloqueada automaticamente após $LOCKOUT_DURATION minutos"
+            echo "✅ SEGURANÇA: Bloqueio temporário com liberação automática"
+        fi
+        
+    else
+        echo "❌ Erro: $result"
+    fi
+}
+
+set_lockout_reset_time() {
+    if [ -z "$RESET_TIME" ]; then
+        echo "Erro: Tempo para reset é obrigatório"
+        return
+    fi
+
+    echo "🔍 Configurando tempo para reset do contador: $RESET_TIME minutos"
+    
+    result=$(sudo samba-tool domain passwordsettings set --reset-account-lockout-after="$RESET_TIME" 2>&1)
+    exit_code=$?
+
+    if [ $exit_code -eq 0 ]; then
+        echo "✅ Tempo para reset configurado para $RESET_TIME minutos"
+        echo ""
+        
+        if [ "$RESET_TIME" -eq 0 ]; then
+            echo "∞ CONFIGURAÇÃO: Contador nunca é resetado automaticamente"
+            echo "⚠️ ATENÇÃO: Contador de tentativas só reseta manualmente"
+        else
+            echo "🔄 CONFIGURAÇÃO: Contador de tentativas reseta após $RESET_TIME minutos"
+            echo "✅ COMPORTAMENTO: Usuário pode tentar login novamente após o prazo"
+        fi
+        
+    else
+        echo "❌ Erro: $result"
+    fi
+}
+
 # === FUNÇÃO PRINCIPAL ===
 
 main() {
@@ -1945,6 +2005,8 @@ main() {
         "set-no-expiry") set_no_expiry ;;
         "set-default-expiry") set_default_expiry ;;
         "set-account-expiry") set_account_expiry ;;
+        "set-lockout-duration") set_lockout_duration ;;
+        "set-lockout-reset-time") set_lockout_reset_time ;;
 
         # Grupos
         "create-group") create_group ;;
