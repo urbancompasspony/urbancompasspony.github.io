@@ -563,6 +563,65 @@
         <button type="button" class="btn" onclick="backToDomainSettings()">Voltar</button>
     </form>
 </div>
+
+<!-- Formulário Duração do Bloqueio -->
+<div id="lockout-duration-form" class="form-container">
+    <h3>Configurar Duração do Bloqueio</h3>
+    <div class="instruction-panel" style="display: block; background: #f8d7da; border-left: 4px solid #dc3545;">
+        <h4 style="color: #721c24; margin-bottom: 10px;">⏰ Duração do Bloqueio:</h4>
+        <p style="margin-bottom: 8px;">• Define por quanto tempo a conta fica bloqueada após errar a senha</p>
+        <p style="color: #666; font-size: 14px;">⚠️ 0 = bloqueio permanente até desbloqueio manual</p>
+    </div>
+    
+    <form onsubmit="submitForm(event, 'set-lockout-duration')">
+        <div class="form-group">
+            <label for="lockout-duration">Duração do bloqueio (minutos):</label>
+            <input type="number" id="lockout-duration" name="lockout-duration" min="0" max="99999" placeholder="30" required>
+            <small style="color: #666;">Entre 0 (permanente) e 99999 minutos</small>
+        </div>
+        
+        <div style="background: #fff3cd; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #ffc107;">
+            <h5 style="color: #856404; margin: 0 0 8px 0;">💡 Exemplos práticos:</h5>
+            <p style="color: #856404; margin: 0; font-size: 14px;">
+                <strong>0:</strong> Bloqueio permanente (admin deve desbloquear)<br>
+                <strong>30:</strong> Desbloqueio automático em 30 minutos<br>
+                <strong>1440:</strong> Desbloqueio automático em 24 horas
+            </p>
+        </div>
+        
+        <button type="submit" class="btn btn-success">Definir Duração</button>
+        <button type="button" class="btn" onclick="backToDomainSettings()">Voltar</button>
+    </form>
+</div>
+
+<!-- Formulário Tempo para Reset -->
+<div id="lockout-reset-form" class="form-container">
+    <h3>Configurar Reset do Contador</h3>
+    <div class="instruction-panel" style="display: block; background: #e8f4fd; border-left: 4px solid #2196F3;">
+        <h4 style="color: #1976D2; margin-bottom: 10px;">🔄 Reset do Contador:</h4>
+        <p style="margin-bottom: 8px;">• Define quando o contador de tentativas incorretas é zerado</p>
+        <p style="color: #666; font-size: 14px;">Permite que usuário tente novamente após o prazo</p>
+    </div>
+    
+    <form onsubmit="submitForm(event, 'set-lockout-reset-time')">
+        <div class="form-group">
+            <label for="reset-time">Tempo para reset (minutos):</label>
+            <input type="number" id="reset-time" name="reset-time" min="0" max="99999" placeholder="30" required>
+            <small style="color: #666;">Entre 0 (nunca reseta) e 99999 minutos</small>
+        </div>
+        
+        <div style="background: #d4edda; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #28a745;">
+            <h5 style="color: #155724; margin: 0 0 8px 0;">💡 Como funciona:</h5>
+            <p style="color: #155724; margin: 0; font-size: 14px;">
+                Se usuário errar 3x e esperar 30 min, pode tentar novamente.<br>
+                <strong>Exemplo:</strong> Reset = 30 min → contador zera a cada 30 min
+            </p>
+        </div>
+        
+        <button type="submit" class="btn btn-success">Definir Tempo de Reset</button>
+        <button type="button" class="btn" onclick="backToDomainSettings()">Voltar</button>
+    </form>
+</div>
                 
                 <!-- Formulário Criar Usuário -->
                 <div id="create-user-form" class="form-container">
@@ -1323,20 +1382,22 @@
                 </div>
 
                 <!-- Formulários de Política de Senha -->
-                <div id="password-policy-form" class="form-container">
-                    <h3>Configurações de Política de Senha</h3>
-                    <div class="submenu-grid">
-                        <div class="submenu-item" onclick="executeCommand('show-password-policy')">Mostrar Status das Regras de Senhas</div>
-                        <div class="submenu-item" onclick="executeCommand('enable-complexity')">Ativar complexidade das senhas</div>
-                        <div class="submenu-item" onclick="executeCommand('disable-complexity')">Desativar complexidade das senhas</div>
-                        <div class="submenu-item" onclick="showForm('password-history')">Tamanho do histórico das senhas</div>
-                        <div class="submenu-item" onclick="showForm('password-min-length')">Tamanho mínimo das senhas</div>
-                        <div class="submenu-item" onclick="showForm('password-min-age')">Validade mínima das senhas</div>
-                        <div class="submenu-item" onclick="showForm('password-max-age')">Validade máxima das senhas</div>
-                        <div class="submenu-item" onclick="showForm('login-attempts')">Tentativas de login antes de bloquear</div>
-                    </div>
-                    <button type="button" class="btn" onclick="backToDomainSettings()">Voltar</button>
-                </div>
+<div id="password-policy-form" class="form-container">
+    <h3>Configurações de Política de Senha</h3>
+    <div class="submenu-grid">
+        <div class="submenu-item" onclick="executeCommand('show-password-policy')">Mostrar Status das Regras de Senhas</div>
+        <div class="submenu-item" onclick="executeCommand('enable-complexity')">Ativar complexidade das senhas</div>
+        <div class="submenu-item" onclick="executeCommand('disable-complexity')">Desativar complexidade das senhas</div>
+        <div class="submenu-item" onclick="showForm('password-history')">Tamanho do histórico das senhas</div>
+        <div class="submenu-item" onclick="showForm('password-min-length')">Tamanho mínimo das senhas</div>
+        <div class="submenu-item" onclick="showForm('password-min-age')">Validade mínima das senhas</div>
+        <div class="submenu-item" onclick="showForm('password-max-age')">Validade máxima das senhas</div>
+        <div class="submenu-item" onclick="showForm('login-attempts')">Tentativas de login antes de bloquear</div>
+        <div class="submenu-item" onclick="showForm('lockout-duration')">Duração do bloqueio de contas</div>
+        <div class="submenu-item" onclick="showForm('lockout-reset')">Tempo para reset do contador</div>
+    </div>
+    <button type="button" class="btn" onclick="backToDomainSettings()">Voltar</button>
+</div>
 
                 <!-- Formulários de Permissões -->
                 <div id="permissions-form" class="form-container">
