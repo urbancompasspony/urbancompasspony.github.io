@@ -22,6 +22,7 @@ SOURCE_USERNAME=""
 TARGET_USERNAME=""
 LOCKOUT_DURATION=""
 RESET_TIME=""
+BROWSE_PATH=""
 
 # Função para log de ações
 log_action() {
@@ -72,6 +73,7 @@ parse_cgi_params() {
             "max-attempts") MAX_ATTEMPTS="$value" ;;
             "lockout-duration") LOCKOUT_DURATION="$value" ;;
             "reset-time") RESET_TIME="$value" ;;
+            "browse-path") BROWSE_PATH="$value" ;;
         esac
     done
 }
@@ -1373,8 +1375,6 @@ samba_processes() {
     execute_samba_command sudo samba-tool processes
 }
 
-# === FUNÇÕES DE COMPARTILHAMENTOS - VERSÃO ROBUSTA ===
-
 # === FUNÇÕES DE COMPARTILHAMENTOS COM SUDO (Seguindo o padrão do código original) ===
 
 show_shares() {
@@ -1616,6 +1616,74 @@ revalidate_shares() {
     echo "✅ Configurações revalidadas com sucesso!"
     echo "📋 Arquivo includes.conf atualizado"
     echo "🔧 Samba recarregado"
+}
+
+list_directory_tree() {
+    if [ -z "$BROWSE_PATH" ]; then
+        BROWSE_PATH="/mnt"
+    fi
+
+    # Validar caminho por segurança
+    if ! echo "$BROWSE_PATH" | grep -qE '^/mnt(/[a-zA-Z0-9._-]*)*/?$'; then
+        echo '{"error": "Caminho inválido"}'
+        return
+    fi
+
+    # Verificar se o diretório existe
+    if [ ! -d "$BROWSE_PATH" ]; then
+        echo '{"error": "Diretório não encontrado"}'
+        return
+    fi
+
+    # Gerar estrutura JSON da árvore
+    echo "{"
+    echo "\"path\": \"$BROWSE_PATH\","
+    echo "\"children\": ["
+    
+    first=true
+    find "$BROWSE_PATH" -maxdepth 3 -type d 2>/dev/null | sort | while IFS= read -r dir; do
+        # Pular o próprio diretório raiz na primeira iteração
+        if [ "$dir" = "$BROWSE_PATH" ]; then
+            continue
+        fi
+        
+        # Calcular nível de profundidade
+        level=$(echo "$dir" | tr -cd '/' | wc -c)
+        base_level=$(echo "$BROWSE_PATH" | tr -cd '/' | wc -c)
+        depth=$((level - base_level))
+        
+        # Obter nome da pasta
+        folder_name=$(basename "$dir")
+        relative_path=${dir#$BROWSE_PATH}
+        relative_path=${relative_path#/}
+        
+        # Verificar se é pasta vazia
+        if [ -z "$(ls -A "$dir" 2>/dev/null)" ]; then
+            empty=true
+        else
+            empty=false
+        fi
+        
+        # Adicionar vírgula se não for o primeiro
+        if [ "$first" = true ]; then
+            first=false
+        else
+            echo ","
+        fi
+        
+        # JSON para esta pasta
+        echo -n "{"
+        echo -n "\"name\": \"$folder_name\","
+        echo -n "\"path\": \"$relative_path\","
+        echo -n "\"fullPath\": \"$dir\","
+        echo -n "\"depth\": $depth,"
+        echo -n "\"empty\": $empty"
+        echo -n "}"
+    done
+    
+    echo ""
+    echo "]"
+    echo "}"
 }
 
 # FIM DOS COMPARTILHAMENTOS
@@ -2059,6 +2127,7 @@ main() {
         "share-users") SHARE_USERS="$value" ;;
         "writable") WRITABLE="$value" ;;
         "browsable") BROWSABLE="$value" ;;
+        "browse-directories") list_directory_tree ;;
 
         # Informações do domínio
         "show-domain-info") show_domain_info ;;
