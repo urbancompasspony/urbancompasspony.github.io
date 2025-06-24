@@ -252,6 +252,29 @@
     padding: 5px;
     margin: -5px;
 }
+        /* Estilos para o browser de pastas */
+.folder-item {
+    transition: all 0.2s ease;
+}
+
+.folder-item:hover {
+    transform: translateX(2px);
+}
+
+.loading-tree {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+#folderTree {
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+#folderTree .folder-item.current {
+    margin-bottom: 15px;
+}
     </style>
 </head>
 <body>
@@ -951,10 +974,13 @@
                             <label for="share-name">Nome do Compartilhamento:</label>
                             <input type="text" id="share-name" name="share-name" placeholder="nome_do_compartilhamento" required>
                         </div>
-                        <div class="form-group">
-                            <label for="share-path">Caminho (/mnt):</label>
-                            <input type="text" id="share-path" name="share-path" placeholder="/pasta_compartilhada" required>
-                        </div>
+<div class="form-group">
+    <label for="share-path">Caminho (/mnt):</label>
+    <div style="display: flex; gap: 10px;">
+        <input type="text" id="share-path" name="share-path" placeholder="/pasta_compartilhada" required style="flex: 1;">
+        <button type="button" class="btn" onclick="openFolderBrowser(function(path) { document.getElementById('share-path').value = path; })" style="padding: 12px 20px;">📁 Navegar</button>
+    </div>
+</div>
                         <div class="form-group">
                             <label for="share-users">Grupos/Usuários (separados por vírgula):</label>
                             <input type="text" id="share-users" name="share-users" placeholder="@grupo, usuario" required>
@@ -986,10 +1012,13 @@
                             <label for="sync-share-name">Nome do Compartilhamento:</label>
                             <input type="text" id="sync-share-name" name="share-name" placeholder="nome_do_compartilhamento" required>
                         </div>
-                        <div class="form-group">
-                            <label for="sync-share-path">Caminho (/mnt):</label>
-                            <input type="text" id="sync-share-path" name="share-path" placeholder="/pasta_sync" required>
-                        </div>
+<div class="form-group">
+    <label for="sync-share-path">Caminho (/mnt):</label>
+    <div style="display: flex; gap: 10px;">
+        <input type="text" id="sync-share-path" name="share-path" placeholder="/pasta_sync" required style="flex: 1;">
+        <button type="button" class="btn" onclick="openFolderBrowser(function(path) { document.getElementById('sync-share-path').value = path; })" style="padding: 12px 20px;">📁 Navegar</button>
+    </div>
+</div>
                         <div class="form-group">
                             <label for="sync-share-users">Grupos/Usuários (separados por vírgula):</label>
                             <input type="text" id="sync-share-users" name="share-users" placeholder="@Sync, @Desativar_Sync" required>
@@ -1446,6 +1475,155 @@
             showMainMenu();
         });
 
+// Variáveis globais para o browser de pastas
+let currentPath = '/mnt';
+let folderBrowserCallback = null;
+
+// Abrir browser de pastas
+function openFolderBrowser(callback, startPath = '/mnt') {
+    folderBrowserCallback = callback;
+    currentPath = startPath;
+    
+    const modal = document.getElementById('folderBrowserModal');
+    modal.style.display = 'flex';
+    
+    updateCurrentPathDisplay();
+    loadFolderTree(currentPath);
+}
+
+// Fechar browser de pastas
+function closeFolderBrowser() {
+    const modal = document.getElementById('folderBrowserModal');
+    modal.style.display = 'none';
+    folderBrowserCallback = null;
+}
+
+// Atualizar display do caminho atual
+function updateCurrentPathDisplay() {
+    document.getElementById('currentBrowsePath').textContent = currentPath;
+}
+
+// Carregar árvore de pastas
+async function loadFolderTree(path) {
+    const treeContainer = document.getElementById('folderTree');
+    treeContainer.innerHTML = '<div class="loading-tree">🔄 Carregando pastas...</div>';
+    
+    try {
+        const response = await fetch('/cgi-bin/samba-admin.cgi', {
+            method: 'POST',
+            body: new URLSearchParams({
+                action: 'browse-directories',
+                'browse-path': path
+            })
+        });
+        
+        const text = await response.text();
+        let data;
+        
+        try {
+            data = JSON.parse(text);
+        } catch {
+            throw new Error('Resposta inválida do servidor');
+        }
+        
+        if (data.error) {
+            treeContainer.innerHTML = `<div style="color: #e74c3c;">❌ ${data.error}</div>`;
+            return;
+        }
+        
+        // Renderizar árvore
+        renderFolderTree(data, treeContainer);
+        
+    } catch (error) {
+        treeContainer.innerHTML = `<div style="color: #e74c3c;">❌ Erro: ${error.message}</div>`;
+    }
+}
+
+// Renderizar árvore de pastas
+function renderFolderTree(data, container) {
+    container.innerHTML = '';
+    
+    // Botão para pasta atual
+    const currentFolder = document.createElement('div');
+    currentFolder.className = 'folder-item current';
+    currentFolder.innerHTML = `
+        <div style="padding: 8px; background: #e3f2fd; border-radius: 4px; margin-bottom: 10px; cursor: pointer; border: 2px solid #2196F3;" onclick="selectPath('${data.path}')">
+            📁 <strong>${data.path}</strong> (pasta atual)
+        </div>
+    `;
+    container.appendChild(currentFolder);
+    
+    // Botão "Voltar" se não estiver na raiz
+    if (data.path !== '/mnt') {
+        const parentPath = data.path.replace(/\/[^\/]*$/, '') || '/mnt';
+        const backButton = document.createElement('div');
+        backButton.className = 'folder-item back';
+        backButton.innerHTML = `
+            <div style="padding: 8px; background: #fff3e0; border-radius: 4px; margin-bottom: 5px; cursor: pointer; border: 1px solid #ff9800;" onclick="navigateToPath('${parentPath}')">
+                ⬆️ .. (voltar)
+            </div>
+        `;
+        container.appendChild(backButton);
+    }
+    
+    if (data.children && data.children.length > 0) {
+        // Agrupar por profundidade
+        const byDepth = {};
+        data.children.forEach(folder => {
+            if (!byDepth[folder.depth]) byDepth[folder.depth] = [];
+            byDepth[folder.depth].push(folder);
+        });
+        
+        // Renderizar por profundidade
+        Object.keys(byDepth).sort((a, b) => a - b).forEach(depth => {
+            byDepth[depth].forEach(folder => {
+                const folderDiv = document.createElement('div');
+                folderDiv.className = 'folder-item';
+                
+                const indent = '  '.repeat(folder.depth);
+                const icon = folder.empty ? '📂' : '📁';
+                const emptyText = folder.empty ? ' (vazia)' : '';
+                
+                folderDiv.innerHTML = `
+                    <div style="padding: 6px; margin: 2px 0; cursor: pointer; border-radius: 3px; border: 1px solid #ddd; font-family: monospace;" 
+                         onmouseover="this.style.background='#f0f0f0'" 
+                         onmouseout="this.style.background='white'"
+                         onclick="navigateToPath('${folder.fullPath}')">
+                        ${indent}${icon} ${folder.name}${emptyText}
+                    </div>
+                `;
+                container.appendChild(folderDiv);
+            });
+        });
+    } else {
+        const emptyDiv = document.createElement('div');
+        emptyDiv.innerHTML = '<div style="color: #666; font-style: italic; padding: 10px;">Nenhuma subpasta encontrada</div>';
+        container.appendChild(emptyDiv);
+    }
+}
+
+// Navegar para uma pasta
+function navigateToPath(path) {
+    currentPath = path;
+    updateCurrentPathDisplay();
+    loadFolderTree(path);
+}
+
+// Selecionar caminho atual
+function selectCurrentPath() {
+    selectPath(currentPath);
+}
+
+// Selecionar uma pasta específica
+function selectPath(path) {
+    if (folderBrowserCallback) {
+        // Converter caminho absoluto para relativo (/mnt/pasta -> /pasta)
+        let relativePath = path.replace(/^\/mnt/, '') || '/';
+        folderBrowserCallback(relativePath);
+    }
+    closeFolderBrowser();
+}
+        
         // Criar elementos de UI dinâmicos
         function createUIElements() {
             loadingElement = document.querySelector('.loading');
@@ -2324,6 +2502,28 @@ function backToDomainSettings() {
         <div class="confirm-buttons">
             <button id="confirmYes" class="confirm-btn confirm-btn-yes">Sim</button>
             <button id="confirmNo" class="confirm-btn confirm-btn-no">Não</button>
+        </div>
+    </div>
+</div>
+    <!-- Modal do Browser de Pastas -->
+<div id="folderBrowserModal" class="confirm-overlay" style="z-index: 10000;">
+    <div class="confirm-box" style="max-width: 600px; width: 90%; max-height: 80vh;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; color: #2c3e50;">📁 Selecionar Pasta</h3>
+            <button onclick="closeFolderBrowser()" style="background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-family: monospace;">
+            <strong>Caminho atual:</strong> <span id="currentBrowsePath">/mnt</span>
+        </div>
+        
+        <div id="folderTree" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: white; border-radius: 5px;">
+            <div class="loading-tree">🔄 Carregando pastas...</div>
+        </div>
+        
+        <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
+            <button onclick="selectCurrentPath()" class="btn btn-success">Usar Esta Pasta</button>
+            <button onclick="closeFolderBrowser()" class="btn">Cancelar</button>
         </div>
     </div>
 </div>
