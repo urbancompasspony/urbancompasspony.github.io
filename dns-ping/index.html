@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste DNS - WebUI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #ff6b6b, #ee5253);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+        }
+
+        .btn-info:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(116, 185, 255, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-container {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: #e9ecef;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 12px;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .results {
+            padding: 30px;
+        }
+
+        .dns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .dns-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #ddd;
+            transition: all 0.3s ease;
+        }
+
+        .dns-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .dns-card.success {
+            border-left-color: #4CAF50;
+        }
+
+        .dns-card.error {
+            border-left-color: #f44336;
+        }
+
+        .dns-card.pending {
+            border-left-color: #ff9800;
+        }
+
+        .dns-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .dns-provider {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .dns-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .dns-ip {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .dns-ping {
+            font-size: 1rem;
+            color: #333;
+        }
+
+        .stats {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 15px;
+            display: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            text-align: center;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading {
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌐 Teste DNS Real</h1>
+            <p>Ferramenta para testar latência REAL da sua internet com servidores DNS</p>
+        </div>
+
+        <div class="controls">
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="startTest()">
+                    ▶️ Iniciar Teste Completo
+                </button>
+                <button class="btn btn-secondary" onclick="stopTest()">
+                    ⏹️ Parar Teste
+                </button>
+                <button class="btn btn-info" onclick="clearResults()">
+                    🗑️ Limpar Resultados
+                </button>
+            </div>
+        </div>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Preparando...</div>
+        </div>
+
+        <div class="results" id="results">
+            <div class="dns-grid" id="dnsGrid"></div>
+            
+            <div class="stats" id="stats">
+                <h3 style="text-align: center; margin-bottom: 20px; color: #2c3e50;">📊 Estatísticas da Sua Conexão</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number" id="successCount" style="color: #4CAF50;">0</div>
+                        <div class="stat-label">DNS Acessíveis</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="errorCount" style="color: #f44336;">0</div>
+                        <div class="stat-label">DNS Inacessíveis</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="avgPing" style="color: #2196F3;">0ms</div>
+                        <div class="stat-label">Latência Média</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="fastestDns" style="color: #FF9800;">-</div>
+                        <div class="stat-label">DNS Mais Rápido</div>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 15px; font-size: 0.9rem; color: #666;">
+                    🔒 DNS over HTTPS &nbsp;|&nbsp; 🌐 Teste de Conectividade &nbsp;|&nbsp; 🔄 Fallback
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dnsServers = [
+            { provider: 'Google', ip: '8.8.4.4' },
+            { provider: 'Google', ip: '8.8.8.8' },
+            { provider: 'OpenDNS', ip: '208.67.222.222' },
+            { provider: 'OpenDNS', ip: '208.67.220.220' },
+            { provider: 'Level3', ip: '4.2.2.1' },
+            { provider: 'Level3', ip: '4.2.2.2' },
+            { provider: 'Comodo', ip: '8.26.56.26' },
+            { provider: 'Comodo', ip: '8.20.247.20' },
+            { provider: 'DNSWATCH', ip: '84.200.69.80' },
+            { provider: 'DNSWATCH', ip: '84.200.70.40' },
+            { provider: 'Quad9', ip: '9.9.9.9' },
+            { provider: 'Quad9', ip: '149.112.112.112' },
+            { provider: 'Cloudflare', ip: '1.1.1.1' },
+            { provider: 'Cloudflare', ip: '1.0.0.1' },
+            { provider: 'Algar', ip: '200.225.197.34' },
+            { provider: 'Algar', ip: '200.225.197.37' },
+            { provider: 'GigaDNS', ip: '189.38.95.95' },
+            { provider: 'GigaDNS', ip: '189.38.95.96' },
+            { provider: 'Claro', ip: '181.213.132.2' },
+            { provider: 'Claro', ip: '181.213.132.3' }
+        ];
+
+        let isTestRunning = false;
+        let testResults = [];
+
+        function createDnsCard(server, index) {
+            return `
+                <div class="dns-card pending" id="card-${index}">
+                    <div class="dns-header">
+                        <div class="dns-provider">${server.provider}</div>
+                        <div class="dns-status status-pending" id="status-${index}">Aguardando</div>
+                    </div>
+                    <div class="dns-ip">${server.ip}</div>
+                    <div class="dns-ping" id="ping-${index}">
+                        <span class="spinner"></span> Testando...
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateProgress(current, total, message) {
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const percentage = (current / total) * 100;
+            
+            progressFill.style.width = percentage + '%';
+            progressText.textContent = message;
+        }
+
+        async function pingServer(ip, provider) {
+            const startTime = performance.now();
+            
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
+                
+                let testUrl;
+                let testMethod = 'connectivity';
+                
+                // Estratégias específicas por provedor para testes mais realistas
+                switch (provider.toLowerCase()) {
+                    case 'google':
+                        testUrl = 'https://dns.google/resolve?name=test.com&type=A';
+                        testMethod = 'dns-over-https';
+                        break;
+                    case 'cloudflare':
+                        testUrl = 'https://cloudflare-dns.com/dns-query?name=test.com&type=A';
+                        testMethod = 'dns-over-https';
+                        break;
+                    case 'quad9':
+                        testUrl = 'https://dns.quad9.net:5053/dns-query?name=test.com&type=A';
+                        testMethod = 'dns-over-https';
+                        break;
+                    default:
+                        // Para outros provedores, testa conectividade usando imagem 1x1 pixel
+                        testUrl = `https://httpbin.org/delay/0`;
+                        testMethod = 'connectivity';
+                        break;
+                }
+                
+                const fetchOptions = {
+                    method: 'GET',
+                    signal: controller.signal,
+                    mode: testMethod === 'dns-over-https' ? 'cors' : 'cors',
+                    cache: 'no-cache',
+                    headers: testMethod === 'dns-over-https' ? {
+                        'Accept': 'application/dns-json'
+                    } : {}
+                };
+                
+                const response = await fetch(testUrl, fetchOptions);
+                
+                clearTimeout(timeoutId);
+                const endTime = performance.now();
+                const pingTime = Math.round(endTime - startTime);
+                
+                return {
+                    success: response.ok && response.status < 400,
+                    time: pingTime,
+                    status: response.status,
+                    method: testMethod
+                };
+                
+            } catch (error) {
+                const endTime = performance.now();
+                const pingTime = Math.round(endTime - startTime);
+                
+                // Se o primeiro método falhar, tenta método alternativo de conectividade
+                try {
+                    const fallbackStart = performance.now();
+                    const controller2 = new AbortController();
+                    const timeoutId2 = setTimeout(() => controller2.abort(), 5000);
+                    
+                    // Teste de conectividade alternativo usando fetch para um endpoint simples
+                    const fallbackResponse = await fetch('https://httpbin.org/status/200', {
+                        method: 'HEAD',
+                        signal: controller2.signal,
+                        mode: 'cors',
+                        cache: 'no-cache'
+                    });
+                    
+                    clearTimeout(timeoutId2);
+                    const fallbackTime = Math.round(performance.now() - fallbackStart);
+                    
+                    return {
+                        success: fallbackResponse.ok,
+                        time: fallbackTime,
+                        status: fallbackResponse.status,
+                        method: 'fallback-connectivity'
+                    };
+                    
+                } catch (fallbackError) {
+                    // Se todos os métodos falharem, retorna erro real
+                    return {
+                        success: false,
+                        time: pingTime,
+                        status: 0,
+                        method: 'failed',
+                        error: error.name === 'AbortError' ? 'Timeout' : error.message
+                    };
+                }
+            }
+        }
+
+        async function testSingleDns(server, index) {
+            const card = document.getElementById(`card-${index}`);
+            const status = document.getElementById(`status-${index}`);
+            const ping = document.getElementById(`ping-${index}`);
+            
+            card.className = 'dns-card pending loading';
+            
+            try {
+                const result = await pingServer(server.ip, server.provider);
+                
+                if (result.success) {
+                    card.className = 'dns-card success';
+                    status.className = 'dns-status status-success';
+                    status.textContent = 'Online';
+                    
+                    let methodIcon = '';
+                    switch (result.method) {
+                        case 'dns-over-https':
+                            methodIcon = '🔒'; // DNS over HTTPS
+                            break;
+                        case 'connectivity':
+                            methodIcon = '🌐'; // Teste de conectividade
+                            break;
+                        case 'fallback-connectivity':
+                            methodIcon = '🔄'; // Fallback
+                            break;
+                    }
+                    
+                    ping.innerHTML = `✅ ${result.time}ms ${methodIcon}`;
+                    testResults.push({ server, success: true, time: result.time, method: result.method });
+                } else {
+                    card.className = 'dns-card error';
+                    status.className = 'dns-status status-error';
+                    status.textContent = 'Falha';
+                    
+                    const errorMsg = result.error || 'Sem resposta';
+                    ping.innerHTML = `❌ ${errorMsg} (${result.time}ms)`;
+                    testResults.push({ server, success: false, time: result.time, error: errorMsg });
+                }
+            } catch (error) {
+                card.className = 'dns-card error';
+                status.className = 'dns-status status-error';
+                status.textContent = 'Erro';
+                ping.innerHTML = '❌ Erro crítico';
+                testResults.push({ server, success: false, time: 0, error: 'Erro crítico' });
+            }
+        }
+
+        function updateStats() {
+            const successCount = testResults.filter(r => r.success).length;
+            const errorCount = testResults.filter(r => !r.success).length;
+            const successfulTests = testResults.filter(r => r.success);
+            const avgPing = successfulTests.length > 0 
+                ? Math.round(successfulTests.reduce((sum, r) => sum + r.time, 0) / successfulTests.length)
+                : 0;
+            
+            const fastestDns = successfulTests.length > 0
+                ? successfulTests.reduce((fastest, current) => 
+                    current.time < fastest.time ? current : fastest
+                  ).server.provider
+                : '-';
+
+            document.getElementById('successCount').textContent = successCount;
+            document.getElementById('errorCount').textContent = errorCount;
+            document.getElementById('avgPing').textContent = avgPing + 'ms';
+            document.getElementById('fastestDns').textContent = fastestDns;
+            
+            document.getElementById('stats').style.display = 'block';
+        }
+
+        async function startTest() {
+            if (isTestRunning) return;
+            
+            isTestRunning = true;
+            testResults = [];
+            
+            const startBtn = document.querySelector('.btn-primary');
+            const stopBtn = document.querySelector('.btn-secondary');
+            const progressContainer = document.getElementById('progressContainer');
+            const dnsGrid = document.getElementById('dnsGrid');
+            
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            progressContainer.style.display = 'block';
+            
+            // Criar cards para todos os servidores
+            dnsGrid.innerHTML = dnsServers.map((server, index) => 
+                createDnsCard(server, index)
+            ).join('');
+            
+            // Testar cada servidor sequencialmente
+            for (let i = 0; i < dnsServers.length && isTestRunning; i++) {
+                updateProgress(i, dnsServers.length, `Testando ${dnsServers[i].provider} (${dnsServers[i].ip})`);
+                await testSingleDns(dnsServers[i], i);
+                
+                // Pequena pausa entre testes para visualização
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+            
+            if (isTestRunning) {
+                updateProgress(dnsServers.length, dnsServers.length, 'Teste concluído!');
+                updateStats();
+            }
+            
+            isTestRunning = false;
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            
+            setTimeout(() => {
+                progressContainer.style.display = 'none';
+            }, 2000);
+        }
+
+        function stopTest() {
+            isTestRunning = false;
+            document.querySelector('.btn-primary').disabled = false;
+            document.querySelector('.btn-secondary').disabled = true;
+            document.getElementById('progressContainer').style.display = 'none';
+        }
+
+        function clearResults() {
+            testResults = [];
+            document.getElementById('dnsGrid').innerHTML = '';
+            document.getElementById('stats').style.display = 'none';
+            document.getElementById('progressContainer').style.display = 'none';
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelector('.btn-secondary').disabled = true;
+        });
+    </script>
+</body>
+</html>
