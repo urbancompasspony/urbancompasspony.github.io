@@ -1,141 +1,340 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUCS 3.0 - Links & Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<style>
-    div, p, span, body {
-  color: #efefef;
-}
-html, body {
-  height: 100%;
-  padding: 0;
-  margin: 0;
-  border: 0;
-  overflow: hidden;
-}
-body, a, div, p, span {
-  font-family: "Times New Roman", Verdana, Helvetica, sans-serif;
-}
-div.lm {
-  background-color: #576879;
-  padding: 1px;
-  float: left;
-  clear: left;
-  margin: 0 0 7px 7px;
-}
-a,a:visited {
-  color: #ccccff;
-}
-span.im a.block,a.block:visited {
-  display:block; background-color: #000000;
-  margin: 2px;
-  padding: 2px 10px 2px 5px;
-}
-span.im_act a.block {
-  display:block; background-color: #00f000;
-  margin: 2px;
-  padding: 2px 10px 2px 5px;
-  color: #000000;
-}
-span.im a:hover {
-   background-color: #990000;
-   color: #000000;
-}
-div#main {
-  margin-left: 15%;
-}
-.right22 {
-  float: right;
-  margin: 2px;
-  padding: 2px;
-}
-h2, h3 {
-  color: #ffffff;
-}
-.footer {
-  position: fixed;
-}
-.footer, .footer2 {
-  bottom: 0;
-  padding: 0;
-  width: 99%;
-  margin: 0;
-}
-span.ltr {
-  float: left;
-  margin-right: 10px;
-}
-div.ltr_r {
-  float: right;
-}
-body {
-  background-color: black;
-}
-li {
-  margin: 0 0 7px 0;
-}
-img {
-  border: 0;
-}
-div.ArticleEntry {
-  border: 1px solid white; 
-  width: 90%;
-  padding: 5px 5px 5px 5px; 
-}
-div.ArticleTitle {
-  text-decoration: underline;
-}
-div.ArticleDescription {
-  background-color: #0f0abc;
-  padding: 4px;
-  margin: 3px 0px 3px 0px;
-}
-div.lborder, p.lborder {
-  padding: 5px;
-  width: 80%;
-  border: 1px solid white;
-}
-div.lighter {
-  padding: 5px;
-  width: 80%;
-  background-color: #576879;
-}
-div.a_bug {
-  border: 1px solid white;
-  padding: 4px;
-  background-color: #273849;
-}
-span.bug_t {
-  text-decoration: underline;
-}
+        body {
+            background-color: #000;
+            color: #efefef;
+            font-family: "Times New Roman", Verdana, Helvetica, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
 
-</style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
 
-<head><title>LUCS 3.0 - Links!</title></head><font size="+1">
+        h1 {
+            color: #fff;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        h2 {
+            color: #fff;
+            margin: 30px 0 20px 0;
+            font-size: 1.8em;
+            border-bottom: 2px solid #576879;
+            padding-bottom: 10px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            background-color: #111;
+            border: 1px solid #576879;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .links-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .link-item {
+            background-color: #273849;
+            border: 1px solid #576879;
+            border-radius: 5px;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .link-item:hover {
+            background-color: #374859;
+            transform: translateY(-2px);
+        }
+
+        .link-item a {
+            color: #ccccff;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .link-item a:hover {
+            color: #fff;
+        }
+
+        .command-item {
+            background-color: #1a1a1a;
+            border: 1px solid #576879;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .command-header {
+            background-color: #273849;
+            padding: 12px 15px;
+            border-bottom: 1px solid #576879;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .command-title {
+            color: #fff;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .command-description {
+            color: #ccc;
+            font-style: italic;
+            font-size: 0.9em;
+            margin-top: 3px;
+        }
+
+        .copy-btn {
+            background-color: #00f000;
+            color: #000;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background-color: #00d000;
+            transform: scale(1.05);
+        }
+
+        .copy-btn.copied {
+            background-color: #ff6600;
+            color: #fff;
+        }
+
+        .command-code {
+            background-color: #0a0a0a;
+            color: #00f000;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            white-space: pre-wrap;
+            word-break: break-all;
+            border: 1px solid #333;
+            margin: 0;
+            position: relative;
+        }
+
+        .command-code::selection {
+            background-color: #00f000;
+            color: #000;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #00f000;
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .command-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .copy-btn {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
 <body>
+    <div class="container">
+        <h1>LUCS 3.0 - Links & Tools</h1>
 
-<h2><b>Tools & Configurations</b></h2>
+        <div class="section">
+            <h2>Tools & Configurations</h2>
+            <div class="links-section">
+                <div class="link-item">
+                    <a href="https://cs.linuxuniverse.com.br/index.php/s/TfaCyiZooC86mAb" target="_blank">
+                        🔧 Recover & Maintenance
+                    </a>
+                </div>
+                <div class="link-item">
+                    <a href="https://cs.linuxuniverse.com.br/index.php/s/KX2wMWoadDGypGS" target="_blank">
+                        🔒 VPN's
+                    </a>
+                </div>
+                <div class="link-item">
+                    <a href="https://www.snappy-driver-installer.org/" target="_blank">
+                        💾 Snappy Driver Installer
+                    </a>
+                </div>
+            </div>
+        </div>
 
-<a href="https://cs.linuxuniverse.com.br/index.php/s/TfaCyiZooC86mAb">Recover & Maintenance</a><br><br>
+        <div class="section">
+            <h2>PowerShell Commands</h2>
+            
+            <div class="command-item">
+                <div class="command-header">
+                    <div>
+                        <div class="command-title">Easy Windows Activation</div>
+                        <div class="command-description">Execute no PowerShell como Administrador</div>
+                    </div>
+                    <button class="copy-btn" onclick="copyCommand(this, 'irm https://get.activated.win | iex')">Copiar</button>
+                </div>
+                <pre class="command-code">irm https://get.activated.win | iex</pre>
+            </div>
 
-<a href="https://cs.linuxuniverse.com.br/index.php/s/KX2wMWoadDGypGS">VPN's</a><br>
+            <div class="command-item">
+                <div class="command-header">
+                    <div>
+                        <div class="command-title">Windows 10 Optimization (Opção 1)</div>
+                        <div class="command-description">ChrisTitus Script - PowerShell como Admin</div>
+                    </div>
+                    <button class="copy-btn" onclick="copyCommand(this, 'irm christitus.com/win | iex')">Copiar</button>
+                </div>
+                <pre class="command-code">irm christitus.com/win | iex</pre>
+            </div>
 
+            <div class="command-item">
+                <div class="command-header">
+                    <div>
+                        <div class="command-title">Windows 10 Optimization (Opção 2)</div>
+                        <div class="command-description">Debloat Script - PowerShell como Admin</div>
+                    </div>
+                    <button class="copy-btn" onclick="copyCommand(this, 'iwr -useb https://git.io/debloat | iex')">Copiar</button>
+                </div>
+                <pre class="command-code">iwr -useb https://git.io/debloat | iex</pre>
+            </div>
+
+            <div class="command-item">
+                <div class="command-header">
+                    <div>
+                        <div class="command-title">Allow PING on Windows</div>
+                        <div class="command-description">Habilitar ICMP - PowerShell como Admin</div>
+                    </div>
+                    <button class="copy-btn" onclick="copyCommand(this, 'netsh advfirewall firewall add rule name=\"ICMP Allow incoming V4 echo request\" protocol=icmpv4:8,any dir=in action=allow')">Copiar</button>
+                </div>
+                <pre class="command-code">netsh advfirewall firewall add rule name="ICMP Allow incoming V4 echo request" protocol=icmpv4:8,any dir=in action=allow</pre>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>System Commands</h2>
+            
+            <div class="command-item">
+                <div class="command-header">
+                    <div>
+                        <div class="command-title">Date Time Fix for Windows on AD</div>
+                        <div class="command-description">Sincronização de tempo com NTP</div>
+                    </div>
+                    <button class="copy-btn" onclick="copyCommand(this, 'w32tm /config /update /manualpeerlist:0.ubuntu.pool.ntp.org /syncfromflags:manual /reliable:yes')">Copiar</button>
+                </div>
+                <pre class="command-code">w32tm /config /update /manualpeerlist:0.ubuntu.pool.ntp.org /syncfromflags:manual /reliable:yes</pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Comando copiado!</div>
+
+    <script>
+        function copyCommand(button, command) {
+            // Copia o comando para a área de transferência
+            navigator.clipboard.writeText(command).then(function() {
+                // Mostra feedback visual no botão
+                const originalText = button.textContent;
+                button.textContent = 'Copiado!';
+                button.classList.add('copied');
+                
+                // Mostra toast de confirmação
+                showToast();
+                
+                // Restaura o botão após 2 segundos
+                setTimeout(function() {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(function(err) {
+                // Fallback para navegadores mais antigos
+                const textarea = document.createElement('textarea');
+                textarea.value = command;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                button.textContent = 'Copiado!';
+                button.classList.add('copied');
+                showToast();
+                
+                setTimeout(function() {
+                    button.textContent = 'Copiar';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            
+            setTimeout(function() {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Permite copiar clicando no código também
+        document.querySelectorAll('.command-code').forEach(function(codeBlock) {
+            codeBlock.addEventListener('click', function() {
+                const command = this.textContent.trim();
+                const button = this.parentElement.querySelector('.copy-btn');
+                copyCommand(button, command);
+            });
+        });
+    </script>
 </body>
-</font></html>
-
-<h2><b>Other's</b></h2>
-
-<i>Easy Activation (PowerShell as Admin)</i><br>
-irm https://get.activated.win | iex<br><br>
-
-<i>For Optimizing Windows 10 (PowerShell as Admin):</i><br>
-irm christitus.com/win | iex<br>or<br>
-iwr -useb https://git.io/debloat | iex<br><br>
-
-<i>Date Time Fix for Windows on AD:</i><br>
-w32tm /config /update /manualpeerlist:0.ubuntu.pool.ntp.org /syncfromflags:manual /reliable:yes<br><br>
-
-<i>Allow PING on Windows (use PowerShell as Admin)</i><br>
-netsh advfirewall firewall add rule name="ICMP Allow incoming V4 echo request" protocol=icmpv4:8,any  dir=in action=allow<br><br>
-
-<i>Drivers when Windows Update doesn't Work!</i><br>
-https://www.snappy-driver-installer.org/<br><br>
+</html>
