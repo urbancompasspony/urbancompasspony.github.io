@@ -203,7 +203,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>👁️ Zoio The Green Eye</h1>
+            <h1>Zoio The Green Eye</h1>
             <p>Portfólio Pessoal de Criações Aleatórias e Projetos em Andamento!</p>
         </div>
 
@@ -230,34 +230,10 @@
                 icon: '👨‍💻'
             },
             {
-                name: 'loja-virtual',
-                title: 'Loja Virtual',
-                description: 'E-commerce completo com carrinho de compras e sistema de pagamento.',
-                icon: '🛒'
-            },
-            {
-                name: 'blog',
-                title: 'Blog Pessoal',
-                description: 'Artigos sobre tecnologia, programação e desenvolvimento web.',
+                name: 'simple-chat',
+                title: 'Simple Web Chat',
+                description: 'No TLS, no SSL, no login, no password!',
                 icon: '📝'
-            },
-            {
-                name: 'dashboard',
-                title: 'Dashboard Analytics',
-                description: 'Painel de controle com gráficos e métricas em tempo real.',
-                icon: '📊'
-            },
-            {
-                name: 'jogo',
-                title: 'Mini Game',
-                description: 'Jogo desenvolvido em JavaScript puro com HTML5 Canvas.',
-                icon: '🎮'
-            },
-            {
-                name: 'calculadora',
-                title: 'Calculadora Avançada',
-                description: 'Calculadora científica com funções matemáticas complexas.',
-                icon: '🧮'
             }
         ];
 
@@ -284,20 +260,6 @@
                 
                 grid.appendChild(projectCard);
             });
-            
-            // Adiciona card para novos projetos
-            const addProjectCard = document.createElement('div');
-            addProjectCard.className = 'project-card add-project';
-            addProjectCard.innerHTML = `
-                <div class="plus-icon">➕</div>
-                <h3>Adicionar Novo Projeto</h3>
-                <p>Crie uma nova pasta e adicione-a à lista</p>
-            `;
-            addProjectCard.onclick = () => {
-                alert('Para adicionar um novo projeto:\n\n1. Crie uma pasta com o nome do projeto\n2. Adicione um index.html na pasta\n3. Atualize a lista de projetos no JavaScript deste arquivo');
-            };
-            
-            grid.appendChild(addProjectCard);
         }
 
         // Funcionalidade de busca
