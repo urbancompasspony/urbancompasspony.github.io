@@ -1,145 +1,891 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+<meta charset="utf-8">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carregando...</title>
-    
-    <!-- Redirecionamento via meta refresh (método 1) -->
-    <meta http-equiv="refresh" content="0; url=https://apps.linuxuniverse.com.br">
-    
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-
-        .loading-container {
-            text-align: center;
-            padding: 2rem;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        h1 {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-            font-weight: 300;
-        }
-
-        p {
-            opacity: 0.8;
-            font-size: 0.9rem;
-        }
-
-        .manual-link {
-            margin-top: 1.5rem;
-        }
-
-        .manual-link a {
-            color: white;
-            text-decoration: none;
-            padding: 0.8rem 1.5rem;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            transition: all 0.3s ease;
-            display: inline-block;
-        }
-
-        .manual-link a:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .fallback-message {
-            margin-top: 1rem;
-            font-size: 0.8rem;
-            opacity: 0.7;
-            line-height: 1.4;
-        }
-    </style>
+	<link href="https://cdn.jsdelivr.net/npm/featherlight@1.7.14/release/featherlight.min.css" type="text/css" rel="stylesheet" />
+	<link href="css/style.css" type="text/css" rel="stylesheet" />
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Cantarell:ital,wght@0,400;0,700;1,400;1,700&family=Play:wght@400;700&display=swap" rel="stylesheet">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <div class="loading-container">
-        <div class="spinner"></div>
-        <h1>🌍 Redirecionando...</h1>
-        <p>Você será redirecionado</p>
+	<nav id="header">
+			<ul>
+				<li><a id="padrao" class="inicio" href="#">Sistema Modelo</a></li>
+				<li><a id="extra" href="#">Mais Serviços</a></li>
+				<li><a id="contrato" class="fim" href="#">Somente Contrato</a></li>
+			</ul>
+	</nav>
+	<div id="container">
+		&nbsp;
+		<br />
+		&nbsp;
+		<br />
+		&nbsp;
+		<br />
+		&nbsp;
+		
+		<!-- LOGO EXIBIDA NA TELA PRINCIPAL -->
+		<img src="https://static.wixstatic.com/media/b0692b_7e3d6e4d196f4be9bcb05dae19a9bf18~mv2.png/v1/fill/w_252,h_260,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/b0692b_7e3d6e4d196f4be9bcb05dae19a9bf18~mv2.png" />
+
+		<br />
+
+<!-- ===================== ===================== -->
+<!-- ===================== ===================== -->
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#db">
+			<div class="item extra">
+				<img src="img/db.png" />
+				<h2>Banco de Dados</h2>
+				<p>Suportando atualmente: MySQL, MariaDB, OracleXE 21C ou Firebird.</p>
+			</div>
+		</a>
+		<div id="db" class="oculto">
+		    
+		<h2>Descrição:</h2>
+		<p><h3>Bancos suportados: MySQL, MariaDB, OracleXE 21C e Firebird.</h3></p>
+		<p>Opcional: PHPMyAdmin para manutenção de bancos de dados.</p>
+		<p>Backup periódico automático incluso de quaisquer bancos de dados descritos e baixo custo para mantê-los.</p>
+		<p>Algumas aplicações podem exigir especificidades para executar o OracleDB. Por padrão, este roda em CentOS.</p>
+		<p>O Firebird Linux pode não ser compatível com aplicações e/ou bancos Firebird Windows devido à forma como uma aplicação faz as requisições do sistema.</p>
+		
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#clamav">
+			<div class="item contrato">
+				<img src="img/clamav.png" />
+				<h2>ClamAV*</h2>
+				<p>Antivírus para pastas compartilhadas na rede ou via Domínio.</p>
+			</div>
+		</a>
+		<div id="clamav" class="oculto">
+		    
+		<h2>Descrição:</h2>
+		<p>Antivírus que funciona diretamente nos dados compartilhados na rede, vasculhando os discos do servidor.</p>
+		<p>Os discos podem ser quaisquer, desde HDD's externos à discos secundários de backup.</p>
+		<p>As varreduras são feitas 1x ao dia e os dados considerados inseguros são movidos para uma pasta separada.</p>
+
+		<p><h3>*EXCLUSIVO PARA CONTRATOS.</h3></p>
+		<p>Caso o contrato seja encerrado o serviço é descontinuado e removido.</p>
+		
+        <img src="print/print-clamav.png"/>
+
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#chromium">
+			<div class="item extra">
+				<img src="img/chromium.png" />
+				<h2>Chromium Virtual Browser</h2>
+				<p>Navegador Web acessível via Web para maior privacidade e/ou acesso ao Servidor.</p>
+			</div>
+		</a>
+		<div id="chromium" class="oculto">
+		    
+		<h2>Descrição:</h2>
+		<p>Navegador de internet completo que funciona dentro do navegador permitindo que seja acessado por N estações de trabalho.</p>
+		<p>Também suporta aceleração de hardware e é capaz de reproduzir áudio/vídeo com baixa latência, incluindo mas não limitado ao Youtube®</p>
+		<p>Os downloads são direcionados a uma pasta customizada direto no servidor de arquivos se assim o preferir.</p>
+		 
+        <img src="print/print-chromium.png"/>
+
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#dashdot">
+			<div class="item padrao">
+				<img src="img/dashdot.png" />
+				<h2>DashDot</h2>
+				<p>Interface visual dos recursos de hardware atualmente em utilização pelo servidor.</p>
+			</div>
+		</a>
+		<div id="dashdot" class="oculto">
+		    
+        <h2>Descrição:</h2>
+		<p>Exibe diversas informações sobre o consumo de CPU, RAM, GPU, Rede e Armazenamento em um servidor, além de exibir detalhes do uso dos núcleos de processamento individualmente.</p>
+		<p>Também pode ser integrado ao Homarr através de iFrames.</p>
+		
+        <img src="print/print-dashdot.png"/>
+		</div>
+
+<!-- ===================== ===================== -->
+				
+		<a href="#" data-featherlight="#dominio">
+			<div class="item padrao">
+				<img src="img/dominio.png" />
+				<h2>Domínio & CUPS</h2>
+				<p>Serviço de Active Directory e Controlador de Domínio (AD-DC) baseado no SAMBA.</p>
+			</div>
+		</a>
+		<div id="dominio" class="oculto">
+		    
+        <h2>Descrição:</h2>
+		<p>Alternativa ao Active Directory da Microsoft, que suporta gerenciamento de Usuários, Grupos, Políticas de Grupos (GPO's), Silos de Autenticação, Unidades Organizacionais, compatibilidade com LDAP além de ser gerenciável através de RSAT ou pelo terminal (imagem abaixo).</p>
+				<p><h3>*A INTEGRAÇÃO DA VPN COM AD-DC É EXCLUSIVA PARA CONTRATOS.</h3></p>
+
+        <img src="print/print-ad.png"/>
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#ferdium">
+			<div class="item extra">
+				<img src="img/ferdium.svg" />
+				<h2>Ferdium</h2>
+				<p>Tenha todos os seus principais sites previamente logados direto na sua rede!</p>
+			</div>
+		</a>
+		<div id="ferdium" class="oculto">
+        <h2>Descrição:</h2>
+		<p>Alternativa ao RAMBOX, permite hospedar localmente um navegador que isola e inicializa diversos sites de redes sociais como o WhatsApp, Facebook, etc. Por exemplo, você pode acessar diversas contas de WhatsApp ao mesmo tempo dentro do serviço, cada aba é como um navegador próprio e isolado.</p>
+		<p>Ideal para quem possui diversos dispositivos e quer ter um controle granular de que todos tenham sempre os mesmos recursos Web sempre disponíveis, independentemente do sistema em uso.</p>
+		<p>O acesso pode ser protegido por uma senha.</p>
+		
+		<img src="print/print-ferdium.png"/>
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#filebrowser">
+			<div class="item contrato">
+				<img src="img/filebrowser.svg" />
+				<h2>FileBrowser*</h2>
+				<p> Gestor de arquivos web, ideal para acesso a backups incrementais ocultos da rede.</p>
+			</div>
+		</a>
+		<div id="filebrowser" class="oculto">
+
+        <h2>Descrição:</h2>
+        <p>Alternativa ao FilleZilla, permite o controle, gerenciamento, manutenção e suporte de diversas pastas e/ou arquivos no servidor.</p>
+		<p>Dentre os recursos destaco o editor de textos e delimitação de acesso de pastas à usuários com permissões customizáveis.</p>
+		<p>Ideal para busca e recuperação de backups incrementais!</p>
+		
+		<p><h3>*EXCLUSIVO PARA CONTRATOS.</h3></p>
+		<p>Caso o contrato seja encerrado o serviço é descontinuado e removido.</p>
+
+        <img src="print/print-browsefiles.png"/>
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#unifi">
+			<div class="item contrato">
+				<img src="img/unifi.svg" />
+				<h2>Gestor UniFi*</h2>
+				<p>Painel de controle para todos os equipamentos UniFi</p>
+			</div>
+		</a>
+		<div id="unifi" class="oculto">
+
+        <h2>Descrição:</h2>
+		<p>Permite o controle, gerenciamento, manutenção e suporte aos WiFi's de equipamentos desenvolvidos sob a marca UniFi</p>
+
+		<p><h3>*EXCLUSIVO PARA CONTRATOS.</h3></p>
+		<p>Caso o contrato seja encerrado o serviço é descontinuado e removido.</p>
+
+        <img src="print/print-unifi.png"/>
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#glpi">
+			<div class="item contrato">
+				<img src="img/glpi.png" />
+				<h2>GLPI*</h2>
+				<p>Sistema de controle de chamados e controle de inventário.</p>
+			</div>
+		</a>
+		<div id="glpi" class="oculto">
+
+        <h2>Descrição:</h2>
+		<p>Permite gestão de abertura de chamados de suporte técnico além de controle de inventário de um parque de infraestrutura de TI.</p>
+		<p>O vínculo LDAP e as notificações via e-mail e mobile só existem na versão paga.</p>
+		
+        <img src="print/print-glpi.png"/>
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#homarr">
+			<div class="item contrato">
+				<img src="img/homarr.svg" />
+				<h2>Homarr*</h2>
+				<p>Dashboard altamente customizável com suporte a atalhos e plugins.</p>
+			</div>
+		</a>
+		<div id="homarr" class="oculto">
+        <h2>Descrição:</h2>
+		<p>Dashboard altamente customizável com suporte a links internos e externos, Ping integrado para vários serviços, integração com serviços como o PiHole, integração utilizando iFrames (para o Kuma e o DashDot por exemplo) além de exibir diversas outras informações como hora local e previsão do tempo.</p>
+		<p>Também pode ser utilizado para gerenciar containers em alternativa ao Portainer e o Pottava!</p>
         
-        <div class="manual-link">
-            <a href="https://apps.linuxuniverse.com.br" id="manualLink">Clique aqui se não foi redirecionado</a>
-        </div>
+		<p><h3>*EXCLUSIVO PARA CONTRATOS.</h3></p>
+		<p>Caso o contrato seja encerrado o serviço é descontinuado e removido.</p>
         
-        <div class="fallback-message">
-            <strong>Nota:</strong> Você será redirecionado em instantes.<br>
-            Este redirecionamento funciona em qualquer servidor web.
-        </div>
-    </div>
+        <img src="print/print-homarr.png"/>
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#jellyfin">
+			<div class="item extra">
+				<img src="img/jellyfin.png" />
+				<h2>Jellyfin</h2>
+				<p>Servidor multimídia para Músicas, Filmes e Séries.</p>
+			</div>
+		</a>
+		<div id="jellyfin" class="oculto">
+		    
+		<h2>Descrição:</h2>
+		<p>Tenha uma Netflix® para chamar de sua, configure um servidor multimídia e facilite a gestão de suas séries e filmes.</p>
+		<p>Possui clientes para iOS, Android, SmarTVs LG, Amazon, Windows e Linux.</p>
+		<p>Não há suporte nativo à SmarTVs da Samsung.</p>
+		
+        <img src="print/print-jellyfin.png"/>
+		</div>
 
-    <script>
-        // Redirecionamento via JavaScript (método 2)
-        setTimeout(function() {
-            window.location.href = 'https://apps.linuxuniverse.com.br';
-        }, 100);
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#kiosk">
+			<div class="item extra">
+				<img src="img/kiosk.png" />
+				<h2>Kiosk</h2>
+				<p>Página web fixa para totens e kioskes interativos ou apenas visuais.</p>
+			</div>
+		</a>
+		<div id="kiosk" class="oculto">
 
-        // Redirecionamento imediato via JavaScript (método 3)
-        // Descomente a linha abaixo se quiser redirecionamento instantâneo
-        // window.location.replace('https://apps.linuxuniverse.com.br');
+        <h2>Descrição:</h2>
+		<p>Utilizando um velho computador Celeron com 2Gb de RAM tenha em mãos um sistema Kiosk para visualizar vídeos, imagens, textos,</p>
+		<p>ou apenas exibir uma página da web com sistema de senhas online, serviços de servidores e outros. Suporta telas touchscreen.</p>
+    
+        <img src="print/print-kiosk.png"/>
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#kuma">
+			<div class="item contrato">
+				<img src="img/kuma.png" />
+				<h2>Kuma*</h2>
+				<p>Sistema de monitoramento de containers, serviços e sites com ping automático.</p>
+			</div>
+		</a>
+		<div id="kuma" class="oculto">
 
-        // Fallback: se após 3 segundos ainda estiver na página, 
-        // destaca o link manual
-        setTimeout(function() {
-            const link = document.getElementById('manualLink');
-            link.style.background = 'rgba(255, 255, 255, 0.4)';
-            link.style.animation = 'pulse 1s infinite';
-        }, 3000);
+        <h2>Descrição:</h2>
+		<p>Monitoramento baseado em Ping para acompanhar o status de websites, serviços, containers e outros.</p>
+		<p>A gestão se dá por login e senha mas o resultado dos testes pode ser definido numa tela pública não interativa.</p>
+    
+    		<p><h3>*EXCLUSIVO PARA CONTRATOS.</h3></p>
+		<p>Caso o contrato seja encerrado o serviço é descontinuado e removido.</p>
+    
+        <img src="print/print-kuma.png"/>
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#myspeed">
+			<div class="item padrao">
+				<img src="img/myspeed.png" />
+				<h2>MySpeed</h2>
+				<p>Realiza testes de velocidade de internet utilizando o SpeedTest by Ookla</p>
+			</div>
+		</a>
+		<div id="myspeed" class="oculto">
+		    
+        <h2>Descrição:</h2>
+        <p>Realiza testes de velocidade de hora em hora de forma automática.</p>
+		<p>Mantém um histórico e desenha gráficos das médias de download e upload.</p>
+		<p>Testes manuais podem ser feitos ao bel prazer do usuário.</p>
+		
+        <img src="print/print-myspeed.png"/>
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#pxe">
+			<div class="item extra">
+				<img src="img/pxe.svg" />
+				<h2>Netboot PXE</h2>
+				<p>Permite habilitar a inicialização PXE em uma rede segura ou laboratório.</p>
+			</div>
+		</a>
+		<div id="pxe" class="oculto">
 
-        // Adiciona animação de pulso
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes pulse {
-                0% { transform: scale(1); }
-                50% { transform: scale(1.05); }
-                100% { transform: scale(1); }
-            }
-        `;
-        document.head.appendChild(style);
+		<h2>Descrição:</h2>
+		<p>Altamente customizável com um painel de gestão através de interface gráfica web. Por padrão inicializa imagens imediatamente baixadas da internet.</p>
+		<p>Até o presente momento NÃO funcional como UEFI para redes com pfSense 2.7+, somente Legacy BIOS.</p>
 
-        // Log para debug
-        console.log('Redirecionando...');
+        <img src="print/print-pxe.png"/>
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#nextcloud">
+			<div class="item extra">
+				<img src="img/nextcloud.png" />
+				<h2>Nextcloud</h2>
+				<p>Sistema centralizado de colaboração em nuvem com foco em ser seguro e amigável.</p>
+			</div>
+		</a>
+		<div id="nextcloud" class="oculto">
         
-        // Opcional: analytics ou tracking antes do redirecionamento
-        // gtag('event', 'redirect', { 'destination': 'apps.linuxuniverse.com.br' });
-    </script>
+        <h2>Descrição:</h2>
+		<p>Possui diversos applets como o Talk para comunicação, chat, videoconferências e afins; O OnlyOffice que é um pacote Office colaborativo; entre outros recursos, como vínculo com Active Directory.</p>
+		
+        <img src="print/print-nextcloud.png"/>
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#ntfy">
+			<div class="item extra">
+				<img src="img/ntfy.png" />
+				<h2>ntfy</h2>
+				<p>Sistema de notificação para diversos meios e sistemas incluindo mobiles.</p>
+			</div>
+		</a>
+		<div id="ntfy" class="oculto">
+		    
+        <h2>Descrição:</h2>
+		<p>Possui aplicativo mobile para receber notificações de diversas naturezas, como eventos de servidores e até eventos de usuários na rede.</p>
+        
+        <img src="print/print-ntfy.png"/>
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#nut">
+			<div class="item contrato">
+				<img src="img/nut.png" />
+				<h2>Network UPS Tools*</h2>
+				<p>Monitoramento de nobreaks pela USB e controle de desligamento automático.</p>
+			</div>
+		</a>
+		<div id="nut" class="oculto">
+		    
+        <h2>Descrição:</h2>
+		<p>Permite ser configurado em um rapsberry pi ou no próprio servidor e envia comandos de desligamento em caso de necessidade.</p>
+        
+		<p><h3>*EXCLUSIVO PARA CONTRATOS.</h3></p>
+		<p>Caso o contrato seja encerrado o serviço é descontinuado e removido.</p>
+        
+        <img src="print/print-nut.png"/>
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#onlyoffice">
+			<div class="item contrato">
+				<img src="img/onlyoffice.png" />
+				<h2>OnlyOffice*</h2>
+				<p>Suíte office colaborativa alternativa ao Microsoft Office 365</p>
+			</div>
+		</a>
+		<div id="onlyoffice" class="oculto">
+		
+		<h2>Descrição:</h2>
+		<p>Alternativa ao Microsoft Office 365 e ao Google Docs porém sem exigência de acesso à internet, sem contratos ou mensalidades.</p>
+		<p>Foco em ser colaborativo, permite que até 20 usuários simultâneos editem o mesmo documento.</p>
+
+        <img src="print/print-onlyoffice.png"/>
+	    </div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#openspeedtest">
+			<div class="item padrao">
+				<img src="img/openspeedtest.png" />
+				<h2>OpenSpeedTest</h2>
+				<p>Avalie a velocidade de conexão com o servidor localmente.</p>
+			</div>
+		</a>
+		<div id="openspeedtest" class="oculto">
+		
+		<h2>Descrição:</h2>
+		<p>Permite fazer um teste de conexão com qualquer equipamento da rede para com o servidor, auxiliando a avaliar cabeamentos e se os roteadores WiFi estão respondendo adequadamente.</p>
+		<p>Também é muito útil para identificar a real velocidade de conexão entre o servidor e os clientes conectados à VPN!</p>
+
+        <img src="print/print-openspeedtest.png"/>
+	    </div>
+	    
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#openvpn">
+			<div class="item contrato">
+				<img src="img/openvpn.png" />
+				<h2>OpenVPN*</h2>
+				<p>Crie conexões VPN entre empresas e colaboradores, porém, sem um firewall.</p>
+			</div>
+		</a>
+		<div id="openvpn" class="oculto">
+		
+		<h2>Descrição:</h2>
+		<p>Conexão OpenVPN independente, que não depende de um servidor firewall completo, como o pfSense ou IPFire, para funcionar.</p>
+		<p>O objetivo aqui é permitir que se tenha o OpenVPN em um RaspberryPi, um servidor mais fraco, ou outro hardware limitado, evitando o uso de quaisquer máquinas virtuais ou outros subterfúgios.</p>
+		<p>Requer, por padrão, um servidor Domínio em Linux pré-executando para funcionar e permitir o gerenciamento dos usuários!</p>
+
+		<p><h3>*EXCLUSIVO PARA CONTRATOS.</h3></p>
+		<p>Caso o contrato seja encerrado o serviço é descontinuado e removido.</p>
+
+        <img src="print/print-openvpn.png"/>
+	    </div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#pentest">
+			<div class="item contrato">
+				<img src="img/pentest.png" />
+				<h2>PenTest & PentApache*</h2>
+				<p>Testes de Invasão realizados localmente e serviço de relatórios dos testes realizados.</p>
+			</div>
+		</a>
+		<div id="pentest" class="oculto">
+		    
+        <h2>Descrição:</h2>
+		<p>Realiza 2 testes diários e emite os relatórios separados por IP e MAC do equipamento apontando o que é provavelmente vulnerável e possivelmente um ransomware pode estar em ação na rede.</p>
+        
+		<p><h3>*EXCLUSIVO PARA CONTRATOS.</h3></p>
+		<p>Caso o contrato seja encerrado o serviço é descontinuado e removido.</p>
+        
+        <img src="print/print-pentest.png"/>
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#pfsense">
+			<div class="item padrao">
+				<img src="img/pfsense.png" />
+				<h2>PfSense</h2>
+				<p>Firewall com suporte a diversos recursos como Load Balancer, VPN e outros.</p>
+			</div>
+		</a>
+		<div id="pfsense" class="oculto">
+		    
+        <h2>Descrição:</h2>
+        <p>Suporta os recursos e ferramentas mais importantes necessários para integração e segurança de uma rede:</p>
+		<p>Contempla balanceamento de carga de 2 ou mais internets, atualizações de DNS Dinamico (NO-IP), VPN através do IPSEC e do OpenVPN, enquanto possui diversas outras ferramentas como Cron e Patches de Segurança que podem ser aplicados imediatamente.</p>
+		
+				<p><h3>*A INTEGRAÇÃO DA VPN COM AD-DC É EXCLUSIVA PARA CONTRATOS.</h3></p>
+        
+        <img src="print/print-pfsense.png"/>
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#pihole">
+			<div class="item padrao">
+				<img src="img/pihole.png" />
+				<h2>PiHole</h2>
+				<p>Servidor DNS local que faz um filtro de diversos sites maliciosos ou indesejados.</p>
+			</div>
+		</a>
+
+		<div id="pihole" class="oculto">
+		    
+		<h2>Descrição:</h2>
+		<p>Permite, em redes mistas de computadores, servidores, tablets e/ou smartphones, bloquear:</p>
+		<p>Anúncios, telemetria, sites maliciosos, sites de phishing, ransomwares, roubo de carteiras de criptomoedas, abusos, fraude, pirataria, golpes, pornografia, discurso de ódio, incentivo às drogas, fake news, apostas, serviços de encontros online, domínio mortos, sites inúteis, sites que propagam malwares com fake news, além de sites de redes sociais (YouTube, Pinterest, Pixiv, Omegle, Patreon, TikTok, Facebook, Instagram, Snapchat, X/Twitter, Discord, Skype, WhatsApp, Spotify) e sites de páginas sobre criptomoedas legítimas.</p>
+		
+		<img src="print/print-pihole.png"/>
+		</div>
+
+
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#qdirstat">
+			<div class="item contrato">
+				<img src="img/qdirstat.png" />
+				<h2>QdirStat*</h2>
+				<p>Monitoramento do tamanho dos arquivos e pastas em um servidor.</p>
+			</div>
+		</a>
+		<div id="qdirstat" class="oculto">
+		    
+        <h2>Descrição:</h2>
+		<p>Acompanhe o consumo de armazenamento de SSDs, Discos Rígidos e NVMes em qualquer tipo de servidor!</p>
+
+		<p><h3>*EXCLUSIVO PARA CONTRATOS.</h3></p>
+		<p>Caso o contrato seja encerrado o serviço é descontinuado e removido.</p>
+		
+        <img src="print/print-qdirstat.jpeg"/>
+		</div>
+
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#qbittorrent">
+			<div class="item extra">
+				<img src="img/qBittorrent.png" />
+				<h2>qBitTorrent</h2>
+				<p>Gestor de downloads de Torrents diretamente no servidor.</p>
+			</div>
+		</a>
+		<div id="qbittorrent" class="oculto">
+		    
+        <h2>Descrição:</h2>
+		<p>Gerencie seus downloads de Torrents de forma centralizada em um servidor dedicado. Interface web, os downloads são enviados para um disco pré-determinado.</p>
+		<p>Pode ser um complemento para o Jellyfin.</p>
+
+        <img src="print/print-qbittorrent.png"/>
+		</div>
+
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#rclone">
+			<div class="item extra">
+				<img src="img/rclone.png" />
+				<h2>RClone</h2>
+				<p>Faça backup para qualquer nuvem com este serviço.</p>
+			</div>
+		</a>
+		<div id="rclone" class="oculto">
+		    
+        <h2>Descrição:</h2>
+		<p>Serviço de backup em Nuvem que pode tanto enviar arquivos quanto baixá-los de qualquer nuvem.</p>
+		<p>Suporta OneDrive, DropBox, Google Drive, Amazon S3, Google Photos, iCloud Drive, WebDAV e outros.</p>
+		
+        <img src="print/print-rclone.png"/>
+		</div>
+
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#remotely">
+			<div class="item extra">
+				<img src="img/remotely.png" />
+				<h2>Remotely</h2>
+				<p>Gestor de acessos remotos customizado e auto hospedado.</p>
+			</div>
+		</a>
+		<div id="remotely" class="oculto">
+		    
+        <h2>Descrição:</h2>
+		<p>Alternativa aos Anydesk, TeamViewer e RustDesk: Possui um painel de controle web que centraliza um servidor de acesso com controle por login e senha.</p>
+		<p>É a alternativa gratuita e livre mais próxima do DWService.</p>
+		
+        <img src="print/print-remotely.png"/>
+		</div>
+
+<!-- ===================== ===================== -->
+
+		<a href="#" data-featherlight="#reverseproxy">
+			<div class="item contrato">
+				<img src="img/reverseproxy.svg" />
+				<h2>Reverse Proxy*</h2>
+				<p>Sistema de controle externo para endereços FQDN.</p>
+			</div>
+		</a>
+		<div id="reverseproxy" class="oculto">
+        
+        <h2>Descrição:</h2>
+		<p>Utilizado para se ter vários serviços que apontam para vários endereços de rede porém sob o mesmo IP externo.</p>
+		<p>Exemplos: Nextcloud, GLPI e ntfy acessíveis remotamente por 3 endereços distintos mas sendo o mesmo endereço Dynamic DNS, NO-IP e afins.</p>
+		
+		<p><h3>*EXCLUSIVO PARA CONTRATOS.</h3></p>
+		<p>Caso o contrato seja encerrado o serviço é descontinuado e removido.</p>
+		
+		</div>
+		
+<!-- ===================== ===================== -->	
+	
+		<a href="#" data-featherlight="#rustdesk">
+			<div class="item contrato">
+				<img src="img/rustdesk.png" />
+				<h2>RustDesk Web Client*</h2>
+				<p>Cliente Web para o serviço de acessos remotos RustDesk</p>
+			</div>
+		</a>
+		<div id="rustdesk" class="oculto">
+		    
+        <h2>Descrição:</h2>
+		<p>Acesso facilitado com um cliente diretamente na Web.</p>
+		<p>Pode ser hospedado no mesmo sistema que o RustDesk Server.</p>
+		
+		<p><h3>*EXCLUSIVO PARA CONTRATOS.</h3></p>
+		<p>Caso o contrato seja encerrado o serviço é descontinuado e removido.</p>
+        
+		</div>
+
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#apache">
+			<div class="item extra">
+				<img src="img/apache.svg" />
+				<h2>Servidor Apache</h2>
+				<p>Servidor Web Apache2 para sites diversos e com suporte a plugins.</p>
+			</div>
+		</a>
+		<div id="apache" class="oculto">
+		    
+        <h2>Descrição:</h2>
+		<p>Permite configurar um login e senha padrão caso seja necessário proteger o conteúdo do site.</p>
+		<p>Suporta sites auto-hospedados incluindo mas não limitado ao Wordpress, sites criados e exportados a partir do WIX, sites para armazenar arquivos e etc.</p>
+		<p>Também pode ser configurado com Reverse Proxy!</p>
+		
+		</div>
+
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#cups">
+			<div class="item extra">
+				<img src="img/cups.svg" />
+				<h2>Servidor CUPS</h2>
+				<p>Servidor de impressão para impressoras USB e também de rede.</p>
+			</div>
+		</a>
+		<div id="cups" class="oculto">
+		    
+		<h2>Descrição:</h2>
+		<p>Suporta as principais impressoras do mercado com drivers nativos para HP, Ricoh, Samsung, Brother, Epson e outras.</p>
+		<p>O suporte à scanner é limitado!</p>
+		
+		<img src="print/print-cups.png"/>
+		</div>
+
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#ftp">
+			<div class="item extra">
+				<img src="img/ftp.png" />
+				<h2>Servidor FTP</h2>
+				<p>Servidor FTP principalmente para Impressoras e Scanners em rede.</p>
+			</div>
+		</a>
+		<div id="ftp" class="oculto">
+        
+        <h2>Descrição:</h2>
+		<p>Ideal para impressoras de rede com protocolos obsoletos que não permitem scannear para redes samba 2 ou 3.</p>
+		<p>Pode ser configurado para ser acessado com usuário e senha ou permitir acesso anônimo.</p>
+		
+		</div>
+
+<!-- ===================== ===================== -->
+
+		<a href="#" data-featherlight="#rustdeskserver">
+			<div class="item contrato">
+				<img src="img/rustdeskserver.png" />
+				<h2>Servidor RustDesk*</h2>
+				<p>Alternativa ao AnyDesk porém sem qualquer limite de uso.</p>
+			</div>
+		</a>
+		<div id="rustdeskserver" class="oculto">
+		    
+        <h2>Descrição:</h2>
+		<p>O servidor e o acesso são totalmente customizados, independente de servidores terceiros.</p>
+		<p>O limite da velocidade do acesso remoto é restrito integralmente à velocidade da rede contratada aonde o servidor está hospedado.</p>
+		
+		<p><h3>*EXCLUSIVO PARA CONTRATOS.</h3></p>
+		<p>Caso o contrato seja encerrado o serviço é descontinuado e removido.</p>
+		
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#samba">
+			<div class="item extra">
+				<img src="img/samba.png" />
+				<h2>Servidor SAMBA</h2>
+				<p>Servidor SAMBA para compartilhamento de pastas na rede (sem Domínio).</p>
+			</div>
+		</a>
+		<div id="samba" class="oculto">
+		    
+        <h2>Descrição:</h2>
+        <p>Para casos em que se precisa compartilhar pastas na rede de forma simples com SAMBA mas não há necessidade de algo complexo quanto um controlador de domínio e regras de GPO.</p>
+        <p>Um uso comum é criar um compartilhamento com poucos usuários e senhas que sabe-se de antemão que improvavelmente serão alterados a longo prazo.</p>
+        
+		</div>
+
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#spark">
+			<div class="item contrato">
+				<img src="img/spark.png" />
+				<h2>Servidor OpenFire*</h2>
+				<p>Servidor base de aplicações como o Spark IM Messenger!</p>
+			</div>
+		</a>
+		<div id="spark" class="oculto">
+		    
+        <h2>Descrição:</h2>
+		<p>Servidor Web na versão 4.7.3</p>
+		<p>Devido à alterações da base recente 4.8+, não é mais possível configurar o Spark Messenger sem um servidor de certificados TLS.</p>
+		<p>A atualização para versões acima da 4.8+ é possível porém apenas em casos de extrema necessidade.</p>
+
+		<p><h3>*EXCLUSIVO PARA CONTRATOS.</h3></p>
+		<p>Caso o contrato seja encerrado o serviço é descontinuado e removido.</p>
+
+        <img src="print/print-openfire.png"/>
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#sist2">
+			<div class="item contrato">
+				<img src="img/elastic.png" />
+				<h2>sist-2*</h2>
+				<p>Indexador poderoso com base em Elastic Search!</p>
+			</div>
+		</a>
+		<div id="sist2" class="oculto">
+		    
+        <h2>Descrição:</h2>
+		<p>Indexe terabytes de dados e encontre tudo o que precisar em poucos segundos.</p>
+
+		<p><h3>*EXCLUSIVO PARA CONTRATOS.</h3></p>
+		<p>Caso o contrato seja encerrado o serviço é descontinuado e removido.</p>
+
+        <img src="print/print-sist2.jpeg"/>
+		</div>		
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#smoke">
+			<div class="item contrato">
+				<img src="img/smokeping.png" />
+				<h2>SmokePing*</h2>
+				<p>Sistema de Ping mais completo e complexo!</p>
+			</div>
+		</a>
+		<div id="smoke" class="oculto">
+		    
+        <h2>Descrição:</h2>
+		<p>Acompanhe rotinas de ping para diversos sites e serviços de forma muito mais minuciosa.</p>
+
+		<p><h3>*EXCLUSIVO PARA CONTRATOS.</h3></p>
+		<p>Caso o contrato seja encerrado o serviço é descontinuado e removido.</p>
+
+        <img src="print/print-smokeping.jpeg"/>
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#sshtunnel">
+			<div class="item contrato">
+				<img src="img/sshtunnel.png" />
+				<h2>SSH Tunnel + Wetty*</h2>
+				<p>Cria um acesso ao terminal do servidor diretamente como um serviço Web.</p>
+			</div>
+		</a>
+		<div id="sshtunnel" class="oculto">
+		    
+        <h2>Descrição:</h2>
+		<p>Cria dois serviços:</p>
+		<p>O primeiro vai abrir um túnel SSH permitindo que conexões VPN possam acessar o servidor diretamente. Ideal para os casos em que o pfSense está virtualizado e o acesso à máquina hospedeira é bloqueado por padrão.</p>
+		<p>O segundo vai gerar um terminal diretamente em um serviço web, facilitando configurações e manutenções de quaisquer natureza.</p>
+		
+		<p><h3>*EXCLUSIVO PARA CONTRATOS.</h3></p>
+		<p>Caso o contrato seja encerrado o serviço é descontinuado e removido.</p>
+		
+        <img src="print/print-wetty.png"/>
+		</div>
+		
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#syncthing">
+			<div class="item extra">
+				<img src="img/syncthing.svg" />
+				<h2>Syncthing</h2>
+				<p>Sistema de backup peer-to-peer com suporte incremental e versionamento.</p>
+			</div>
+		</a>
+		<div id="syncthing" class="oculto">
+		    
+        <h2>Descrição:</h2>
+		<p>Sistema de backup que pode ser gerenciado via Web e permite backups incrementais e até mesmo com lixeira temporária para evitar deleções acidentais.</p>
+		<p>Útil para se manter dois servidores distintos com dados iguais, com configurações amplas, por exemplo, mão-única ou via dupla!</p>
+		
+        <img src="print/print-syncthing.png"/>
+		</div>
+
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#tailscale">
+			<div class="item contrato">
+				<img src="img/tailscale.png" />
+				<h2>Tailscale*</h2>
+				<p>Permite liberar acessos a serviços que estejam sob CGNAT, 3G e outros!</p>
+			</div>
+		</a>
+		<div id="tailscale" class="oculto">
+		    
+		<h2>Descrição:</h2>
+		<p>Interligue diversos equipamentos, clientes, servidores e/ou serviços, através de uma VPN MESH, sem necessidade de abrir portas em modems, roteadores ou firewalls. Funciona em quaisquer tipos de redes privadas ou bloqueadas: Mobile 3G, Internet à Rádio, CGNAT, etc.</p>
+		<p>A versão gratuita conta com as seguintes restrições:</p>
+		<p><b>> Limitado a 3 usuários.<br>> Limitado a 100 equipamentos.</b></p>
+		<p><h3>*EXCLUSIVO PARA CONTRATOS.</h3></p>
+		<p>Caso o contrato seja encerrado o serviço é descontinuado e removido.</p>
+		
+		<img src="print/print-tailscale.png"/>
+		</div>
+
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#ubuntu">
+			<div class="item padrao">
+				<img src="img/ubuntu.png" />
+				<h2>Ubuntu Server 22.04 LTS</h2>
+				<p>Sistema operacional com suporte à ampla gama de serviços a serem contratados.</p>
+			</div>
+		</a>
+		<div id="ubuntu" class="oculto">
+		    
+        <h2>Descrição:</h2>
+		<p>Base fundamental dos serviços a serem implantados, com suporte a Virtualização, maior diversidade de hardwares,</p>
+		<p>alta durabilidade e estabilidade garantidos pela Canonical®.</p>
+
+        <img src="print/print-ubuntu.png"/>
+		</div>
+
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#windows">
+			<div class="item extra">
+				<img src="img/windows.png" />
+				<h2>Windows Virtualizado</h2>
+				<p>Sistema operacional adicional com ferramentas RSAT e bancos de dados.</p>
+			</div>
+		</a>
+		<div id="windows" class="oculto">
+		    
+        <h2>Descrição:</h2>
+		<p>Para casos como a adição de banco de dados TGA, Alterdata e etc ou ainda para acessar as Ferramentas de Gestão de AD.</p>
+
+        <img src="print/windows-server.png"/>
+		</div>
+
+<!-- ===================== ===================== -->
+		
+		<a href="#" data-featherlight="#xpra">
+			<div class="item padrao">
+				<img src="img/xpra.png" />
+				<h2>XPRA</h2>
+				<p>Acesso às máquinas virtuais do servidor por interface web.</p>
+			</div>
+		</a>
+		<div id="xpra" class="oculto">
+		    
+        <h2>Descrição:</h2>
+		<p>Permite o gerenciamento, criação, destruição, cópia e etc, de quaisquer máquinas virtuais existentes no servidor.</p>
+		<p>Pode ser utilizado para configurar qualquer sistema convencional como Linux, Windows ou mesmo FreeBSD.</p>
+		<p>Também pode ser utilizado para inicializar sistemas emulados, como o Android e o macOS.</p>
+        
+        <img src="print/print-xpra.png"/>
+		</div>
+		
+<!-- ===================== ===================== -->
+<!-- ===================== ===================== -->
+<!-- ===================== ===================== -->
+
+	</div>
+	<!-- Chamando o Jim Carey pra animar a festa -->
+	<script src="https://code.jquery.com/jquery-latest.js"></script>
+	
+	<!-- Chamando o peso pluma -->
+	<script src="https://cdn.jsdelivr.net/npm/featherlight@1.7.14/release/featherlight.min.js" type="text/javascript" charset="utf-8"></script>
+	<script src="js/script.js" type="text/javascript" charset="utf-8"></script>
 </body>
-</html>
+
