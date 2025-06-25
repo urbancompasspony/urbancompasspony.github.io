@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Projetos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .project-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .project-card:hover::before {
+            left: 100%;
+        }
+
+        .project-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .project-title {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-transform: capitalize;
+        }
+
+        .project-description {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .project-link {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .project-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .add-project {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .add-project:hover {
+            border-color: rgba(255, 255, 255, 0.6);
+            color: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .add-project .plus-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .projects-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            body {
+                padding: 1rem;
+            }
+        }
+
+        .search-container {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .search-input {
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            color: white;
+            font-size: 1rem;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .search-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Meus Projetos</h1>
+            <p>Portfólio de sites e aplicações</p>
+        </div>
+
+        <div class="search-container">
+            <input type="text" class="search-input" placeholder="🔍 Buscar projetos..." id="searchInput">
+        </div>
+
+        <div class="projects-grid" id="projectsGrid">
+            <!-- Os projetos serão carregados aqui dinamicamente -->
+        </div>
+
+        <div class="footer">
+            <p>💻 Desenvolvido com GitHub Pages</p>
+        </div>
+    </div>
+
+    <script>
+        // Lista de projetos - personalize conforme suas pastas
+        const projects = [
+            {
+                name: 'portfolio',
+                title: 'Portfólio Pessoal',
+                description: 'Meu site pessoal com informações sobre mim, projetos e contato.',
+                icon: '👨‍💻'
+            },
+            {
+                name: 'loja-virtual',
+                title: 'Loja Virtual',
+                description: 'E-commerce completo com carrinho de compras e sistema de pagamento.',
+                icon: '🛒'
+            },
+            {
+                name: 'blog',
+                title: 'Blog Pessoal',
+                description: 'Artigos sobre tecnologia, programação e desenvolvimento web.',
+                icon: '📝'
+            },
+            {
+                name: 'dashboard',
+                title: 'Dashboard Analytics',
+                description: 'Painel de controle com gráficos e métricas em tempo real.',
+                icon: '📊'
+            },
+            {
+                name: 'jogo',
+                title: 'Mini Game',
+                description: 'Jogo desenvolvido em JavaScript puro com HTML5 Canvas.',
+                icon: '🎮'
+            },
+            {
+                name: 'calculadora',
+                title: 'Calculadora Avançada',
+                description: 'Calculadora científica com funções matemáticas complexas.',
+                icon: '🧮'
+            }
+        ];
+
+        function renderProjects(projectList = projects) {
+            const grid = document.getElementById('projectsGrid');
+            
+            // Limpa o grid
+            grid.innerHTML = '';
+            
+            // Adiciona cada projeto
+            projectList.forEach(project => {
+                const projectCard = document.createElement('div');
+                projectCard.className = 'project-card';
+                projectCard.onclick = () => window.open(`./${project.name}/`, '_blank');
+                
+                projectCard.innerHTML = `
+                    <div class="project-icon">${project.icon}</div>
+                    <h3 class="project-title">${project.title}</h3>
+                    <p class="project-description">${project.description}</p>
+                    <a href="./${project.name}/" class="project-link" onclick="event.stopPropagation()">
+                        Acessar Projeto →
+                    </a>
+                `;
+                
+                grid.appendChild(projectCard);
+            });
+            
+            // Adiciona card para novos projetos
+            const addProjectCard = document.createElement('div');
+            addProjectCard.className = 'project-card add-project';
+            addProjectCard.innerHTML = `
+                <div class="plus-icon">➕</div>
+                <h3>Adicionar Novo Projeto</h3>
+                <p>Crie uma nova pasta e adicione-a à lista</p>
+            `;
+            addProjectCard.onclick = () => {
+                alert('Para adicionar um novo projeto:\n\n1. Crie uma pasta com o nome do projeto\n2. Adicione um index.html na pasta\n3. Atualize a lista de projetos no JavaScript deste arquivo');
+            };
+            
+            grid.appendChild(addProjectCard);
+        }
+
+        // Funcionalidade de busca
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredProjects = projects.filter(project => 
+                project.title.toLowerCase().includes(searchTerm) || 
+                project.description.toLowerCase().includes(searchTerm) ||
+                project.name.toLowerCase().includes(searchTerm)
+            );
+            renderProjects(filteredProjects);
+        });
+
+        // Carrega os projetos inicialmente
+        renderProjects();
+
+        // Adicione animação de entrada
+        window.addEventListener('load', function() {
+            const cards = document.querySelectorAll('.project-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>
