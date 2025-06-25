@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carregando...</title>
+    
+    <!-- Redirecionamento via meta refresh (método 1) -->
+    <meta http-equiv="refresh" content="0; url=https://linuxuniverse.com.br">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .loading-container {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 300;
+        }
+
+        p {
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        .manual-link {
+            margin-top: 1.5rem;
+        }
+
+        .manual-link a {
+            color: white;
+            text-decoration: none;
+            padding: 0.8rem 1.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .manual-link a:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .fallback-message {
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-container">
+        <div class="spinner"></div>
+        <h1>🌍 Redirecionando...</h1>
+        <p>Você será redirecionado para o Google</p>
+        
+        <div class="manual-link">
+            <a href="https://linuxuniverse.com.br" id="manualLink">Clique aqui se não foi redirecionado</a>
+        </div>
+        
+        <div class="fallback-message">
+            <strong>Nota:</strong> Você será redirecionado para o Google em instantes.<br>
+            Este redirecionamento funciona em qualquer servidor web.
+        </div>
+    </div>
+
+    <script>
+        // Redirecionamento via JavaScript (método 2)
+        setTimeout(function() {
+            window.location.href = 'https://linuxuniverse.com.br';
+        }, 100);
+
+        // Redirecionamento imediato via JavaScript (método 3)
+        // Descomente a linha abaixo se quiser redirecionamento instantâneo
+        // window.location.replace('https://linuxuniverse.com.br');
+
+        // Fallback: se após 3 segundos ainda estiver na página, 
+        // destaca o link manual
+        setTimeout(function() {
+            const link = document.getElementById('manualLink');
+            link.style.background = 'rgba(255, 255, 255, 0.4)';
+            link.style.animation = 'pulse 1s infinite';
+        }, 3000);
+
+        // Adiciona animação de pulso
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+                100% { transform: scale(1); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Log para debug
+        console.log('Redirecionando para Google...');
+        
+        // Opcional: analytics ou tracking antes do redirecionamento
+        // gtag('event', 'redirect', { 'destination': 'linuxuniverse.com.br' });
+    </script>
+</body>
+</html>
