@@ -1,0 +1,158 @@
+a:visited, a {
+	color:black;
+	text-decoration:none;
+}
+* {
+	font-family: "Cantarell", sans-serif;
+}
+body {
+	background-image:url('https://source.unsplash.com/random/?internet,white');
+	background-attachment:fixed;
+	background-size:cover;
+	margin:0px;
+	padding:0px;
+	font-family: "Cantarell", sans-serif;
+}
+h1, h2, h3, h4, h5, h6, nav ul li a {
+	font-family: "Play", sans-serif;
+}
+#header {
+	text-align:center;
+	position:fixed;
+	width:100%;
+	z-index:99;
+	display:block;
+	padding:0px;
+	margin:0px;
+}
+#header ul {
+	margin: 0 auto;
+	display:inline-block;
+	height:30px;
+	padding:0px;
+	margin:0px;
+}
+nav ul li {
+	list-style:none;
+	display:block;
+	float:left;
+	margin:0px;
+	margin-top:5px;
+	padding:0px;
+}
+nav ul li a {
+	align-items: center;
+	appearance: none;
+	background-color: #FCFCFD;
+	border-width: 0;
+	box-shadow: rgba(45, 35, 66, 0.4) 0 2px 4px,rgba(45, 35, 66, 0.3) 0 7px 13px -3px,#D6D6E7 0 -3px 0 inset;
+	box-sizing: border-box;
+	color: #36395A;
+	cursor: pointer;
+	display: inline-flex;
+	height: 48px;
+	justify-content: center;
+	line-height: 1;
+	list-style: none;
+	overflow: hidden;
+	padding-left: 16px;
+	padding-right: 16px;
+	position: relative;
+	text-align: left;
+	text-decoration: none;
+	transition: box-shadow .15s,transform .15s;
+	user-select: none;
+	-webkit-user-select: none;
+	touch-action: manipulation;
+	white-space: nowrap;
+	will-change: box-shadow,transform;
+	font-size: 18px;
+}
+nav ul li a {
+	border-radius: 8px;
+	margin-right:4px;
+}
+
+nav ul li a:focus {
+	box-shadow: #D6D6E7 0 0 0 1.5px inset, rgba(45, 35, 66, 0.4) 0 2px 4px, rgba(45, 35, 66, 0.3) 0 7px 13px -3px, #D6D6E7 0 -3px 0 inset;
+}
+
+nav ul li a:hover {
+	box-shadow: rgba(45, 35, 66, 0.4) 0 4px 8px, rgba(45, 35, 66, 0.3) 0 7px 13px -3px, #D6D6E7 0 -3px 0 inset;
+	transform: translateY(-2px);
+}
+
+nav ul li a:active {
+	box-shadow: #D6D6E7 0 3px 7px inset;
+	transform: translateY(2px);
+}
+nav ul li a.active {
+	transform: translateY(2px);
+	box-shadow: black 0 3px 7px inset;
+}
+#container {
+	margin:0 auto;
+	width:100%;
+	text-align:center;
+}
+.featherlight .featherlight-content {
+	border-radius: 8px;
+}
+.item {
+	border-radius:8px;
+	display:inline-block;
+	padding:5px 20px;
+	margin:15px;
+	max-width:320px;
+	background-color:rgba(255,255,255,0.75);
+	backdrop-filter:blur(5px);
+	box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
+}
+.item h2 {
+	text-align:center;
+}
+.item p {
+	text-align:justify;
+}
+.item img {
+	min-height:64px;
+	max-height:64px;
+	margin-top:20px;
+}
+.item.contrato p:after,
+.item.padrao p:after,
+.item.tecnico p:after,
+.item.extra p:after	{
+	content:"Contrato";
+	background-color:red;
+	padding:5px;
+	text-shadow:1px 1px 3px rgba(0,0,0,0.9);
+	display:block;
+	position:relative;
+	text-align:center;
+	font-weight:bold;
+	color:white;
+	border-radius:0px 0px 8px 8px;
+	margin-top:20px;
+	margin-left:-20px;
+	margin-right:-20px;
+	margin-bottom:-21px;
+	padding-bottom:8px;
+	box-shadow: rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
+}
+.item.padrao p:after {
+	content:"Ferramenta Padrão";
+	background-color:green;
+}
+.item.tecnico p:after {
+	background-color:blue;
+	content:"Ferramentas Técnicas";
+}
+.item.extra p:after {
+	content:"Serviços Gerais";
+	background-color:purple;
+}
+.oculto {
+display:none;}
+
+.featherlight .featherlight-inner img {width:100% /*this is fucking*/ !important;
