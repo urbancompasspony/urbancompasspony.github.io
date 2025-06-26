@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portfolio de Zoio The Green Eye</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.8);
+            --shadow-light: 0 8px 32px rgba(31, 38, 135, 0.2);
+            --shadow-heavy: 0 15px 45px rgba(0, 0, 0, 0.3);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,57 +26,253 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--primary-gradient);
             min-height: 100vh;
-            padding: 2rem;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated background particles */
+        .background-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.5; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
         }
 
+        /* Header Section */
         .header {
             text-align: center;
-            margin-bottom: 3rem;
-            color: white;
+            margin-bottom: 4rem;
+            color: var(--text-primary);
+            position: relative;
         }
 
-        .header h1 {
-            font-size: 3rem;
-            margin-bottom: 0.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .header p {
-            font-size: 1.2rem;
-            opacity: 0.9;
-        }
-
-        .projects-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
+        .profile-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
             margin-bottom: 2rem;
         }
 
-        .project-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
-            cursor: pointer;
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            background: var(--accent-gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            box-shadow: var(--shadow-light);
             position: relative;
             overflow: hidden;
         }
 
-        .project-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        .profile-avatar::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .header h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            background: linear-gradient(45deg, #fff, #f0f8ff, #fff);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-text 3s ease infinite;
+        }
+
+        @keyframes gradient-text {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .header .subtitle {
+            font-size: 1.3rem;
+            font-weight: 400;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .stats-section {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 1rem 1.5rem;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* Search Section */
+        .search-container {
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .search-wrapper {
+            position: relative;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1.2rem 1.8rem 1.2rem 3.5rem;
+            border: none;
+            border-radius: 60px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 400;
+            border: 2px solid var(--glass-border);
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-light);
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .search-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Filter Section */
+        .filter-section {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 25px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
             background: rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-light);
+        }
+
+        /* Projects Grid */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .project-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 2rem;
+            border: 1px solid var(--glass-border);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-light);
+            transform-style: preserve-3d;
+        }
+
+        .project-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-heavy);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
         }
 
         .project-card::before {
@@ -73,250 +283,424 @@
             width: 100%;
             height: 100%;
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-            transition: left 0.5s;
+            transition: left 0.6s ease;
         }
 
         .project-card:hover::before {
             left: 100%;
         }
 
+        .project-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
         .project-icon {
-            width: 60px;
-            height: 60px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
+            width: 70px;
+            height: 70px;
+            background: var(--secondary-gradient);
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 1rem;
-            font-size: 1.5rem;
+            font-size: 1.8rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .project-card:hover .project-icon {
+            transform: rotate(5deg) scale(1.1);
+        }
+
+        .project-info {
+            flex: 1;
         }
 
         .project-title {
-            color: white;
-            font-size: 1.5rem;
+            color: var(--text-primary);
+            font-size: 1.4rem;
             font-weight: 600;
-            margin-bottom: 0.5rem;
-            text-transform: capitalize;
+            margin-bottom: 0.25rem;
+            line-height: 1.3;
+        }
+
+        .project-category {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .project-description {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.9rem;
-            line-height: 1.5;
-            margin-bottom: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .project-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
         }
 
         .project-link {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--text-primary);
             text-decoration: none;
-            border-radius: 25px;
+            border-radius: 30px;
             font-size: 0.9rem;
             font-weight: 500;
             transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            border: 1px solid var(--glass-border);
         }
 
         .project-link:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
-        .add-project {
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px dashed rgba(255, 255, 255, 0.3);
+        .project-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4ade80;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 3rem 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 4rem;
+        }
+
+        .footer-content {
             display: flex;
             flex-direction: column;
             align-items: center;
+            gap: 1rem;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .social-link {
+            width: 50px;
+            height: 50px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
             justify-content: center;
-            min-height: 200px;
-            text-align: center;
-            color: rgba(255, 255, 255, 0.7);
-            cursor: pointer;
+            color: var(--text-secondary);
+            text-decoration: none;
             transition: all 0.3s ease;
+            font-size: 1.2rem;
         }
 
-        .add-project:hover {
-            border-color: rgba(255, 255, 255, 0.6);
-            color: rgba(255, 255, 255, 0.9);
-            background: rgba(255, 255, 255, 0.05);
+        .social-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            transform: translateY(-3px);
         }
 
-        .add-project .plus-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
+        .footer-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
         }
 
-        .footer {
-            text-align: center;
-            color: rgba(255, 255, 255, 0.7);
-            margin-top: 3rem;
-        }
-
+        /* Mobile Responsiveness */
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2rem;
+            .container {
+                padding: 1rem;
             }
             
             .projects-grid {
                 grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .stats-section {
                 gap: 1rem;
             }
             
-            body {
-                padding: 1rem;
+            .filter-section {
+                gap: 0.5rem;
+            }
+            
+            .project-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .project-footer {
+                flex-direction: column;
+                align-items: stretch;
             }
         }
 
-        .search-container {
-            margin-bottom: 2rem;
-            text-align: center;
+        /* Loading animation */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.6s ease-out forwards;
         }
 
-        .search-input {
-            padding: 1rem 1.5rem;
-            border: none;
-            border-radius: 50px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            color: white;
-            font-size: 1rem;
-            width: 100%;
-            max-width: 400px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .search-input::placeholder {
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .search-input:focus {
-            outline: none;
-            background: rgba(255, 255, 255, 0.2);
-            border-color: rgba(255, 255, 255, 0.4);
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
 <body>
+    <div class="background-particles" id="particles"></div>
+    
     <div class="container">
-        <div class="header">
-            <h1>Zoio The Green Eye</h1>
-            <p>Portfólio Pessoal de Criações Aleatórias e Projetos em Andamento!</p>
-        </div>
+        <header class="header">
+            <div class="profile-section">
+                <div class="profile-avatar">👁️</div>
+                <div>
+                    <h1>Zoio The Green Eye</h1>
+                    <p class="subtitle">Portfólio Pessoal de Criações Aleatórias e Projetos em Andamento!</p>
+                </div>
+            </div>
+            
+            <div class="stats-section">
+                <div class="stat-item">
+                    <span class="stat-number" id="projectCount">7</span>
+                    <span class="stat-label">Projetos</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">∞</span>
+                    <span class="stat-label">Ideias</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">24/7</span>
+                    <span class="stat-label">Ativo</span>
+                </div>
+            </div>
+        </header>
 
         <div class="search-container">
-            <input type="text" class="search-input" placeholder="🔍 Buscar projetos..." id="searchInput">
+            <div class="search-wrapper">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" placeholder="Buscar projetos..." id="searchInput">
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <button class="filter-btn active" data-filter="all">Todos</button>
+            <button class="filter-btn" data-filter="web">Web</button>
+            <button class="filter-btn" data-filter="tools">Ferramentas</button>
+            <button class="filter-btn" data-filter="services">Serviços</button>
         </div>
 
         <div class="projects-grid" id="projectsGrid">
             <!-- Os projetos serão carregados aqui dinamicamente -->
         </div>
 
-        <div class="footer">
-            <p>💻 Desenvolvido por José Humberto</p>
-        </div>
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="social-links">
+                    <a href="#" class="social-link">💼</a>
+                    <a href="#" class="social-link">📧</a>
+                    <a href="#" class="social-link">🐙</a>
+                    <a href="#" class="social-link">🐦</a>
+                </div>
+                <p class="footer-text">💻 Desenvolvido com ❤️ por José Humberto</p>
+            </div>
+        </footer>
     </div>
 
     <script>
-        // Lista de projetos - personalize conforme suas pastas
+        // Lista de projetos expandida
         const projects = [
             {
                 name: 'linuxuniverse',
                 title: 'Linux Universe',
-                description: 'Site sobre notícias, tutoriais e etc.',
-                icon: '📝'
+                description: 'Site completo sobre notícias, tutoriais e guias do mundo Linux. Uma fonte confiável para entusiastas e profissionais.',
+                icon: '🐧',
+                category: 'web',
+                status: 'online'
             },
             {
                 name: 'p',
-                title: 'Publicações mais Recentes',
-                description: 'E a redes sociais da Linux Universe.',
-                icon: '📝'
+                title: 'Publicações Recentes',
+                description: 'Central de publicações mais recentes e integração com redes sociais da Linux Universe.',
+                icon: '📝',
+                category: 'web',
+                status: 'online'
             },
             {
                 name: 't',
-                title: 'Ferramentas para Terminal',
-                description: 'E alguns adicionais.',
-                icon: '📝'
+                title: 'Ferramentas Terminal',
+                description: 'Coleção de ferramentas úteis para terminal e scripts adicionais para produtividade.',
+                icon: '⚡',
+                category: 'tools',
+                status: 'online'
             },
             {
                 name: 'apps',
-                title: 'Serviços Prestados em Servidores',
-                description: 'Lista de serviços ofertados para diversas necessidades.',
-                icon: '👨‍💻'
+                title: 'Serviços de Servidor',
+                description: 'Lista completa de serviços prestados em servidores para diversas necessidades empresariais.',
+                icon: '🖥️',
+                category: 'services',
+                status: 'online'
             },
             {
                 name: 'domain-webui',
-                title: 'WebUI Active Directory & Domain Controller',
-                description: 'Um gestor unificado Web que substitua o RSAT no Active Directory!',
-                icon: '👨‍💻'
+                title: 'WebUI Active Directory',
+                description: 'Interface web unificada que substitui o RSAT no gerenciamento do Active Directory e Domain Controller.',
+                icon: '🏢',
+                category: 'tools',
+                status: 'online'
             },
             {
                 name: 'dns-ping',
-                title: 'Test Ping DNS',
-                description: 'Teste de Ping e Latência REAIS de Provedores DNS diversos.',
-                icon: '📝'
+                title: 'DNS Ping Tester',
+                description: 'Ferramenta para teste de ping e latência em tempo real de diversos provedores DNS.',
+                icon: '📡',
+                category: 'tools',
+                status: 'online'
             },
             {
                 name: '404',
-                title: 'Página não Encontrada',
-                description: 'Uma página de erro simples.',
-                icon: '📝'
+                title: 'Página de Erro 404',
+                description: 'Página de erro personalizada e elegante para quando algo não é encontrado.',
+                icon: '❌',
+                category: 'web',
+                status: 'online'
             }
         ];
 
-        function renderProjects(projectList = projects) {
-            const grid = document.getElementById('projectsGrid');
+        let currentFilter = 'all';
+        let searchTerm = '';
+
+        // Criar partículas de fundo
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 50;
             
-            // Limpa o grid
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        function getFilteredProjects() {
+            return projects.filter(project => {
+                const matchesFilter = currentFilter === 'all' || project.category === currentFilter;
+                const matchesSearch = searchTerm === '' || 
+                    project.title.toLowerCase().includes(searchTerm) || 
+                    project.description.toLowerCase().includes(searchTerm) ||
+                    project.name.toLowerCase().includes(searchTerm);
+                return matchesFilter && matchesSearch;
+            });
+        }
+
+        function renderProjects() {
+            const grid = document.getElementById('projectsGrid');
+            const filteredProjects = getFilteredProjects();
+            
             grid.innerHTML = '';
             
-            // Adiciona cada projeto
-            projectList.forEach(project => {
+            filteredProjects.forEach((project, index) => {
                 const projectCard = document.createElement('div');
-                projectCard.className = 'project-card';
+                projectCard.className = 'project-card fade-in';
+                projectCard.style.animationDelay = `${index * 0.1}s`;
                 projectCard.onclick = () => window.open(`./${project.name}/`, '_blank');
                 
                 projectCard.innerHTML = `
-                    <div class="project-icon">${project.icon}</div>
-                    <h3 class="project-title">${project.title}</h3>
+                    <div class="project-header">
+                        <div class="project-icon">${project.icon}</div>
+                        <div class="project-info">
+                            <h3 class="project-title">${project.title}</h3>
+                            <span class="project-category">${project.category}</span>
+                        </div>
+                    </div>
                     <p class="project-description">${project.description}</p>
-                    <a href="./${project.name}/" class="project-link" onclick="event.stopPropagation()">
-                        Acessar Projeto →
-                    </a>
+                    <div class="project-footer">
+                        <a href="./${project.name}/" class="project-link" onclick="event.stopPropagation()">
+                            Acessar →
+                        </a>
+                        <div class="project-status">
+                            <div class="status-dot"></div>
+                            <span>${project.status}</span>
+                        </div>
+                    </div>
                 `;
                 
                 grid.appendChild(projectCard);
             });
+            
+            // Atualizar contador de projetos
+            document.getElementById('projectCount').textContent = filteredProjects.length;
         }
 
-        // Funcionalidade de busca
+        // Event listeners
         document.getElementById('searchInput').addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            const filteredProjects = projects.filter(project => 
-                project.title.toLowerCase().includes(searchTerm) || 
-                project.description.toLowerCase().includes(searchTerm) ||
-                project.name.toLowerCase().includes(searchTerm)
-            );
-            renderProjects(filteredProjects);
+            searchTerm = e.target.value.toLowerCase();
+            renderProjects();
         });
 
-        // Carrega os projetos inicialmente
-        renderProjects();
+        // Filtros
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.filter;
+                renderProjects();
+            });
+        });
 
-        // Adicione animação de entrada
-        window.addEventListener('load', function() {
-            const cards = document.querySelectorAll('.project-card');
-            cards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                setTimeout(() => {
-                    card.style.transition = 'all 0.5s ease';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, index * 100);
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+            renderProjects();
+        });
+
+        // Smooth scroll para links internos
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
             });
         });
     </script>
