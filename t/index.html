@@ -173,17 +173,17 @@
             body {
                 padding: 10px;
             }
-            
+
             h1 {
                 font-size: 2em;
             }
-            
+
             .command-header {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 10px;
             }
-            
+
             .copy-btn {
                 align-self: flex-end;
             }
@@ -192,10 +192,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>LUCS 3.0 - Links & Tools</h1>
+        <h1>Atalhos e Comandos Rápidos</h1>
 
         <div class="section">
-            <h2>Tools & Configurations</h2>
+            <h2>Acesso Restrito</h2>
             <div class="links-section">
                 <div class="link-item">
                     <a href="https://cs.linuxuniverse.com.br/index.php/s/TfaCyiZooC86mAb" target="_blank">
@@ -208,6 +208,36 @@
                     </a>
                 </div>
                 <div class="link-item">
+                    <a href="https://cs.linuxuniverse.com.br/index.php/s/5e2jSSRq2KCaQ4x" target="_blank">
+                        🔧 Con
+                    </a>
+                </div>
+                <div class="link-item">
+                    <a href="https://cs.linuxuniverse.com.br/index.php/s/6KKGk5jnEwLA5RG" target="_blank">
+                        🔧 Cli
+                    </a>
+                </div>
+                <div class="link-item">
+                    <a href="" target="_blank">
+                        🔧 SIT
+                    </a>
+                </div>
+                <div class="link-item">
+                    <a href="https://cs.linuxuniverse.com.br/index.php/s/afYLBniX32CTwf5" target="_blank">
+                        🔧 BS
+                    </a>
+                </div>
+                <div class="link-item">
+                    <a href="https://cs.linuxuniverse.com.br/index.php/s/Dxj3LMqbmTcFgmT" target="_blank">
+                        🔧 BR
+                    </a>
+                </div>
+                <div class="link-item">
+                    <a href="" target="_blank">
+                        🔧 DH
+                    </a>
+                </div>
+                <div class="link-item">
                     <a href="https://www.snappy-driver-installer.org/" target="_blank">
                         💾 Snappy Driver Installer
                     </a>
@@ -216,13 +246,14 @@
         </div>
 
         <div class="section">
-            <h2>PowerShell Commands</h2>
-            
+            <h2>Windows PowerShell</h2>
+
             <div class="command-item">
                 <div class="command-header">
                     <div>
-                        <div class="command-title">Easy Windows Activation</div>
-                        <div class="command-description">Execute no PowerShell como Administrador</div>
+                        <div class="command-title">Ativar ou Trocar a versão do Windows (8, 10, 11 e Server até 2022)</div>
+                        <div class="command-description">Execute no PowerShell como Administrador.</div>
+                        <div class="command-description">Não funciona para o Windows 10 ou 11 na versão LTSC!</div>
                     </div>
                     <button class="copy-btn" onclick="copyCommand(this, 'irm https://get.activated.win | iex')">Copiar</button>
                 </div>
@@ -232,8 +263,8 @@
             <div class="command-item">
                 <div class="command-header">
                     <div>
-                        <div class="command-title">Windows 10 Optimization (Opção 1)</div>
-                        <div class="command-description">ChrisTitus Script - PowerShell como Admin</div>
+                        <div class="command-title">Windows 10 Debloat (Opção 1) (não executar no Windows 11!)</div>
+                        <div class="command-description">Executar no PowerShell como Admin</div>
                     </div>
                     <button class="copy-btn" onclick="copyCommand(this, 'irm christitus.com/win | iex')">Copiar</button>
                 </div>
@@ -243,8 +274,8 @@
             <div class="command-item">
                 <div class="command-header">
                     <div>
-                        <div class="command-title">Windows 10 Optimization (Opção 2)</div>
-                        <div class="command-description">Debloat Script - PowerShell como Admin</div>
+                        <div class="command-title">Windows 10 Debloat (Opção 2) (não executar no Windows 11!)</div>
+                        <div class="command-description">Executar no PowerShell como Admin</div>
                     </div>
                     <button class="copy-btn" onclick="copyCommand(this, 'iwr -useb https://git.io/debloat | iex')">Copiar</button>
                 </div>
@@ -254,30 +285,63 @@
             <div class="command-item">
                 <div class="command-header">
                     <div>
-                        <div class="command-title">Allow PING on Windows</div>
-                        <div class="command-description">Habilitar ICMP - PowerShell como Admin</div>
+                        <div class="command-title">Windows 11 Debloat (não executar no Windows 10!)</div>
+                        <div class="command-description">Executar no PowerShell como Admin</div>
+                    </div>
+                    <button class="copy-btn" onclick="copyDebloatCommand(this)">Copiar</button>
+                </div>
+                <pre class="command-code">& ([scriptblock]::Create((irm "https://debloat.raphi.re/")))</pre>
+            </div>
+
+            <div class="command-item">
+                <div class="command-header">
+                    <div>
+                        <div class="command-title">Permitir PING ICMP (Testado no Windows 10 e 11)</div>
+                        <div class="command-description">Executar no PowerShell como Admin</div>
                     </div>
                     <button class="copy-btn" onclick="copyCommand(this, 'netsh advfirewall firewall add rule name=\"ICMP Allow incoming V4 echo request\" protocol=icmpv4:8,any dir=in action=allow')">Copiar</button>
                 </div>
                 <pre class="command-code">netsh advfirewall firewall add rule name="ICMP Allow incoming V4 echo request" protocol=icmpv4:8,any dir=in action=allow</pre>
             </div>
-        </div>
 
-        <div class="section">
-            <h2>System Commands</h2>
-            
             <div class="command-item">
                 <div class="command-header">
                     <div>
-                        <div class="command-title">Date Time Fix for Windows on AD</div>
+                        <div class="command-title">Corrigir Data e Hora em Clientes Windows AD (Qualquer Windows)</div>
                         <div class="command-description">Sincronização de tempo com NTP</div>
                     </div>
                     <button class="copy-btn" onclick="copyCommand(this, 'w32tm /config /update /manualpeerlist:0.ubuntu.pool.ntp.org /syncfromflags:manual /reliable:yes')">Copiar</button>
                 </div>
                 <pre class="command-code">w32tm /config /update /manualpeerlist:0.ubuntu.pool.ntp.org /syncfromflags:manual /reliable:yes</pre>
             </div>
+
+            <div class="command-item">
+                <div class="command-header">
+                    <div>
+                        <div class="command-title">Corrigir Erros OpenVPN (Testado nos Windows 10 e 11)</div>
+                        <div class="command-description">Executar no PowerShell como Admin</div>
+                    </div>
+                    <button class="copy-btn" onclick="copyCommand(this, 'winmgmt /resetrepository')">Copiar</button>
+                </div>
+                <pre class="command-code">winmgmt /resetrepository</pre>
+            </div>
+
+            <div class="command-item">
+                <div class="command-header">
+                    <div>
+                        <div class="command-title">God Mode Windows 7 em diante e Server a partir do 2012</div>
+                        <div class="command-description">Crie uma pasta com um destes nomes:</div>
+                    </div>
+                    <button class="copy-btn" onclick="copyCommand(this, 'GodMode.{ED7BA470-8E54-465E-825C-99712043E01C}')">Copiar</button>
+                </div>
+                <pre class="command-code">GodMode.{ED7BA470-8E54-465E-825C-99712043E01C}</pre>
+                <pre class="command-code">Configurações.{ED7BA470-8E54-465E-825C-99712043E01C}</pre>
+                <pre class="command-code">Admin.{ED7BA470-8E54-465E-825C-99712043E01C}</pre>
+            </div>
+
         </div>
     </div>
+</div>
 
     <div class="toast" id="toast">Comando copiado!</div>
 
@@ -289,10 +353,10 @@
                 const originalText = button.textContent;
                 button.textContent = 'Copiado!';
                 button.classList.add('copied');
-                
+
                 // Mostra toast de confirmação
                 showToast();
-                
+
                 // Restaura o botão após 2 segundos
                 setTimeout(function() {
                     button.textContent = originalText;
@@ -306,11 +370,45 @@
                 textarea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textarea);
-                
+
                 button.textContent = 'Copiado!';
                 button.classList.add('copied');
                 showToast();
-                
+
+                setTimeout(function() {
+                    button.textContent = 'Copiar';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // Função específica para o comando complexo do debloat
+        function copyDebloatCommand(button) {
+            const command = '& ([scriptblock]::Create((irm "https://debloat.raphi.re/")))';
+
+            navigator.clipboard.writeText(command).then(function() {
+                const originalText = button.textContent;
+                button.textContent = 'Copiado!';
+                button.classList.add('copied');
+                showToast();
+
+                setTimeout(function() {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(function(err) {
+                // Fallback para navegadores mais antigos
+                const textarea = document.createElement('textarea');
+                textarea.value = command;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+
+                button.textContent = 'Copiado!';
+                button.classList.add('copied');
+                showToast();
+
                 setTimeout(function() {
                     button.textContent = 'Copiar';
                     button.classList.remove('copied');
@@ -321,7 +419,7 @@
         function showToast() {
             const toast = document.getElementById('toast');
             toast.classList.add('show');
-            
+
             setTimeout(function() {
                 toast.classList.remove('show');
             }, 3000);
@@ -332,7 +430,13 @@
             codeBlock.addEventListener('click', function() {
                 const command = this.textContent.trim();
                 const button = this.parentElement.querySelector('.copy-btn');
-                copyCommand(button, command);
+
+                // Verifica se é o comando complexo do debloat
+                if (command.includes('scriptblock')) {
+                    copyDebloatCommand(button);
+                } else {
+                    copyCommand(button, command);
+                }
             });
         });
     </script>
