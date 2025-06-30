@@ -205,9 +205,14 @@
             color: white;
         }
 
-        .btn-info:hover {
+        .btn-custom {
+            background: linear-gradient(135deg, #9c27b0, #8e24aa);
+            color: white;
+        }
+
+        .btn-custom:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(116, 185, 255, 0.3);
+            box-shadow: 0 8px 16px rgba(156, 39, 176, 0.3);
         }
 
         .btn:disabled {
@@ -458,8 +463,11 @@
 
         <div class="controls">
             <div class="button-group">
-                <button class="btn btn-primary" onclick="startTest()">
-                    ▶️ Iniciar Teste Completo
+                <button class="btn btn-primary" onclick="startTest('all')">
+                    ▶️ Teste Completo (Todos)
+                </button>
+                <button class="btn btn-custom" onclick="startTest('custom')" id="customTestBtn" disabled>
+                    ⚙️ Testar Apenas Customizados
                 </button>
                 <button class="btn btn-secondary" onclick="stopTest()">
                     ⏹️ Parar Teste
@@ -581,6 +589,10 @@
 
         function updateCustomDnsList() {
             const listContainer = document.getElementById('customDnsList');
+            const customTestBtn = document.getElementById('customTestBtn');
+            
+            // Habilitar/desabilitar botão de teste customizado
+            customTestBtn.disabled = customDnsServers.length === 0;
             
             if (customDnsServers.length === 0) {
                 listContainer.innerHTML = '';
@@ -597,7 +609,10 @@
             `).join('');
         }
 
-        function getAllDnsServers() {
+        function getAllDnsServers(testType = 'all') {
+            if (testType === 'custom') {
+                return customDnsServers;
+            }
             return [...defaultDnsServers, ...customDnsServers];
         }
 
@@ -822,30 +837,45 @@
             document.getElementById('stats').style.display = 'block';
         }
 
-        async function startTest() {
+        async function startTest(testType = 'all') {
             if (isTestRunning) return;
             
             isTestRunning = true;
             testResults = [];
             
-            const allServers = getAllDnsServers();
+            const allServers = getAllDnsServers(testType);
+            
+            // Verificar se há servidores para testar
+            if (allServers.length === 0) {
+                alert('Nenhum DNS customizado foi adicionado!');
+                isTestRunning = false;
+                return;
+            }
+            
             const startBtn = document.querySelector('.btn-primary');
+            const customBtn = document.querySelector('.btn-custom');
             const stopBtn = document.querySelector('.btn-secondary');
             const progressContainer = document.getElementById('progressContainer');
             const dnsGrid = document.getElementById('dnsGrid');
             
             startBtn.disabled = true;
+            customBtn.disabled = true;
             stopBtn.disabled = false;
             progressContainer.style.display = 'block';
             
-            // Criar cards para todos os servidores (padrão + customizados)
+            // Atualizar título do progresso baseado no tipo de teste
+            const testTitle = testType === 'custom' ? 'DNS Customizados' : 'Todos os DNS';
+            updateProgress(0, allServers.length, `Iniciando teste de ${testTitle}...`);
+            
+            // Criar cards para os servidores selecionados
             dnsGrid.innerHTML = allServers.map((server, index) => 
                 createDnsCard(server, index)
             ).join('');
             
             // Testar cada servidor sequencialmente
             for (let i = 0; i < allServers.length && isTestRunning; i++) {
-                updateProgress(i, allServers.length, `Testando ${allServers[i].provider} (${allServers[i].ip})`);
+                const serverType = allServers[i].custom ? 'customizado' : 'padrão';
+                updateProgress(i, allServers.length, `Testando ${allServers[i].provider} (${serverType}) - ${allServers[i].ip}`);
                 await testSingleDns(allServers[i], i);
                 
                 // Pequena pausa entre testes para visualização
@@ -853,12 +883,16 @@
             }
             
             if (isTestRunning) {
-                updateProgress(allServers.length, allServers.length, 'Teste concluído!');
+                const completedMessage = testType === 'custom' 
+                    ? `Teste de DNS customizados concluído! (${allServers.length} servidores)`
+                    : `Teste completo concluído! (${allServers.length} servidores)`;
+                updateProgress(allServers.length, allServers.length, completedMessage);
                 updateStats();
             }
             
             isTestRunning = false;
             startBtn.disabled = false;
+            customBtn.disabled = customDnsServers.length === 0;
             stopBtn.disabled = true;
             
             setTimeout(() => {
@@ -869,6 +903,7 @@
         function stopTest() {
             isTestRunning = false;
             document.querySelector('.btn-primary').disabled = false;
+            document.querySelector('.btn-custom').disabled = customDnsServers.length === 0;
             document.querySelector('.btn-secondary').disabled = true;
             document.getElementById('progressContainer').style.display = 'none';
         }
@@ -883,6 +918,7 @@
         // Event listeners para adicionar DNS com Enter
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelector('.btn-secondary').disabled = true;
+            document.querySelector('.btn-custom').disabled = true; // Inicialmente desabilitado
             
             // Adicionar DNS com Enter no campo IP
             document.getElementById('customDnsIp').addEventListener('keypress', function(e) {
