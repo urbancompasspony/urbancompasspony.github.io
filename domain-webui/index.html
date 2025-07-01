@@ -2493,6 +2493,273 @@ function backToDomainSettings() {
     showSubmenu('domain-settings');
 }
 
+// Funções de demonstração para o Domain WebUI
+// Adicione no final do script do domain-webui/index.html
+
+// Verificar se CGI está disponível
+async function checkCGIAvailability() {
+    try {
+        const response = await fetch('/cgi-bin/samba-admin.cgi', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ action: 'ping' })
+        });
+        return response.ok;
+    } catch (error) {
+        return false;
+    }
+}
+
+// Função principal de demonstração
+function showDomainDemo() {
+    console.log('🎭 Modo demonstração ativado para Domain WebUI');
+    
+    // Interceptar todas as chamadas para o CGI
+    const originalFetch = window.fetch;
+    window.fetch = function(url, options) {
+        if (url.includes('samba-admin.cgi')) {
+            return simulateDomainResponse(url, options);
+        }
+        return originalFetch(url, options);
+    };
+    
+    // Mostrar aviso de demonstração
+    showAlert('🎭 MODO DEMONSTRAÇÃO: CGI não encontrado. Mostrando dados de exemplo.', 'warning');
+}
+
+// Simular respostas do servidor
+async function simulateDomainResponse(url, options) {
+    // Simular delay de rede
+    await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+    
+    // Extrair ação dos parâmetros
+    const body = options.body;
+    const params = new URLSearchParams(body);
+    const action = params.get('action');
+    
+    // Gerar resposta baseada na ação
+    const demoData = getDomainDemoData(action, params);
+    
+    return new Response(demoData, {
+        status: 200,
+        headers: { 'Content-Type': 'text/plain' }
+    });
+}
+
+// Dados de demonstração por ação
+function getDomainDemoData(action, params) {
+    const demoResponses = {
+        'list-users': `joão.silva
+maria.santos  
+pedro.oliveira
+ana.costa
+carlos.ferreira
+beatriz.lima
+rafael.souza
+julia.almeida
+fernando.dias
+carolina.rocha`,
+
+        'list-groups': `TI
+Vendas
+Marketing
+RH
+Diretoria
+Suporte
+Financeiro
+Projetos`,
+
+        'list-computers': `DESKTOP-001$
+NOTEBOOK-002$
+SERVER-BACKUP$
+LAPTOP-TI-001$
+WORKSTATION-003$`,
+
+        'check-user': generateUserCheckDemo(params.get('username')),
+        
+        'show-user-groups': `Domain Users
+TI
+Projetos
+VPN-Users`,
+
+        'list-group-members': generateGroupMembersDemo(params.get('group')),
+        
+        'show-shares': `===========================================
+📂 COMPARTILHAMENTO #1: Documentos
+===========================================
+📁 Caminho: /documentos_empresa
+👥 Usuários: @Todos, @Administradores
+✏️ Gravável: yes
+👁️ Navegável: yes
+✅ Pasta existe no disco
+📊 Tamanho: 2.3G
+
+[Documentos]
+path = /mnt/documentos_empresa
+valid users = @Todos, @Administradores
+admin users = @Administradores
+writable = yes
+browsable = yes
+guest ok = no
+
+===========================================
+📂 COMPARTILHAMENTO #2: Projetos
+===========================================
+📁 Caminho: /projetos_ti
+👥 Usuários: @TI, @Projetos
+✏️ Gravável: yes
+👁️ Navegável: no
+✅ Pasta existe no disco
+📊 Tamanho: 890M`,
+
+        'show-domain-info': `Forest: EMPRESA.LOCAL
+Domain: EMPRESA.LOCAL
+Netbios domain: EMPRESA
+DC name: DC01.empresa.local
+Server site: Default-First-Site-Name
+Client site: Default-First-Site-Name`,
+
+        'active-sessions': `Computador        Usuário          Tempo    Compartilhamentos
+─────────────────────────────────────────────────────────────
+DESKTOP-001       joão.silva       02:15    Documentos, Projetos
+LAPTOP-TI-001     maria.santos     00:45    TI-Scripts
+NOTEBOOK-002      pedro.oliveira   01:30    Documentos
+WORKSTATION-003   ana.costa        03:22    Marketing, Vendas`,
+
+        'show-password-policy': `Password information for domain 'DC=empresa,DC=local'
+
+Password complexity: on
+Store plaintext passwords: off
+Password history length: 24
+Minimum password length: 8
+Minimum password age (days): 1
+Maximum password age (days): 90
+Account lockout duration (mins): 30
+Account lockout threshold (attempts): 5
+Reset account lockout after (mins): 30`,
+
+        'create-user': 'Usuário criado com sucesso no domínio EMPRESA.LOCAL',
+        'create-group': 'Grupo criado com sucesso no domínio',
+        'add-user-to-group': 'Usuário adicionado ao grupo com sucesso',
+        'create-share': '✅ Compartilhamento criado com sucesso!\n📁 Configuração aplicada\n🔧 Permissões definidas',
+        
+        'verify-password': generatePasswordVerifyDemo(params.get('username')),
+        
+        'default': 'Operação executada com sucesso (dados de demonstração)'
+    };
+    
+    return demoResponses[action] || demoResponses['default'];
+}
+
+// Gerar demonstração de verificação de usuário
+function generateUserCheckDemo(username) {
+    if (!username) username = 'usuario.demo';
+    
+    return `<div style='background: white; padding: 16px; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.5; max-width: 100%;'>
+
+<h4 style='color: #e67e22; margin: 0 0 20px 0; font-size: 18px; font-weight: 600;'>📋 Informações do Usuário ${username}</h4>
+
+<div style='margin-bottom: 16px;'>
+
+<div style='padding: 8px 12px; background: #d4edda; border-left: 3px solid #28a745; margin-bottom: 8px; border-radius: 3px;'>
+<span style='font-size: 16px; font-weight: 600; color: #155724;'>🔒 STATUS:</span> <span style='color: #155724; font-size: 16px;'>✅ ATIVO</span></div>
+
+<div style='padding: 8px 12px; background: #fff3cd; border-left: 3px solid #ffc107; margin-bottom: 8px; border-radius: 3px;'>
+<span style='font-size: 16px; font-weight: 600; color: #856404;'>🔐 SENHA:</span> <span style='color: #856404; font-size: 16px;'>⚠️ Expira em 15 dias (${getFutureDate(15)})</span></div>
+
+<div style='padding: 8px 12px; background: #d4edda; border-left: 3px solid #28a745; margin-bottom: 8px; border-radius: 3px;'>
+<span style='font-size: 16px; font-weight: 600; color: #155724;'>👤 CONTA:</span> <span style='color: #155724; font-size: 16px;'>∞ Nunca expira</span></div>
+
+</div>
+
+<details style='background: #f8f9fa; padding: 14px; border-radius: 6px; border: 1px solid #e9ecef;'>
+<summary style='cursor: pointer; font-weight: 600; color: #495057; font-size: 16px; margin-bottom: 0; outline: none;'>🔧 Informações Técnicas Detalhadas</summary>
+<pre style='background: #343a40; color: #f8f9fa; padding: 14px; border-radius: 4px; overflow-x: auto; margin: 10px 0 0 0; font-size: 13px; line-height: 1.4; border: none;'>dn: CN=${username},CN=Users,DC=empresa,DC=local
+objectClass: top
+objectClass: person  
+objectClass: user
+cn: ${username}
+sAMAccountName: ${username}
+userAccountControl: 512
+pwdLastSet: ${Date.now()}000000
+accountExpires: 0
+memberOf: CN=Domain Users,CN=Users,DC=empresa,DC=local
+memberOf: CN=TI,CN=Users,DC=empresa,DC=local</pre>
+</details>
+
+</div>`;
+}
+
+// Gerar demonstração de membros do grupo
+function generateGroupMembersDemo(groupName) {
+    const memberSets = {
+        'TI': 'joão.silva\nmaria.santos\ncarlos.ferreira',
+        'Vendas': 'pedro.oliveira\nana.costa\njulia.almeida',
+        'Marketing': 'beatriz.lima\nrafael.souza\ncarolina.rocha',
+        'default': 'usuario1\nusuario2\nusuario3'
+    };
+    
+    return memberSets[groupName] || memberSets['default'];
+}
+
+// Gerar demonstração de verificação de senha
+function generatePasswordVerifyDemo(username) {
+    if (!username) username = 'usuario.demo';
+    
+    const isValid = Math.random() > 0.3; // 70% chance de senha válida
+    
+    if (isValid) {
+        return `✅ SENHA VÁLIDA para usuário '${username}'
+
+🔍 Analisando política de expiração...
+📋 Política do domínio - Idade máxima: 90 dias
+🔢 Calculando dias restantes...
+📅 Senha alterada em: ${getPastDate(45)} às 14:30
+⏱️ Dias desde a alteração: 45
+🔐 SENHA: Expira em 45 dias (${getFutureDate(45)})
+
+👤 CONTA: Nunca expira`;
+    } else {
+        return `❌ SENHA INVÁLIDA para usuário '${username}'
+
+🔍 Detalhes do erro: Senha incorreta ou conta bloqueada
+⚠️ Verifique se a conta está ativa e a senha está correta`;
+    }
+}
+
+// Funções auxiliares para datas
+function getFutureDate(days) {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    return date.toLocaleDateString('pt-BR');
+}
+
+function getPastDate(days) {
+    const date = new Date();
+    date.setDate(date.getDate() - days);
+    return date.toLocaleDateString('pt-BR');
+}
+
+// Inicializar modo demonstração quando necessário
+document.addEventListener('DOMContentLoaded', async function() {
+    // Verificar se CGI está disponível após 2 segundos
+    setTimeout(async () => {
+        const cgiAvailable = await checkCGIAvailability();
+        if (!cgiAvailable) {
+            console.log('🎭 CGI não disponível, ativando modo demonstração');
+            showDomainDemo();
+        } else {
+            console.log('✅ CGI disponível, modo normal ativo');
+        }
+    }, 2000);
+});
+
+// Função para ativar demonstração manualmente (para testes)
+function enableDemoMode() {
+    showDomainDemo();
+    showAlert('🎭 Modo demonstração ativado manualmente', 'success');
+}
+    
 </script>
 <div class="loading" style="display:none"><div class="spinner"></div>Carregando...</div>
 <div class="result-container" style="display:none"></div>
