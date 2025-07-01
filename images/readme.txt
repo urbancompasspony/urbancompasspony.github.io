@@ -1,0 +1,1 @@
+Tente usar imagens .png
