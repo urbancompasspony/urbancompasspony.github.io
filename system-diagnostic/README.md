@@ -25,13 +25,13 @@ Uma interface web moderna e intuitiva para executar diagnósticos completos do s
 
 ```bash
 # Baixar o script de instalação
-curl -O https://raw.githubusercontent.com/seu-usuario/diagnostic-webui/main/install-diagnostic-webui.sh
+curl -O https://raw.githubusercontent.com/seu-usuario/diagnostic-webui/main/install.sh
 
 # Dar permissão de execução
-chmod +x install-diagnostic-webui.sh
+chmod +x install.sh
 
 # Executar como root
-sudo ./install-diagnostic-webui.sh
+sudo ./install.sh
 ```
 
 ### 2. Instalação Manual
@@ -302,7 +302,7 @@ sudo certbot --apache -d seu-dominio.com
 ### Atualizar o Sistema
 ```bash
 # Re-executar o instalador
-sudo ./install-diagnostic-webui.sh
+sudo ./install.sh
 
 # Ou atualizar manualmente
 sudo cp novos-arquivos/* /destino/
@@ -348,66 +348,5 @@ sudo tee /etc/logrotate.d/diagnostic-webui << EOF
 }
 EOF
 ```
-
-## 🤝 Contribuindo
-
-### Estrutura do Projeto
-```
-diagnostic-webui/
-├── install-diagnostic-webui.sh     # Script de instalação
-├── diagnostic-system.sh            # Script principal de diagnóstico
-├── system-diagnostic.cgi           # Interface CGI
-├── system-diagnostic.html          # Interface web
-├── README.md                       # Documentação
-└── examples/                       # Exemplos de configuração
-```
-
-### Como Contribuir
-1. Fork do projeto
-2. Criar branch para feature (`git checkout -b feature/nova-feature`)
-3. Commit das mudanças (`git commit -am 'Adiciona nova feature'`)
-4. Push para branch (`git push origin feature/nova-feature`)
-5. Criar Pull Request
-
-## 📝 Changelog
-
-### v1.0.0 (2025-01-07)
-- Lançamento inicial
-- Interface web completa
-- Diagnóstico de armazenamento, rede, serviços e sistema
-- Suporte a Apache, Nginx e Lighttpd
-- Instalador automático
-- Exportação de relatórios
-- Painel de informações do sistema
-
-## 📄 Licença
-
-Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
-
-## 👥 Autores
-
-- **Desenvolvedor Principal** - Criação do sistema WebUI baseado no script original
-
-## 🙏 Agradecimentos
-
-- Baseado no script de diagnóstico original v3.7
-- Inspirado na interface do domain-webui
-- Comunidade Linux pela contribuição contínua
-
-## 📞 Suporte
-
-### Canais de Suporte
-- **Issues GitHub**: Para bugs e feature requests
-- **Documentação**: Wiki do projeto
-- **Fórum**: Discussões da comunidade
-
-### Informações de Debug
-Para solicitar suporte, inclua:
-1. Versão do sistema operacional
-2. Servidor web utilizado
-3. Logs de erro relevantes
-4. Passos para reproduzir o problema
-
----
 
 **Sistema de Diagnóstico WebUI** - Uma ferramenta moderna para administradores de sistema Linux.
