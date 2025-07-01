@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Diagnóstico WebUI</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        .header p { font-size: 1.1em; opacity: 0.9;}
+        .main-content { padding: 40px; }
+        
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .menu-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+            text-align: center;
+        }
+        
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            border-color: #3498db;
+        }
+        
+        .menu-card h3 { 
+            color: #2c3e50; 
+            margin-bottom: 15px; 
+            font-size: 1.3em;
+        }
+        
+        .menu-card p { 
+            color: #7f8c8d; 
+            line-height: 1.6;
+        }
+        
+        .menu-card.full-diagnostic {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+        }
+        
+        .menu-card.full-diagnostic h3,
+        .menu-card.full-diagnostic p {
+            color: white;
+        }
+        
+        .menu-card.critical {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+        
+        .menu-card.critical h3,
+        .menu-card.critical p {
+            color: white;
+        }
+        
+        .menu-card.warning {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+        }
+        
+        .menu-card.warning h3,
+        .menu-card.warning p {
+            color: white;
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s ease;
+            margin: 5px;
+        }
+        
+        .btn:hover { background: #2980b9;}
+        .btn-success { background: #27ae60;}
+        .btn-success:hover { background: #229954;}
+        .btn-danger { background: #e74c3c;}
+        .btn-danger:hover { background: #c0392b;}
+        .btn-warning { background: #f39c12;}
+        .btn-warning:hover { background: #e67e22;}
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .loading.active { display: block;}
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
+        
+        .result-container {
+            margin-top: 20px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+            display: none;
+        }
+        
+        .result-container.active { display: block;}
+        
+        .result-container.success {
+            border-left-color: #27ae60;
+            background: #d4edda;
+        }
+        
+        .result-container.error {
+            border-left-color: #e74c3c;
+            background: #f8d7da;
+        }
+        
+        .result-container.warning {
+            border-left-color: #f39c12;
+            background: #fff3cd;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .result-header h4 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 1.2em;
+        }
+        
+        .result-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .result-content {
+            font-family: 'Courier New', monospace;
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            line-height: 1.6;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .result-summary {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+        
+        .summary-label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .summary-value {
+            font-family: monospace;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .summary-value.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .summary-value.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .summary-value.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            display: none;
+        }
+        
+        .alert.active { display: block;}
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .test-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .test-section.success {
+            border-left-color: #27ae60;
+        }
+        
+        .test-section.error {
+            border-left-color: #e74c3c;
+        }
+        
+        .test-section.warning {
+            border-left-color: #f39c12;
+        }
+        
+        .test-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .test-details {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .system-info {
+            background: #e8f4fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .system-info h4 {
+            color: #1976D2;
+            margin-bottom: 10px;
+        }
+        
+        .system-info p {
+            color: #1976D2;
+            margin-bottom: 5px;
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Sistema de Diagnóstico</h1>
+            <p>Interface Web para Diagnóstico e Monitoramento do Sistema - v3.7</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Menu Principal -->
+            <div id="main-menu" class="menu-grid">
+                <div class="menu-card full-diagnostic" onclick="runFullDiagnostic()">
+                    <h3>🚀 Diagnóstico Completo</h3>
+                    <p>Executa todos os testes de diagnóstico do sistema de uma vez.</p>
+                </div>
+
+                <div class="menu-card" onclick="runSpecificTest('storage')">
+                    <h3>💾 Teste de Armazenamento</h3>
+                    <p>Verifica integridade, bad blocks e uso de espaço em disco.</p>
+                </div>
+
+                <div class="menu-card" onclick="runSpecificTest('network')">
+                    <h3>🌐 Teste de Rede</h3>
+                    <p>Testa conectividade, DNS e interfaces de rede.</p>
+                </div>
+
+                <div class="menu-card" onclick="runSpecificTest('services')">
+                    <h3>⚙️ Teste de Serviços</h3>
+                    <p>Verifica status de serviços essenciais, Docker e LibVirt.</p>
+                </div>
+
+                <div class="menu-card" onclick="runSpecificTest('system')">
+                    <h3>🖥️ Teste de Sistema</h3>
+                    <p>Analisa carga, memória, processos e logs do sistema.</p>
+                </div>
+
+                <div class="menu-card warning" onclick="showSystemInfo()">
+                    <h3>ℹ️ Informações do Sistema</h3>
+                    <p>Exibe informações detalhadas sobre o sistema.</p>
+                </div>
+            </div>
+
+            <!-- Informações do Sistema -->
+            <div id="system-info" class="system-info" style="display: none;">
+                <h4>📊 Informações do Sistema</h4>
+                <div id="system-details">
+                    <p>🔄 Carregando informações...</p>
+                </div>
+            </div>
+
+            <!-- Barra de Progresso -->
+            <div id="progress-container" style="display: none;">
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill"></div>
+                </div>
+                <p id="progress-text" style="text-align: center; margin-top: 10px;">Iniciando diagnóstico...</p>
+            </div>
+
+            <!-- Loading -->
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p id="loading-text">Executando diagnóstico do sistema...</p>
+            </div>
+
+            <!-- Container de Resultado -->
+            <div id="result-container" class="result-container">
+                <div class="result-header">
+                    <h4 id="result-title">Resultado do Diagnóstico</h4>
+                    <div class="result-actions">
+                        <button class="btn btn-success" onclick="downloadResults()">📥 Baixar</button>
+                        <button class="btn" onclick="printResults()">🖨️ Imprimir</button>
+                        <button class="btn btn-warning" onclick="clearResults()">🗑️ Limpar</button>
+                    </div>
+                </div>
+                
+                <div id="result-summary" class="result-summary" style="display: none;">
+                    <h5 style="margin-bottom: 15px; color: #2c3e50;">📋 Resumo do Diagnóstico</h5>
+                    <div class="summary-item">
+                        <span class="summary-label">Status Geral:</span>
+                        <span id="summary-status" class="summary-value">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Erros Críticos:</span>
+                        <span id="summary-errors" class="summary-value">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Avisos:</span>
+                        <span id="summary-warnings" class="summary-value">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Testes Realizados:</span>
+                        <span id="summary-tests" class="summary-value">-</span>
+                    </div>
+                </div>
+                
+                <div id="result-content" class="result-content"></div>
+            </div>
+
+            <!-- Container de Alerta -->
+            <div id="alert-container" class="alert"></div>
+        </div>
+    </div>
+
+    <script>
+        // Configurações
+        const CGI_URL = '/cgi-bin/system-diagnostic.cgi';
+        
+        // Elementos DOM
+        let currentTest = null;
+        let diagnosticResults = {};
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSystemInfo();
+        });
+
+        // Executar diagnóstico completo
+        async function runFullDiagnostic() {
+            showLoading('Executando diagnóstico completo do sistema...');
+            showProgress(0, 'Iniciando diagnóstico completo...');
+            
+            try {
+                const response = await fetch(CGI_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'full-diagnostic'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.text();
+                processResults(data, 'Diagnóstico Completo');
+                
+            } catch (error) {
+                hideLoading();
+                hideProgress();
+                showAlert('Erro ao executar diagnóstico: ' + error.message, 'error');
+            }
+        }
+
+        // Executar teste específico
+        async function runSpecificTest(testType) {
+            const testNames = {
+                'storage': 'Teste de Armazenamento',
+                'network': 'Teste de Rede',
+                'services': 'Teste de Serviços',
+                'system': 'Teste de Sistema'
+            };
+
+            const testName = testNames[testType] || 'Teste Específico';
+            showLoading(`Executando ${testName.toLowerCase()}...`);
+            showProgress(0, `Iniciando ${testName.toLowerCase()}...`);
+            
+            try {
+                const response = await fetch(CGI_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'specific-test',
+                        test: testType
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.text();
+                processResults(data, testName);
+                
+            } catch (error) {
+                hideLoading();
+                hideProgress();
+                showAlert('Erro ao executar teste: ' + error.message, 'error');
+            }
+        }
+
+        // Processar resultados
+        function processResults(data, testName) {
+            hideLoading();
+            hideProgress();
+            
+            // Tentar parsear como JSON primeiro
+            let results;
+            try {
+                results = JSON.parse(data);
+            } catch (e) {
+                // Se não for JSON, tratar como texto simples
+                results = { output: data };
+            }
+            
+            // Analisar os resultados
+            const analysis = analyzeResults(results.output || data);
+            
+            // Mostrar resultados
+            showResults(results.output || data, testName, analysis);
+            
+            // Atualizar resumo
+            updateSummary(analysis);
+        }
+
+        // Analisar resultados
+        function analyzeResults(output) {
+            const analysis = {
+                status: 'unknown',
+                errors: 0,
+                warnings: 0,
+                tests: 0,
+                sections: []
+            };
+
+            if (!output) return analysis;
+
+            const lines = output.split('\n');
+            let currentSection = null;
+            let sectionContent = [];
+
+            for (const line of lines) {
+                // Detectar início de teste
+                if (line.includes('Teste 0') && line.includes('🔍')) {
+                    if (currentSection) {
+                        analysis.sections.push({
+                            title: currentSection,
+                            content: sectionContent.join('\n'),
+                            status: getSectionStatus(sectionContent.join('\n'))
+                        });
+                    }
+                    currentSection = line.trim();
+                    sectionContent = [];
+                    analysis.tests++;
+                }
+                
+                // Contabilizar erros e avisos
+                if (line.includes('❌') || line.includes('ERRO') || line.includes('CRÍTICO')) {
+                    analysis.errors++;
+                }
+                if (line.includes('⚠️') || line.includes('AVISO')) {
+                    analysis.warnings++;
+                }
+                
+                sectionContent.push(line);
+            }
+
+            // Adicionar última seção
+            if (currentSection) {
+                analysis.sections.push({
+                    title: currentSection,
+                    content: sectionContent.join('\n'),
+                    status: getSectionStatus(sectionContent.join('\n'))
+                });
+            }
+
+            // Determinar status geral
+            if (analysis.errors > 0) {
+                analysis.status = 'error';
+            } else if (analysis.warnings > 0) {
+                analysis.status = 'warning';
+            } else {
+                analysis.status = 'success';
+            }
+
+            return analysis;
+        }
+
+        // Obter status da seção
+        function getSectionStatus(content) {
+            if (content.includes('❌') || content.includes('ERRO') || content.includes('CRÍTICO')) {
+                return 'error';
+            }
+            if (content.includes('⚠️') || content.includes('AVISO')) {
+                return 'warning';
+            }
+            return 'success';
+        }
+
+        // Mostrar resultados
+        function showResults(output, testName, analysis) {
+            const container = document.getElementById('result-container');
+            const title = document.getElementById('result-title');
+            const content = document.getElementById('result-content');
+            
+            title.textContent = `${testName} - ${new Date().toLocaleString('pt-BR')}`;
+            content.innerHTML = `<pre>${output}</pre>`;
+            
+            // Aplicar classe CSS baseada no status
+            container.className = `result-container active ${analysis.status}`;
+            
+            // Mostrar alerta baseado no status
+            if (analysis.status === 'success') {
+                showAlert('Diagnóstico concluído com sucesso! Sistema saudável.', 'success');
+            } else if (analysis.status === 'warning') {
+                showAlert(`Diagnóstico concluído com ${analysis.warnings} aviso(s). Verificar itens mencionados.`, 'warning');
+            } else {
+                showAlert(`Diagnóstico concluído com ${analysis.errors} erro(s) crítico(s). Ação imediata necessária!`, 'error');
+            }
+        }
+
+        // Atualizar resumo
+        function updateSummary(analysis) {
+            const summaryContainer = document.getElementById('result-summary');
+            const statusElement = document.getElementById('summary-status');
+            const errorsElement = document.getElementById('summary-errors');
+            const warningsElement = document.getElementById('summary-warnings');
+            const testsElement = document.getElementById('summary-tests');
+            
+            // Mostrar resumo
+            summaryContainer.style.display = 'block';
+            
+            // Atualizar valores
+            statusElement.textContent = getStatusText(analysis.status);
+            statusElement.className = `summary-value ${analysis.status}`;
+            
+            errorsElement.textContent = analysis.errors;
+            errorsElement.className = `summary-value ${analysis.errors > 0 ? 'error' : 'success'}`;
+            
+            warningsElement.textContent = analysis.warnings;
+            warningsElement.className = `summary-value ${analysis.warnings > 0 ? 'warning' : 'success'}`;
+            
+            testsElement.textContent = analysis.tests || 'Completo';
+            testsElement.className = 'summary-value success';
+        }
+
+        // Obter texto do status
+        function getStatusText(status) {
+            switch (status) {
+                case 'success': return '✅ Saudável';
+                case 'warning': return '⚠️ Com Avisos';
+                case 'error': return '❌ Crítico';
+                default: return '❓ Desconhecido';
+            }
+        }
+
+        // Mostrar informações do sistema
+        async function showSystemInfo() {
+            const infoContainer = document.getElementById('system-info');
+            const detailsElement = document.getElementById('system-details');
+            
+            infoContainer.style.display = 'block';
+            detailsElement.innerHTML = '<p>🔄 Carregando informações do sistema...</p>';
+            
+            try {
+                const response = await fetch(CGI_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'system-info'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.text();
+                detailsElement.innerHTML = `<pre style="background: white; padding: 15px; border-radius: 8px; color: #2c3e50; font-family: monospace;">${data}</pre>`;
+                
+            } catch (error) {
+                detailsElement.innerHTML = `<p style="color: #e74c3c;">❌ Erro ao carregar informações: ${error.message}</p>`;
+            }
+        }
+
+        // Carregar informações do sistema na inicialização
+        async function loadSystemInfo() {
+            try {
+                const response = await fetch(CGI_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'quick-info'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.text();
+                    // Processar informações básicas se necessário
+                }
+            } catch (error) {
+                console.log('Informações do sistema não disponíveis');
+            }
+        }
+
+        // Funções de UI
+        function showLoading(text = 'Processando...') {
+            const loading = document.getElementById('loading');
+            const loadingText = document.getElementById('loading-text');
+            
+            loadingText.textContent = text;
+            loading.classList.add('active');
+        }
+
+        function hideLoading() {
+            const loading = document.getElementById('loading');
+            loading.classList.remove('active');
+        }
+
+        function showProgress(percent, text = '') {
+            const container = document.getElementById('progress-container');
+            const fill = document.getElementById('progress-fill');
+            const textElement = document.getElementById('progress-text');
+            
+            container.style.display = 'block';
+            fill.style.width = `${percent}%`;
+            if (text) textElement.textContent = text;
+        }
+
+        function hideProgress() {
+            const container = document.getElementById('progress-container');
+            container.style.display = 'none';
+        }
+
+        function showAlert(message, type = 'success') {
+            const alert = document.getElementById('alert-container');
+            alert.textContent = message;
+            alert.className = `alert alert-${type} active`;
+
+            setTimeout(() => {
+                alert.classList.remove('active');
+            }, 5000);
+        }
+
+        // Funções de ação
+        function downloadResults() {
+            const content = document.getElementById('result-content');
+            if (!content.textContent.trim()) {
+                showAlert('Nenhum resultado para baixar', 'warning');
+                return;
+            }
+
+            const blob = new Blob([content.textContent], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `diagnostico-sistema-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showAlert('Resultado baixado com sucesso!', 'success');
+        }
+
+        function printResults() {
+            const content = document.getElementById('result-content');
+            if (!content.textContent.trim()) {
+                showAlert('Nenhum resultado para imprimir', 'warning');
+                return;
+            }
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Diagnóstico do Sistema</title>
+                        <style>
+                            body { font-family: monospace; margin: 20px; }
+                            pre { white-space: pre-wrap; font-size: 12px; }
+                            .header { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <h1>🔍 Diagnóstico do Sistema</h1>
+                            <p>Data: ${new Date().toLocaleString('pt-BR')}</p>
+                        </div>
+                        <pre>${content.textContent}</pre>
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function clearResults() {
+            const container = document.getElementById('result-container');
+            const summary = document.getElementById('result-summary');
+            const content = document.getElementById('result-content');
+            
+            container.classList.remove('active');
+            summary.style.display = 'none';
+            content.innerHTML = '';
+            
+            showAlert('Resultados limpos', 'success');
+        }
+
+        // Atalhos de teclado
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'd') {
+                e.preventDefault();
+                runFullDiagnostic();
+            }
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                downloadResults();
+            }
+            if (e.key === 'Escape') {
+                clearResults();
+            }
+        });
+
+        // Função para simular progresso durante diagnóstico
+        function simulateProgress(duration = 10000) {
+            let progress = 0;
+            const interval = 100;
+            const increment = 100 / (duration / interval);
+            
+            const progressInterval = setInterval(() => {
+                progress += increment;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(progressInterval);
+                }
+                showProgress(progress, `Executando diagnóstico... ${Math.round(progress)}%`);
+            }, interval);
+            
+            return progressInterval;
+        }
+
+        // Adicionar efeitos visuais
+        function addVisualEffects() {
+            // Efeito de hover nos cards
+            const cards = document.querySelectorAll('.menu-card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px) scale(1.02)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        }
+
+        // Função para verificar status do servidor CGI
+        async function checkCGIStatus() {
+            try {
+                const response = await fetch(CGI_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'ping'
+                    })
+                });
+                
+                if (response.ok) {
+                    return true;
+                }
+            } catch (error) {
+                console.error('CGI não disponível:', error);
+            }
+            return false;
+        }
+
+        // Inicialização completa
+        window.addEventListener('load', function() {
+            addVisualEffects();
+            
+            // Verificar status do CGI
+            checkCGIStatus().then(status => {
+                if (!status) {
+                    showAlert('⚠️ Aviso: Servidor CGI pode não estar disponível. Verifique a configuração.', 'warning');
+                    
+                    // Mostrar dados de exemplo para demonstração
+                    setTimeout(() => {
+                        showDemoData();
+                    }, 2000);
+                }
+            });
+            
+            console.log('Sistema de Diagnóstico WebUI carregado com sucesso!');
+        });
+
+        // Função para mostrar dados de demonstração (quando CGI não estiver disponível)
+        function showDemoData() {
+            const demoOutput = `============================================
+Diagnóstico do Sistema v3.7 - 04.06.2025
+============================================
+
+✅ Autenticação realizada com sucesso!
+
+🔍 Teste 01: Verificando armazenamento...
+   2025-01-07 10:30:15 - Verificando consistência do /etc/fstab...
+✅ OK: Todos os sistemas de arquivos do fstab estão montados
+   2025-01-07 10:30:18 - Verificando integridade dos sistemas de arquivos...
+✅ OK: Nenhum erro de sistema de arquivos detectado
+   2025-01-07 10:30:21 - Verificando armazenamento com possíveis BAD BLOCKS...
+✅ OK: Dispositivo /dev/sda sem problemas SMART para relatar.
+✅ OK: Dispositivo /dev/sdb sem problemas SMART para relatar.
+
+🔍 Teste 02: Verificando utilização de armazenamento...
+✅ OK: Nenhum disco com 100% de uso
+   2025-01-07 10:30:24 - Verificando uso acima de 90%...
+✅ OK: Nenhum disco com +90% de uso
+   2025-01-07 10:30:27 - Verificando utilização de inodes...
+✅ OK: Nenhum disco com inodes esgotados
+
+🔍 Teste 03: Verificando conectividade de rede...
+✅ DNS 1.1.1.1 respondendo!
+64 bytes from 1.1.1.1: icmp_seq=1 ttl=58 time=12.4 ms
+✅ DNS 8.8.8.8 respondendo!
+64 bytes from 8.8.8.8: icmp_seq=1 ttl=118 time=15.2 ms
+   2025-01-07 10:30:35 - Verificando interfaces de rede...
+✅ Todas as interfaces de rede existentes estão ativas!
+   2025-01-07 10:30:38 - Verificando resolução DNS...
+✅ Resolução DNS OK, os seguintes dados foram coletados:
+IP WAN   : 203.0.113.45
+IP LAN   : 192.168.1.100
+Gateway  : 192.168.1.1
+Subnet   : 192.168.1.0
+Interface: eth0
+
+🔍 Teste 04: Verificando serviços essenciais...
+✅ OK: Serviço ssh.socket está ativo
+✅ OK: Serviço systemd-resolved está ativo
+✅ OK: Serviço NetworkManager está ativo
+✅ OK: Serviço cron está ativo
+   2025-01-07 10:30:45 - Verificando Docker...
+✅ OK: Docker está ativo
+✅ OK: Docker está respondendo aos comandos normalmente.
+✅ OK: Containers ativos e operando normalmente de acordo com o sistema.
+✅ OK: Não há containers reiniciando em estado de erro.
+✅ OK: Não há containers com alto consumo de CPU.
+   2025-01-07 10:30:52 - Verificando LibVirt...
+✅ OK: LibVirt não está instalado neste servidor. Sem capacidades de virtualização.
+
+🔍 Teste 05: Verificações adicionais do sistema...
+✅ OK: Carga do sistema normal (1.2)
+✅ OK: Uso de memória normal (45%)
+✅ OK: Nenhum processo zumbi detectado.
+   2025-01-07 10:30:58 - Verificando logs de sistema...
+
+============================================
+📊 RESUMO DO DIAGNÓSTICO
+============================================
+   2025-01-07 10:31:00 - Diagnóstico concluído
+Erros críticos encontrados: 0
+Avisos encontrados: 0
+
+🎉 SISTEMA SAUDÁVEL: Nenhum problema detectado!`;
+
+            processResults(demoOutput, 'Diagnóstico de Demonstração');
+        }
+
+        // Auto-refresh para alguns dados (opcional)
+        function startAutoRefresh() {
+            // Atualizar informações do sistema a cada 30 segundos
+            setInterval(() => {
+                const infoContainer = document.getElementById('system-info');
+                if (infoContainer.style.display === 'block') {
+                    loadSystemInfo();
+                }
+            }, 30000);
+        }
+
+        // Função para exportar relatório em formato HTML
+        function exportHTMLReport() {
+            const content = document.getElementById('result-content');
+            const summary = document.getElementById('result-summary');
+            
+            if (!content.textContent.trim()) {
+                showAlert('Nenhum resultado para exportar', 'warning');
+                return;
+            }
+
+            const htmlContent = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Diagnóstico do Sistema</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 20px; margin-bottom: 30px; }
+        .header h1 { color: #2c3e50; margin-bottom: 10px; }
+        .summary { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+        .content { font-family: monospace; background: #2c3e50; color: #ecf0f1; padding: 20px; border-radius: 8px; white-space: pre-wrap; }
+        .footer { text-align: center; margin-top: 30px; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Relatório de Diagnóstico do Sistema</h1>
+            <p>Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
+        </div>
+        
+        ${summary.style.display !== 'none' ? `<div class="summary">${summary.innerHTML}</div>` : ''}
+        
+        <div class="content">${content.textContent}</div>
+        
+        <div class="footer">
+            <p>Relatório gerado pelo Sistema de Diagnóstico WebUI v3.7</p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `relatorio-diagnostico-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showAlert('Relatório HTML exportado com sucesso!', 'success');
+        }
+
+        // Adicionar botão de exportar HTML
+        function addHTMLExportButton() {
+            const resultActions = document.querySelector('.result-actions');
+            if (resultActions && !document.getElementById('html-export-btn')) {
+                const htmlBtn = document.createElement('button');
+                htmlBtn.id = 'html-export-btn';
+                htmlBtn.className = 'btn';
+                htmlBtn.innerHTML = '📄 HTML';
+                htmlBtn.onclick = exportHTMLReport;
+                resultActions.insertBefore(htmlBtn, resultActions.lastElementChild);
+            }
+        }
+
+        // Modificar a função showResults para incluir o botão HTML
+        const originalShowResults = showResults;
+        showResults = function(output, testName, analysis) {
+            originalShowResults(output, testName, analysis);
+            setTimeout(addHTMLExportButton, 100);
+        };
+    </script>
+</body>
+</html>
