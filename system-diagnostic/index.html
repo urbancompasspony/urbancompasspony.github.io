@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diagnóstico do Sistema</title>
+    <title>Diagnóstico de Sistema WebUI</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -374,7 +374,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔍 Diagnóstico do Sistema</h1>
+            <h1>🔍 Diagnóstico de Sistema</h1>
             <p>Interface Web para Diagnóstico e Monitoramento do Sistema - v3.7</p>
         </div>
 
@@ -536,8 +536,7 @@
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
                     body: new URLSearchParams({
-                        action: 'specific-test',
-                        test: testType
+                        action: testType + '-test'  // Mudança aqui: storage-test, network-test, etc.
                     })
                 });
 
@@ -945,15 +944,7 @@
                 if (!status) {
                     showAlert('⚠️ Aviso: Servidor CGI pode não estar disponível. Verifique a configuração.', 'warning');
                     
-                    // Mostrar dados de exemplo para demonstração
-                    setTimeout(() => {
-                        showDemoData();
-                    }, 2000);
-                }
-            });
-            
-            console.log('Sistema de Diagnóstico WebUI carregado com sucesso!');
-        });
+                    // DEMO
 
         // Função para mostrar dados de demonstração (quando CGI não estiver disponível)
         function showDemoData() {
