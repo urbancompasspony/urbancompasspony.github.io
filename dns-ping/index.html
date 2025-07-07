@@ -504,8 +504,8 @@
                         <div class="stat-label">Latência Média</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-number" id="fastestDns" style="color: #FF9800;">-</div>
-                        <div class="stat-label">DNS Mais Rápido</div>
+                        <div class="stat-number" id="top3Dns" style="color: #FF9800; font-size: 1rem; line-height: 1.3;">-</div>
+                        <div class="stat-label">Top 3 Mais Rápidos</div>
                     </div>
                 </div>
                 <div style="text-align: center; margin-top: 15px; font-size: 0.9rem; color: #666;">
@@ -815,27 +815,36 @@
             }
         }
 
-        function updateStats() {
-            const successCount = testResults.filter(r => r.success).length;
-            const errorCount = testResults.filter(r => !r.success).length;
-            const successfulTests = testResults.filter(r => r.success);
-            const avgPing = successfulTests.length > 0 
-                ? Math.round(successfulTests.reduce((sum, r) => sum + r.time, 0) / successfulTests.length)
-                : 0;
-            
-            const fastestDns = successfulTests.length > 0
-                ? successfulTests.reduce((fastest, current) => 
-                    current.time < fastest.time ? current : fastest
-                  ).server.provider
-                : '-';
+function updateStats() {
+    const successCount = testResults.filter(r => r.success).length;
+    const errorCount = testResults.filter(r => !r.success).length;
+    const successfulTests = testResults.filter(r => r.success);
+    const avgPing = successfulTests.length > 0 
+        ? Math.round(successfulTests.reduce((sum, r) => sum + r.time, 0) / successfulTests.length)
+        : 0;
+    
+    // Calcular top 3 mais rápidos
+    let top3Dns = '-';
+    if (successfulTests.length > 0) {
+        const sortedBySpeed = successfulTests
+            .sort((a, b) => a.time - b.time)
+            .slice(0, 3);
+        
+        top3Dns = sortedBySpeed
+            .map((result, index) => {
+                const medal = ['🥇', '🥈', '🥉'][index];
+                return `${medal} ${result.server.provider} (${result.time}ms)`;
+            })
+            .join('<br>');
+    }
 
-            document.getElementById('successCount').textContent = successCount;
-            document.getElementById('errorCount').textContent = errorCount;
-            document.getElementById('avgPing').textContent = avgPing + 'ms';
-            document.getElementById('fastestDns').textContent = fastestDns;
-            
-            document.getElementById('stats').style.display = 'block';
-        }
+    document.getElementById('successCount').textContent = successCount;
+    document.getElementById('errorCount').textContent = errorCount;
+    document.getElementById('avgPing').textContent = avgPing + 'ms';
+    document.getElementById('top3Dns').innerHTML = top3Dns;
+    
+    document.getElementById('stats').style.display = 'block';
+}
 
         async function startTest(testType = 'all') {
             if (isTestRunning) return;
