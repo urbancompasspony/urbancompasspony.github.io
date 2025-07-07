@@ -74,12 +74,25 @@
             border-radius: 8px;
             font-size: 1rem;
             transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
         }
 
         .dns-input:focus {
             outline: none;
             border-color: #3498db;
             box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .dns-input.ipv4 {
+            border-left: 4px solid #3498db;
+        }
+
+        .dns-input.ipv6 {
+            border-left: 4px solid #e74c3c;
+        }
+
+        .dns-input.invalid {
+            border-left: 4px solid #f39c12;
         }
 
         .dns-input::placeholder {
@@ -118,6 +131,25 @@
             box-shadow: 0 6px 12px rgba(40, 167, 69, 0.3);
         }
 
+        .ip-type-indicator {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 10px;
+        }
+
+        .ip-type-indicator.ipv4 {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .ip-type-indicator.ipv6 {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
         .custom-dns-list {
             margin-top: 15px;
             display: flex;
@@ -135,6 +167,23 @@
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        .custom-dns-tag.ipv6 {
+            border-color: #e74c3c;
+        }
+
+        .protocol-badge {
+            background: #3498db;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .protocol-badge.ipv6 {
+            background: #e74c3c;
         }
 
         .remove-dns {
@@ -291,6 +340,10 @@
             border-left-color: #9c27b0;
         }
 
+        .dns-card.ipv6 {
+            border-left-color: #e74c3c;
+        }
+
         .dns-header {
             display: flex;
             justify-content: space-between;
@@ -343,6 +396,7 @@
             font-size: 1.1rem;
             color: #666;
             margin-bottom: 10px;
+            word-break: break-all;
         }
 
         .dns-ping {
@@ -409,12 +463,12 @@
             .header h1 {
                 font-size: 2rem;
             }
-            
+
             .button-group {
                 flex-direction: column;
                 align-items: center;
             }
-            
+
             .btn {
                 width: 100%;
                 max-width: 300px;
@@ -434,23 +488,24 @@
     <div class="container">
         <div class="header">
             <h1>🌐 Teste DNS Real</h1>
-            <p>Ferramenta para testar latência REAL da sua internet com servidores DNS</p>
+            <p>Ferramenta para testar latência REAL da sua internet com servidores DNS IPv4 e IPv6</p>
         </div>
 
         <div class="custom-dns">
             <h3>⚙️ Adicionar DNS Customizado</h3>
             <div class="dns-input-group">
-                <input 
-                    type="text" 
-                    class="dns-input" 
-                    id="customDnsIp" 
-                    placeholder="Digite o IP do DNS (ex: 1.1.1.1)"
-                    pattern="^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+                <input
+                    type="text"
+                    class="dns-input"
+                    id="customDnsIp"
+                    placeholder="Digite o IP do DNS (IPv4: 1.1.1.1 ou IPv6: 2001:4860:4860::8888)"
+                    oninput="validateIpInput()"
                 >
-                <input 
-                    type="text" 
-                    class="provider-input" 
-                    id="customDnsProvider" 
+                <span class="ip-type-indicator" id="ipTypeIndicator" style="display: none;"></span>
+                <input
+                    type="text"
+                    class="provider-input"
+                    id="customDnsProvider"
                     placeholder="Nome do provedor"
                     maxlength="20"
                 >
@@ -487,7 +542,7 @@
 
         <div class="results" id="results">
             <div class="dns-grid" id="dnsGrid"></div>
-            
+
             <div class="stats" id="stats">
                 <h3 style="text-align: center; margin-bottom: 20px; color: #2c3e50;">📊 Estatísticas da Sua Conexão</h3>
                 <div class="stats-grid">
@@ -509,7 +564,7 @@
                     </div>
                 </div>
                 <div style="text-align: center; margin-top: 15px; font-size: 0.9rem; color: #666;">
-                    🔒 DNS over HTTPS &nbsp;|&nbsp; 🇧🇷 Sites Brasileiros &nbsp;|&nbsp; 🌐 Sites Globais &nbsp;|&nbsp; 🚀 Fallback BR &nbsp;|&nbsp; ⚙️ DNS Customizado
+                    🔒 DNS over HTTPS &nbsp;|&nbsp; 🇧🇷 Sites Brasileiros &nbsp;|&nbsp; 🌐 Sites Globais &nbsp;|&nbsp; 🚀 Fallback BR &nbsp;|&nbsp; ⚙️ DNS Customizado &nbsp;|&nbsp; 🆕 IPv6
                 </div>
             </div>
         </div>
@@ -517,69 +572,120 @@
 
     <script>
         const defaultDnsServers = [
-            { provider: 'Google', ip: '8.8.4.4' },
-            { provider: 'Google', ip: '8.8.8.8' },
-            { provider: 'OpenDNS', ip: '208.67.222.222' },
-            { provider: 'OpenDNS', ip: '208.67.220.220' },
-            { provider: 'Level3', ip: '4.2.2.1' },
-            { provider: 'Level3', ip: '4.2.2.2' },
-            { provider: 'Comodo', ip: '8.26.56.26' },
-            { provider: 'Comodo', ip: '8.20.247.20' },
-            { provider: 'DNSWATCH', ip: '84.200.69.80' },
-            { provider: 'DNSWATCH', ip: '84.200.70.40' },
-            { provider: 'Quad9', ip: '9.9.9.9' },
-            { provider: 'Quad9', ip: '149.112.112.112' },
-            { provider: 'Cloudflare', ip: '1.1.1.1' },
-            { provider: 'Cloudflare', ip: '1.0.0.1' },
-            { provider: 'Algar', ip: '200.225.197.34' },
-            { provider: 'Algar', ip: '200.225.197.37' },
-            { provider: 'GigaDNS', ip: '189.38.95.95' },
-            { provider: 'GigaDNS', ip: '189.38.95.96' },
-            { provider: 'Claro', ip: '181.213.132.2' },
-            { provider: 'Claro', ip: '181.213.132.3' }
+            // IPv4 Servers (originais)
+            { provider: 'Google', ip: '8.8.4.4', protocol: 'ipv4' },
+            { provider: 'Google', ip: '8.8.8.8', protocol: 'ipv4' },
+            { provider: 'OpenDNS', ip: '208.67.222.222', protocol: 'ipv4' },
+            { provider: 'OpenDNS', ip: '208.67.220.220', protocol: 'ipv4' },
+            { provider: 'Level3', ip: '4.2.2.1', protocol: 'ipv4' },
+            { provider: 'Level3', ip: '4.2.2.2', protocol: 'ipv4' },
+            { provider: 'Comodo', ip: '8.26.56.26', protocol: 'ipv4' },
+            { provider: 'Comodo', ip: '8.20.247.20', protocol: 'ipv4' },
+            { provider: 'DNSWATCH', ip: '84.200.69.80', protocol: 'ipv4' },
+            { provider: 'DNSWATCH', ip: '84.200.70.40', protocol: 'ipv4' },
+            { provider: 'Quad9', ip: '9.9.9.9', protocol: 'ipv4' },
+            { provider: 'Quad9', ip: '149.112.112.112', protocol: 'ipv4' },
+            { provider: 'Cloudflare', ip: '1.1.1.1', protocol: 'ipv4' },
+            { provider: 'Cloudflare', ip: '1.0.0.1', protocol: 'ipv4' },
+            { provider: 'Algar', ip: '200.225.197.34', protocol: 'ipv4' },
+            { provider: 'Algar', ip: '200.225.197.37', protocol: 'ipv4' },
+            { provider: 'GigaDNS', ip: '189.38.95.95', protocol: 'ipv4' },
+            { provider: 'GigaDNS', ip: '189.38.95.96', protocol: 'ipv4' },
+            { provider: 'Claro', ip: '181.213.132.2', protocol: 'ipv4' },
+            { provider: 'Claro', ip: '181.213.132.3', protocol: 'ipv4' },
+
+            // IPv6 Servers (adicionados)
+            { provider: 'Google', ip: '2001:4860:4860::8888', protocol: 'ipv6' },
+            { provider: 'Google', ip: '2001:4860:4860::8844', protocol: 'ipv6' },
+            { provider: 'Cloudflare', ip: '2606:4700:4700::1111', protocol: 'ipv6' },
+            { provider: 'Cloudflare', ip: '2606:4700:4700::1001', protocol: 'ipv6' },
+            { provider: 'Quad9', ip: '2620:fe::fe', protocol: 'ipv6' },
+            { provider: 'Quad9', ip: '2620:fe::9', protocol: 'ipv6' },
+            { provider: 'OpenDNS', ip: '2620:119:35::35', protocol: 'ipv6' },
+            { provider: 'OpenDNS', ip: '2620:119:53::53', protocol: 'ipv6' }
         ];
 
         let customDnsServers = [];
         let isTestRunning = false;
         let testResults = [];
 
+        // Função original mantida
         function isValidIp(ip) {
             const ipRegex = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
             return ipRegex.test(ip);
         }
 
+        // Novas funções para IPv6
+        function isValidIpv6(ip) {
+            const ipv6Regex = /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
+            return ipv6Regex.test(ip);
+        }
+
+        function detectIpType(ip) {
+            if (isValidIp(ip)) return 'ipv4';
+            if (isValidIpv6(ip)) return 'ipv6';
+            return 'invalid';
+        }
+
+        function validateIpInput() {
+            const input = document.getElementById('customDnsIp');
+            const indicator = document.getElementById('ipTypeIndicator');
+            const ip = input.value.trim();
+
+            input.className = 'dns-input';
+            indicator.style.display = 'none';
+
+            if (ip.length > 0) {
+                const ipType = detectIpType(ip);
+                input.classList.add(ipType);
+
+                if (ipType !== 'invalid') {
+                    indicator.style.display = 'inline-block';
+                    indicator.className = `ip-type-indicator ${ipType}`;
+                    indicator.textContent = ipType.toUpperCase();
+                }
+            }
+        }
+
         function addCustomDns() {
             const ipInput = document.getElementById('customDnsIp');
             const providerInput = document.getElementById('customDnsProvider');
-            
+
             const ip = ipInput.value.trim();
             const provider = providerInput.value.trim() || 'Customizado';
-            
+
             if (!ip) {
                 alert('Por favor, digite um IP válido!');
                 return;
             }
-            
-            if (!isValidIp(ip)) {
-                alert('IP inválido! Use o formato: 192.168.1.1');
+
+            const ipType = detectIpType(ip);
+            if (ipType === 'invalid') {
+                alert('IP inválido! Use o formato IPv4 (192.168.1.1) ou IPv6 (2001:4860:4860::8888)');
                 return;
             }
-            
+
             // Verificar se já existe
             if (customDnsServers.some(dns => dns.ip === ip)) {
                 alert('Este DNS já foi adicionado!');
                 return;
             }
-            
+
             // Adicionar à lista
-            customDnsServers.push({ provider, ip, custom: true });
-            
+            customDnsServers.push({
+                provider,
+                ip,
+                protocol: ipType,
+                custom: true
+            });
+
             // Limpar campos
             ipInput.value = '';
             providerInput.value = '';
-            
+
             // Atualizar visualização
             updateCustomDnsList();
+            validateIpInput(); // Limpar indicador
         }
 
         function removeCustomDns(ip) {
@@ -590,23 +696,27 @@
         function updateCustomDnsList() {
             const listContainer = document.getElementById('customDnsList');
             const customTestBtn = document.getElementById('customTestBtn');
-            
+
             // Habilitar/desabilitar botão de teste customizado
             customTestBtn.disabled = customDnsServers.length === 0;
-            
+
             if (customDnsServers.length === 0) {
                 listContainer.innerHTML = '';
                 return;
             }
-            
-            listContainer.innerHTML = customDnsServers.map(dns => `
-                <div class="custom-dns-tag">
-                    <strong>${dns.provider}</strong> - ${dns.ip}
-                    <button class="remove-dns" onclick="removeCustomDns('${dns.ip}')" title="Remover">
-                        ×
-                    </button>
-                </div>
-            `).join('');
+
+            listContainer.innerHTML = customDnsServers.map(dns => {
+                const protocolClass = dns.protocol === 'ipv6' ? 'ipv6' : '';
+                return `
+                    <div class="custom-dns-tag ${protocolClass}">
+                        <strong>${dns.provider}</strong> - ${dns.ip}
+                        <span class="protocol-badge ${dns.protocol}">${dns.protocol.toUpperCase()}</span>
+                        <button class="remove-dns" onclick="removeCustomDns('${dns.ip}')" title="Remover">
+                            ×
+                        </button>
+                    </div>
+                `;
+            }).join('');
         }
 
         function getAllDnsServers(testType = 'all') {
@@ -618,13 +728,16 @@
 
         function createDnsCard(server, index) {
             const customClass = server.custom ? ' custom' : '';
+            const protocolClass = server.protocol === 'ipv6' ? ' ipv6' : '';
             const customBadge = server.custom ? '<span class="custom-badge">CUSTOM</span>' : '';
-            
+            const protocolBadge = `<span class="protocol-badge ${server.protocol}">${server.protocol.toUpperCase()}</span>`;
+
             return `
-                <div class="dns-card pending${customClass}" id="card-${index}">
+                <div class="dns-card pending${customClass}${protocolClass}" id="card-${index}">
                     <div class="dns-header">
                         <div class="dns-provider">
                             ${server.provider}
+                            ${protocolBadge}
                             ${customBadge}
                         </div>
                         <div class="dns-status status-pending" id="status-${index}">Aguardando</div>
@@ -641,110 +754,150 @@
             const progressFill = document.getElementById('progressFill');
             const progressText = document.getElementById('progressText');
             const percentage = (current / total) * 100;
-            
+
             progressFill.style.width = percentage + '%';
             progressText.textContent = message;
         }
 
-        async function pingServer(ip, provider) {
+        async function pingServer(ip, provider, protocol = 'ipv4') {
             const startTime = performance.now();
-            
+
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s timeout
-                
+
+                // Timeout específico por protocolo
+                const timeout = protocol === 'ipv6' ? 4000 : 1500;
+                const timeoutId = setTimeout(() => controller.abort(), timeout);
+
                 let testUrl;
                 let testMethod = 'connectivity';
-                
-                // Estratégias específicas por provedor para testes mais realistas
-                switch (provider.toLowerCase()) {
-                    case 'google':
-                        testUrl = 'https://dns.google/resolve?name=example.com&type=A';
-                        testMethod = 'dns-over-https';
-                        break;
-                    case 'cloudflare':
-                        testUrl = 'https://cloudflare-dns.com/dns-query?name=example.com&type=A';
-                        testMethod = 'dns-over-https';
-                        break;
-                    case 'quad9':
-                        testUrl = 'https://dns.quad9.net:5053/dns-query?name=example.com&type=A';
-                        testMethod = 'dns-over-https';
-                        break;
-                    case 'algar':
-                    case 'gigadns':
-                    case 'claro':
-                        // Testa conectividade usando sites brasileiros rápidos
-                        const brazilianSites = [
-                            'https://www.google.com.br/generate_204', // Google Brasil - endpoint de conectividade
-                            'https://www.uol.com.br/favicon.ico',     // UOL - servidor brasileiro
-                            'https://g1.globo.com/favicon.ico'       // Globo - CDN brasileiro
-                        ];
-                        testUrl = brazilianSites[Math.floor(Math.random() * brazilianSites.length)];
-                        testMethod = 'brazil-connectivity';
-                        break;
-                    default:
-                        // Para outros provedores (incluindo customizados), usa sites globais com presença no Brasil
-                        const globalSites = [
-                            'https://www.google.com/generate_204',    // Google global com edge no Brasil
-                            'https://api.github.com/zen',             // GitHub com CDN global
-                            'https://httpstat.us/200'                 // Httpstat.us - mais leve que httpbin
-                        ];
-                        testUrl = globalSites[Math.floor(Math.random() * globalSites.length)];
-                        testMethod = provider === 'Customizado' || provider.includes('Custom') ? 'custom-connectivity' : 'global-connectivity';
-                        break;
+
+                // Estratégias específicas por protocolo e provedor
+                if (protocol === 'ipv6') {
+                    // Para IPv6, usar DNS over HTTPS com consultas AAAA
+                    switch (provider.toLowerCase()) {
+                        case 'google':
+                            testUrl = 'https://dns.google/resolve?name=ipv6.google.com&type=AAAA';
+                            testMethod = 'ipv6-doh';
+                            break;
+                        case 'cloudflare':
+                            testUrl = 'https://cloudflare-dns.com/dns-query?name=ipv6.cloudflare.com&type=AAAA';
+                            testMethod = 'ipv6-doh';
+                            break;
+                        case 'quad9':
+                            testUrl = 'https://dns.quad9.net:5053/dns-query?name=ipv6.quad9.net&type=AAAA';
+                            testMethod = 'ipv6-doh';
+                            break;
+                        default:
+                            // Para outros provedores IPv6, testar conectividade IPv6
+                            const ipv6Sites = [
+                                'https://ipv6.google.com/generate_204',
+                                'https://test-ipv6.com/json/',
+                                'https://ipv6-test.com/api/myip.php'
+                            ];
+                            testUrl = ipv6Sites[Math.floor(Math.random() * ipv6Sites.length)];
+                            testMethod = 'ipv6-connectivity';
+                            break;
+                    }
+                } else {
+                    // Estratégias IPv4 (código original mantido)
+                    switch (provider.toLowerCase()) {
+                        case 'google':
+                            testUrl = 'https://dns.google/resolve?name=example.com&type=A';
+                            testMethod = 'dns-over-https';
+                            break;
+                        case 'cloudflare':
+                            testUrl = 'https://cloudflare-dns.com/dns-query?name=example.com&type=A';
+                            testMethod = 'dns-over-https';
+                            break;
+                        case 'quad9':
+                            testUrl = 'https://dns.quad9.net:5053/dns-query?name=example.com&type=A';
+                            testMethod = 'dns-over-https';
+                            break;
+                        case 'algar':
+                        case 'gigadns':
+                        case 'claro':
+                            // Testa conectividade usando sites brasileiros rápidos
+                            const brazilianSites = [
+                                'https://www.google.com.br/generate_204', // Google Brasil - endpoint de conectividade
+                                'https://www.uol.com.br/favicon.ico',     // UOL - servidor brasileiro
+                                'https://g1.globo.com/favicon.ico'       // Globo - CDN brasileiro
+                            ];
+                            testUrl = brazilianSites[Math.floor(Math.random() * brazilianSites.length)];
+                            testMethod = 'brazil-connectivity';
+                            break;
+                        default:
+                            // Para outros provedores (incluindo customizados), usa sites globais com presença no Brasil
+                            const globalSites = [
+                                'https://www.google.com/generate_204',    // Google global com edge no Brasil
+                                'https://api.github.com/zen',             // GitHub com CDN global
+                                'https://httpstat.us/200'                 // Httpstat.us - mais leve que httpbin
+                            ];
+                            testUrl = globalSites[Math.floor(Math.random() * globalSites.length)];
+                            testMethod = provider === 'Customizado' || provider.includes('Custom') ? 'custom-connectivity' : 'global-connectivity';
+                            break;
+                    }
                 }
-                
+
                 const fetchOptions = {
                     method: testMethod.includes('connectivity') ? 'HEAD' : 'GET',
                     signal: controller.signal,
                     mode: 'cors',
                     cache: 'no-cache',
-                    headers: testMethod === 'dns-over-https' ? {
+                    headers: (testMethod === 'dns-over-https' || testMethod.includes('doh')) ? {
                         'Accept': 'application/dns-json'
                     } : {}
                 };
-                
+
                 const response = await fetch(testUrl, fetchOptions);
-                
+
                 clearTimeout(timeoutId);
                 const endTime = performance.now();
                 const pingTime = Math.round(endTime - startTime);
-                
+
                 return {
                     success: response.ok && response.status < 400,
                     time: pingTime,
                     status: response.status,
                     method: testMethod
                 };
-                
+
             } catch (error) {
                 const endTime = performance.now();
                 const pingTime = Math.round(endTime - startTime);
-                
-                // Fallback usando endpoint brasileiro ultra-leve
+
+                // Fallback específico por protocolo
                 try {
                     const fallbackStart = performance.now();
                     const controller2 = new AbortController();
                     const timeoutId2 = setTimeout(() => controller2.abort(), 4000);
-                    
-                    // Teste final com endpoint brasileiro garantido
-                    const fallbackResponse = await fetch('https://www.google.com.br/generate_204', {
+
+                    let fallbackUrl;
+                    if (protocol === 'ipv6') {
+                        // Fallback IPv6 usando teste de conectividade IPv6
+                        fallbackUrl = 'https://ipv6.google.com/generate_204';
+                    } else {
+                        // Fallback IPv4 brasileiro
+                        fallbackUrl = 'https://www.google.com.br/generate_204';
+                    }
+
+                    const fallbackResponse = await fetch(fallbackUrl, {
                         method: 'HEAD',
                         signal: controller2.signal,
                         mode: 'no-cors', // no-cors para evitar problemas de CORS
                         cache: 'no-cache'
                     });
-                    
+
                     clearTimeout(timeoutId2);
                     const fallbackTime = Math.round(performance.now() - fallbackStart);
-                    
+
                     return {
                         success: true, // no-cors sempre "funciona"
                         time: fallbackTime,
                         status: 200,
-                        method: 'brazil-fallback'
+                        method: protocol === 'ipv6' ? 'ipv6-fallback' : 'brazil-fallback'
                     };
-                    
+
                 } catch (fallbackError) {
                     // Se todos os métodos falharem, retorna erro real
                     return {
@@ -762,21 +915,24 @@
             const card = document.getElementById(`card-${index}`);
             const status = document.getElementById(`status-${index}`);
             const ping = document.getElementById(`ping-${index}`);
-            
+
             card.className = card.className.replace('pending', 'pending loading');
-            
+
             try {
-                const result = await pingServer(server.ip, server.provider);
-                
+                const result = await pingServer(server.ip, server.provider, server.protocol);
+
                 if (result.success) {
                     card.className = card.className.replace('pending loading', 'success');
                     status.className = 'dns-status status-success';
                     status.textContent = 'Online';
-                    
+
                     let methodIcon = '';
                     switch (result.method) {
                         case 'dns-over-https':
                             methodIcon = '🔒'; // DNS over HTTPS
+                            break;
+                        case 'ipv6-doh':
+                            methodIcon = '🔒🆕'; // DNS over HTTPS IPv6
                             break;
                         case 'brazil-connectivity':
                             methodIcon = '🇧🇷'; // Sites brasileiros
@@ -784,26 +940,33 @@
                         case 'global-connectivity':
                             methodIcon = '🌐'; // Sites globais
                             break;
+                        case 'ipv6-connectivity':
+                            methodIcon = '🌐🆕'; // Sites IPv6
+                            break;
                         case 'custom-connectivity':
                             methodIcon = '⚙️'; // DNS customizado
                             break;
                         case 'brazil-fallback':
                             methodIcon = '🚀'; // Fallback brasileiro
                             break;
+                        case 'ipv6-fallback':
+                            methodIcon = '🚀🆕'; // Fallback IPv6
+                            break;
                         case 'fallback-connectivity':
                             methodIcon = '🔄'; // Fallback geral
                             break;
                     }
-                    
+
                     ping.innerHTML = `✅ ${result.time}ms ${methodIcon}`;
                     testResults.push({ server, success: true, time: result.time, method: result.method });
                 } else {
                     card.className = card.className.replace('pending loading', 'error');
                     status.className = 'dns-status status-error';
                     status.textContent = 'Falha';
-                    
+
                     const errorMsg = result.error || 'Sem resposta';
-                    ping.innerHTML = `❌ ${errorMsg} (${result.time}ms)`;
+                    const protocolWarning = server.protocol === 'ipv6' ? ' (IPv6 indisponível)' : '';
+                    ping.innerHTML = `❌ ${errorMsg}${protocolWarning} (${result.time}ms)`;
                     testResults.push({ server, success: false, time: result.time, error: errorMsg });
                 }
             } catch (error) {
@@ -815,95 +978,97 @@
             }
         }
 
-function updateStats() {
-    const successCount = testResults.filter(r => r.success).length;
-    const errorCount = testResults.filter(r => !r.success).length;
-    const successfulTests = testResults.filter(r => r.success);
-    const avgPing = successfulTests.length > 0 
-        ? Math.round(successfulTests.reduce((sum, r) => sum + r.time, 0) / successfulTests.length)
-        : 0;
-    
-    // Calcular top 3 mais rápidos
-let top3Dns = '-';
-if (successfulTests.length > 0) {
-    const sortedBySpeed = successfulTests
-        .sort((a, b) => a.time - b.time)
-        .slice(0, 3);
-    
-    top3Dns = sortedBySpeed
-        .map((result, index) => {
-            const medal = ['🥇', '🥈', '🥉'][index];
-            return `${medal} ${result.server.provider} (${result.server.ip}) - ${result.time}ms`;
-        })
-        .join('<br>');
-}
+        function updateStats() {
+            const successCount = testResults.filter(r => r.success).length;
+            const errorCount = testResults.filter(r => !r.success).length;
+            const successfulTests = testResults.filter(r => r.success);
+            const avgPing = successfulTests.length > 0
+                ? Math.round(successfulTests.reduce((sum, r) => sum + r.time, 0) / successfulTests.length)
+                : 0;
 
-    document.getElementById('successCount').textContent = successCount;
-    document.getElementById('errorCount').textContent = errorCount;
-    document.getElementById('avgPing').textContent = avgPing + 'ms';
-    document.getElementById('top3Dns').innerHTML = top3Dns;
-    
-    document.getElementById('stats').style.display = 'block';
-}
+            // Calcular top 3 mais rápidos
+            let top3Dns = '-';
+            if (successfulTests.length > 0) {
+                const sortedBySpeed = successfulTests
+                    .sort((a, b) => a.time - b.time)
+                    .slice(0, 3);
+
+                top3Dns = sortedBySpeed
+                    .map((result, index) => {
+                        const medal = ['🥇', '🥈', '🥉'][index];
+                        const protocolIcon = result.server.protocol === 'ipv6' ? '🆕' : '';
+                        return `${medal} ${result.server.provider} ${protocolIcon}(${result.server.ip}) - ${result.time}ms`;
+                    })
+                    .join('<br>');
+            }
+
+            document.getElementById('successCount').textContent = successCount;
+            document.getElementById('errorCount').textContent = errorCount;
+            document.getElementById('avgPing').textContent = avgPing + 'ms';
+            document.getElementById('top3Dns').innerHTML = top3Dns;
+
+            document.getElementById('stats').style.display = 'block';
+        }
 
         async function startTest(testType = 'all') {
             if (isTestRunning) return;
-            
+
             isTestRunning = true;
             testResults = [];
-            
+
             const allServers = getAllDnsServers(testType);
-            
+
             // Verificar se há servidores para testar
             if (allServers.length === 0) {
                 alert('Nenhum DNS customizado foi adicionado!');
                 isTestRunning = false;
                 return;
             }
-            
+
             const startBtn = document.querySelector('.btn-primary');
             const customBtn = document.querySelector('.btn-custom');
             const stopBtn = document.querySelector('.btn-secondary');
             const progressContainer = document.getElementById('progressContainer');
             const dnsGrid = document.getElementById('dnsGrid');
-            
+
             startBtn.disabled = true;
             customBtn.disabled = true;
             stopBtn.disabled = false;
             progressContainer.style.display = 'block';
-            
+
             // Atualizar título do progresso baseado no tipo de teste
-            const testTitle = testType === 'custom' ? 'DNS Customizados' : 'Todos os DNS';
+            const testTitle = testType === 'custom' ? 'DNS Customizados' : 'Todos os DNS (IPv4 + IPv6)';
             updateProgress(0, allServers.length, `Iniciando teste de ${testTitle}...`);
-            
+
             // Criar cards para os servidores selecionados
-            dnsGrid.innerHTML = allServers.map((server, index) => 
+            dnsGrid.innerHTML = allServers.map((server, index) =>
                 createDnsCard(server, index)
             ).join('');
-            
+
             // Testar cada servidor sequencialmente
             for (let i = 0; i < allServers.length && isTestRunning; i++) {
                 const serverType = allServers[i].custom ? 'customizado' : 'padrão';
-                updateProgress(i, allServers.length, `Testando ${allServers[i].provider} (${serverType}) - ${allServers[i].ip}`);
+                const protocolLabel = allServers[i].protocol.toUpperCase();
+                updateProgress(i, allServers.length, `Testando ${allServers[i].provider} (${serverType} ${protocolLabel}) - ${allServers[i].ip}`);
                 await testSingleDns(allServers[i], i);
-                
+
                 // Pequena pausa entre testes para visualização
                 await new Promise(resolve => setTimeout(resolve, 200));
             }
-            
+
             if (isTestRunning) {
-                const completedMessage = testType === 'custom' 
+                const completedMessage = testType === 'custom'
                     ? `Teste de DNS customizados concluído! (${allServers.length} servidores)`
-                    : `Teste completo concluído! (${allServers.length} servidores)`;
+                    : `Teste completo concluído! (${allServers.length} servidores IPv4 + IPv6)`;
                 updateProgress(allServers.length, allServers.length, completedMessage);
                 updateStats();
             }
-            
+
             isTestRunning = false;
             startBtn.disabled = false;
             customBtn.disabled = customDnsServers.length === 0;
             stopBtn.disabled = true;
-            
+
             setTimeout(() => {
                 progressContainer.style.display = 'none';
             }, 2000);
@@ -928,14 +1093,14 @@ if (successfulTests.length > 0) {
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelector('.btn-secondary').disabled = true;
             document.querySelector('.btn-custom').disabled = true; // Inicialmente desabilitado
-            
+
             // Adicionar DNS com Enter no campo IP
             document.getElementById('customDnsIp').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     addCustomDns();
                 }
             });
-            
+
             // Adicionar DNS com Enter no campo Provider
             document.getElementById('customDnsProvider').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
