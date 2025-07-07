@@ -766,7 +766,7 @@
                 const controller = new AbortController();
 
                 // Timeout específico por protocolo
-                const timeout = protocol === 'ipv6' ? 4000 : 1500;
+                const timeout = protocol === 'ipv6' ? 3000 : 1500;
                 const timeoutId = setTimeout(() => controller.abort(), timeout);
 
                 let testUrl;
