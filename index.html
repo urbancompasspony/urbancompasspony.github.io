@@ -393,6 +393,10 @@
             animation: pulse 2s infinite;
         }
 
+        .status-dot.standby {
+            background: #fbbf24;
+        }
+
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
@@ -597,7 +601,7 @@
                 description: 'Interface web unificada que substitui o RSAT no gerenciamento do Active Directory e Domain Controller.',
                 icon: '🖥️',
                 category: 'examples',
-                status: 'offline'
+                status: 'standby'
             },
             {
                 name: 'system-diagnostic',
@@ -605,7 +609,7 @@
                 description: 'Página que permite executar uma série de testes no servidor!',
                 icon: '🖥️',
                 category: 'examples',
-                status: 'offline'
+                status: 'standby'
             },
             {
                 name: 'pentest',
@@ -613,7 +617,7 @@
                 description: 'Sistema automatizado de pentesting com relatórios gerados automaticamente e gerenciado por WebUI!',
                 icon: '🔰',
                 category: 'examples',
-                status: 'offline'
+                status: 'standby'
             },
             {
                 name: '404',
@@ -681,9 +685,9 @@
                             Acessar →
                         </a>
                         <div class="project-status">
-                            <div class="status-dot"></div>
+                            <div class="status-dot ${project.status === 'standby' ? 'standby' : ''}"></div>
                             <span>${project.status}</span>
-                        </div>
+                        div>
                     </div>
                 `;
                 
