@@ -824,19 +824,19 @@ function updateStats() {
         : 0;
     
     // Calcular top 3 mais rápidos
-    let top3Dns = '-';
-    if (successfulTests.length > 0) {
-        const sortedBySpeed = successfulTests
-            .sort((a, b) => a.time - b.time)
-            .slice(0, 3);
-        
-        top3Dns = sortedBySpeed
-            .map((result, index) => {
-                const medal = ['🥇', '🥈', '🥉'][index];
-                return `${medal} ${result.server.provider} (${result.time}ms)`;
-            })
-            .join('<br>');
-    }
+let top3Dns = '-';
+if (successfulTests.length > 0) {
+    const sortedBySpeed = successfulTests
+        .sort((a, b) => a.time - b.time)
+        .slice(0, 3);
+    
+    top3Dns = sortedBySpeed
+        .map((result, index) => {
+            const medal = ['🥇', '🥈', '🥉'][index];
+            return `${medal} ${result.server.provider} (${result.server.ip}) - ${result.time}ms`;
+        })
+        .join('<br>');
+}
 
     document.getElementById('successCount').textContent = successCount;
     document.getElementById('errorCount').textContent = errorCount;
