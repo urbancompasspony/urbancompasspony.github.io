@@ -582,6 +582,7 @@
                     document.getElementById('fpsValue').textContent = fps;
                     document.getElementById('frameTime').textContent = avgFrameTime;
                     document.getElementById('frameCount').textContent = frameCount;
+                    document.getElementById('gpumodel').textContent = gl.getParameter(gl.VERSION);
 
                     // Atualizar informações de geometria (verificar se elementos existem)
                     const vertexCountEl = document.getElementById('vertexCount');
