@@ -2,7 +2,7 @@
 
         let gl, shaderProgram, programInfo;
         let sceneBuffers = {};
-        let lightIntensity = 1.0, cameraSpeed = 1.0, cameraHeight = 4.0, cameraZoom = 12.0;
+        let lightIntensity = 1.0, cameraSpeed = 0.0, cameraHeight = 4.0, cameraZoom = 15.0;
         let cameraAngle = 0;
         let mouseX = 0, mouseY = 0, isDragging = false;
         let userRotationX = 0, userRotationY = 0;
@@ -36,7 +36,7 @@
         }
         `;
 
-        // Fragment Shader
+        // Fragment Shader CORRIGIDO - SUBSTITUA O fsSource INTEIRO por este:
         const fsSource = `#version 300 es
         precision highp float;
 
@@ -48,7 +48,7 @@
 
         uniform float uTime;
         uniform float uLightIntensity;
-        uniform int uObjectType; // 0: floor, 1: pool, 2: palm, 3: lights
+        uniform int uObjectType; // 0: floor, 1: pool, 2: palm, 3: lights, 4: walls
 
         out vec4 fragColor;
 
@@ -139,6 +139,46 @@
             }
         }
 
+        // Textura de azulejo reflexivo
+        vec3 reflectiveTiles(vec2 uv) {
+            float scale = 4.0;
+            vec2 scaledUV = uv * scale;
+            vec2 tilePos = floor(scaledUV);
+            vec2 tileUV = fract(scaledUV);
+
+            // Criar padrão de azulejo com bordas mais definidas
+            vec2 border = smoothstep(0.0, 0.08, tileUV) * smoothstep(0.0, 0.08, 1.0 - tileUV);
+            float tileMask = border.x * border.y;
+
+            // Cores dos azulejos mais reflexivas
+            vec3 tileColor = vec3(0.95, 0.98, 1.0); // Quase branco para mais reflexo
+            vec3 groutColor = vec3(0.2, 0.3, 0.5); // Rejunte mais escuro para contraste
+
+            // Padrão de reflexo mais complexo
+            float reflectionPattern = sin(tileUV.x * 6.28) * sin(tileUV.y * 6.28) * 0.1 + 0.9;
+
+            // Adicionar ondulações no reflexo (simulando imperfeições)
+            float ripple = sin(tileUV.x * 12.56 + uTime) * sin(tileUV.y * 12.56 + uTime * 0.7) * 0.05;
+            reflectionPattern += ripple;
+
+            tileColor *= reflectionPattern;
+
+            // Brilho especular baseado na posição (hotspot)
+            float distanceFromCenter = length(tileUV - 0.5);
+            float specular = pow(max(0.0, 1.0 - distanceFromCenter * 2.0), 3.0) * 0.4;
+
+            // Adicionar variação de brilho por tile
+            float tileVariation = sin(tilePos.x * 1.7 + tilePos.y * 2.3) * 0.1 + 0.9;
+            specular *= tileVariation;
+
+            tileColor += vec3(specular * 1.2); // Mais brilho
+
+            // Reflexo com cor levemente azulada
+            tileColor = mix(tileColor, vec3(0.9, 0.95, 1.0), 0.3);
+
+            return mix(groutColor, tileColor, tileMask);
+        }
+
         void main() {
             vec3 normal = normalize(vNormal);
             vec3 color = vec3(1.0);
@@ -180,6 +220,56 @@
                 // Neon lights
                 color = neonLight();
                 color = color * uLightIntensity * 2.0; // Lights are emissive
+
+            } else if (uObjectType == 4) {
+                // Paredes reflexivas super brilhantes
+                color = reflectiveTiles(vTextureCoord);
+
+                // === REFLEXOS ESPECULARES MÚLTIPLOS ===
+                vec3 viewDir = normalize(-vWorldPos);
+
+                // Reflexo da luz rosa (principal)
+                vec3 lightDir1 = normalize(vec3(1.0, 2.0, 1.0));
+                vec3 reflectDir1 = reflect(-lightDir1, normal);
+                float spec1 = pow(max(dot(viewDir, reflectDir1), 0.0), 64.0); // Mais focado
+
+                // Reflexo da luz cyan (secundária)
+                vec3 lightDir2 = normalize(vec3(-1.0, 2.0, 1.0));
+                vec3 reflectDir2 = reflect(-lightDir2, normal);
+                float spec2 = pow(max(dot(viewDir, reflectDir2), 0.0), 64.0);
+
+                // Reflexo ambiente (luzes neon distantes)
+                vec3 ambientReflect = reflect(viewDir, normal);
+                float ambientSpec = pow(max(0.0, ambientReflect.y), 16.0) * 0.3;
+
+                // === CORES DOS REFLEXOS ===
+                vec3 pinkReflection = vec3(1.0, 0.2, 0.8) * spec1 * 2.0;
+                vec3 cyanReflection = vec3(0.2, 0.8, 1.0) * spec2 * 2.0;
+                vec3 ambientReflection = vec3(0.8, 0.4, 1.0) * ambientSpec;
+
+                // === ILUMINAÇÃO DIFUSA COLORIDA ===
+                vec3 pinkLight = vec3(1.0, 0.3, 0.6) * NdotL1;
+                vec3 cyanLight = vec3(0.3, 0.8, 1.0) * NdotL2;
+
+                // Combinar iluminação difusa
+                color = color * (0.2 + (pinkLight + cyanLight) * uLightIntensity * 0.6);
+
+                // === ADICIONAR REFLEXOS BRILHANTES ===
+                color += (pinkReflection + cyanReflection + ambientReflection) * uLightIntensity;
+
+                // === FRESNEL EFFECT (mais reflexo nas bordas) ===
+                float fresnel = 1.0 - abs(dot(viewDir, normal));
+                fresnel = pow(fresnel, 2.0);
+
+                // Reflexo fresnel com cor neon
+                vec3 fresnelColor = mix(vec3(0.2, 0.8, 1.0), vec3(1.0, 0.2, 0.8),
+                                        sin(uTime * 2.0) * 0.5 + 0.5);
+                color += fresnelColor * fresnel * 0.4 * uLightIntensity;
+
+                // === BRILHO EXTRA NOS AZULEJOS ===
+                vec2 tileUV = fract(vTextureCoord * 4.0);
+                float tileBrightness = pow(max(0.0, 1.0 - length(tileUV - 0.5) * 2.0), 4.0);
+                color += vec3(0.8, 0.9, 1.0) * tileBrightness * 0.3 * uLightIntensity;
             }
 
             // Add atmospheric glow
@@ -259,6 +349,9 @@
             const speedSlider = document.getElementById('cameraSpeed');
             const heightSlider = document.getElementById('cameraHeight');
             const zoomSlider = document.getElementById('cameraZoom');
+
+            speedSlider.value = cameraSpeed;
+            zoomSlider.value = cameraZoom;
 
             lightSlider.addEventListener('input', (e) => {
                 lightIntensity = parseFloat(e.target.value);
@@ -362,50 +455,82 @@
 
             // Create neon lights
             sceneBuffers.lights = createNeonLights();
+
+            // Create reflective walls
+            sceneBuffers.walls = createReflectiveWalls();
         }
 
         function createFloor() {
-            const size = 20;
             const positions = [];
             const colors = [];
             const textureCoords = [];
             const normals = [];
             const indices = [];
 
-            // Create a grid floor
-            for (let x = -size; x <= size; x += 2) {
-                for (let z = -size; z <= size; z += 2) {
+            const poolRadius = 6.0; // Mesmo raio da piscina
+            const poolCenterX = 0;
+            const poolCenterZ = 0;
+            const floorSegments = 64; // Mais segmentos para suavidade
+
+            // === CRIAR CHÃO COM BURACO REDONDO ===
+
+            // Raio externo do chão
+            const floorOuterRadius = 30;
+            const floorInnerRadius = poolRadius; // Buraco do tamanho da piscina
+
+            // Criar anel do chão (formato donut)
+            for (let ring = 0; ring < 20; ring++) { // Anéis concêntricos
+                const innerR = floorInnerRadius + ring * 1.2;
+                const outerR = floorInnerRadius + (ring + 1) * 1.2;
+
+                if (outerR > floorOuterRadius) break;
+
+                for (let i = 0; i < floorSegments; i++) {
+                    const angle1 = (i / floorSegments) * Math.PI * 2;
+                    const angle2 = ((i + 1) / floorSegments) * Math.PI * 2;
+
+                    const cos1 = Math.cos(angle1);
+                    const sin1 = Math.sin(angle1);
+                    const cos2 = Math.cos(angle2);
+                    const sin2 = Math.sin(angle2);
+
                     const baseIndex = positions.length / 3;
 
-                    // Vertices for a tile
-                    positions.push(x, 0, z);
-                    positions.push(x + 2, 0, z);
-                    positions.push(x + 2, 0, z + 2);
-                    positions.push(x, 0, z + 2);
+                    // 4 vértices do quad
+                    // Inner ring, angle1
+                    positions.push(poolCenterX + cos1 * innerR, 0, poolCenterZ + sin1 * innerR);
+                    colors.push(0.5, 0.5, 1.0, 1.0);
+                    textureCoords.push((cos1 * innerR + 30) / 60, (sin1 * innerR + 30) / 60);
+                    normals.push(0, 1, 0);
 
-                    // Colors (will be overridden by shader)
-                    for (let i = 0; i < 4; i++) {
-                        colors.push(0.5, 0.5, 1.0, 1.0);
-                    }
+                    // Outer ring, angle1
+                    positions.push(poolCenterX + cos1 * outerR, 0, poolCenterZ + sin1 * outerR);
+                    colors.push(0.5, 0.5, 1.0, 1.0);
+                    textureCoords.push((cos1 * outerR + 30) / 60, (sin1 * outerR + 30) / 60);
+                    normals.push(0, 1, 0);
 
-                    // Texture coordinates
-                    textureCoords.push(0, 0, 1, 0, 1, 1, 0, 1);
+                    // Outer ring, angle2
+                    positions.push(poolCenterX + cos2 * outerR, 0, poolCenterZ + sin2 * outerR);
+                    colors.push(0.5, 0.5, 1.0, 1.0);
+                    textureCoords.push((cos2 * outerR + 30) / 60, (sin2 * outerR + 30) / 60);
+                    normals.push(0, 1, 0);
 
-                    // Normals (pointing up)
-                    for (let i = 0; i < 4; i++) {
-                        normals.push(0, 1, 0);
-                    }
+                    // Inner ring, angle2
+                    positions.push(poolCenterX + cos2 * innerR, 0, poolCenterZ + sin2 * innerR);
+                    colors.push(0.5, 0.5, 1.0, 1.0);
+                    textureCoords.push((cos2 * innerR + 30) / 60, (sin2 * innerR + 30) / 60);
+                    normals.push(0, 1, 0);
 
-                    // Indices for two triangles
-                    indices.push(
-                        baseIndex, baseIndex + 1, baseIndex + 2,
-                        baseIndex, baseIndex + 2, baseIndex + 3
-                    );
+                    // Dois triângulos para formar o quad
+                    indices.push(baseIndex, baseIndex + 1, baseIndex + 2);
+                    indices.push(baseIndex, baseIndex + 2, baseIndex + 3);
                 }
             }
 
             return createBuffers(positions, colors, textureCoords, normals, indices);
         }
+
+        // SUBSTITUA createPool() por esta versão com água transparente:
 
         function createPool() {
             const positions = [];
@@ -414,34 +539,95 @@
             const normals = [];
             const indices = [];
 
-            // Create a curved pool shape
             const segments = 32;
             const centerX = 0, centerZ = 0;
-            const radius = 6;
+            const radius = 6.0;
+            const depth = 1.2; // Profundidade da piscina
 
-            // Pool bottom
+            // === FUNDO DA PISCINA ===
             for (let i = 0; i <= segments; i++) {
                 const angle = (i / segments) * Math.PI * 2;
                 const x = centerX + Math.cos(angle) * radius;
                 const z = centerZ + Math.sin(angle) * radius;
 
-                positions.push(x, -0.5, z);
-                colors.push(0.0, 0.5, 1.0, 1.0);
+                positions.push(x, -depth, z);
+                colors.push(0.0, 0.3, 0.8, 1.0);
                 textureCoords.push((x + radius) / (radius * 2), (z + radius) / (radius * 2));
                 normals.push(0, 1, 0);
             }
 
-            // Center point
-            positions.push(centerX, -0.5, centerZ);
-            colors.push(0.0, 0.5, 1.0, 1.0);
+            // Centro do fundo
+            positions.push(centerX, -depth, centerZ);
+            colors.push(0.0, 0.3, 0.8, 1.0);
             textureCoords.push(0.5, 0.5);
             normals.push(0, 1, 0);
 
             const centerIndex = segments + 1;
 
-            // Create triangles
+            // Triângulos do fundo
             for (let i = 0; i < segments; i++) {
                 indices.push(centerIndex, i, (i + 1) % (segments + 1));
+            }
+
+            // === SUPERFÍCIE DA ÁGUA (TRANSPARENTE) ===
+            const surfaceStart = positions.length / 3;
+
+            for (let i = 0; i <= segments; i++) {
+                const angle = (i / segments) * Math.PI * 2;
+                const x = centerX + Math.cos(angle) * radius;
+                const z = centerZ + Math.sin(angle) * radius;
+
+                positions.push(x, -0.05, z); // Bem levemente abaixo do chão
+                // TRANSPARÊNCIA: Alpha = 0.7 para água translúcida
+                colors.push(0.2, 0.7, 1.0, 0.3);
+                textureCoords.push((x + radius) / (radius * 2), (z + radius) / (radius * 2));
+                normals.push(0, 1, 0);
+            }
+
+            // Centro da superfície
+            positions.push(centerX, -0.05, centerZ);
+            colors.push(0.2, 0.7, 1.0, 0.7); // Transparente
+            textureCoords.push(0.5, 0.5);
+            normals.push(0, 1, 0);
+
+            const surfaceCenterIndex = surfaceStart + segments + 1;
+
+            // Triângulos da superfície
+            for (let i = 0; i < segments; i++) {
+                indices.push(surfaceCenterIndex, surfaceStart + i, surfaceStart + ((i + 1) % (segments + 1)));
+            }
+
+            // === PAREDES DA PISCINA ===
+            const wallStart = positions.length / 3;
+
+            for (let i = 0; i <= segments; i++) {
+                const angle = (i / segments) * Math.PI * 2;
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
+                const x = centerX + cos * radius;
+                const z = centerZ + sin * radius;
+
+                // Vértice superior (borda)
+                positions.push(x, -0.05, z);
+                colors.push(0.4, 0.6, 0.9, 0.4); // Levemente transparente
+                textureCoords.push(i / segments, 1);
+                normals.push(cos, 0, sin);
+
+                // Vértice inferior (fundo)
+                positions.push(x, -depth, z);
+                colors.push(0.2, 0.4, 0.7, 1.0);
+                textureCoords.push(i / segments, 0);
+                normals.push(cos, 0, sin);
+            }
+
+            // Triângulos das paredes
+            for (let i = 0; i < segments; i++) {
+                const base = wallStart + i * 2;
+                const next = wallStart + ((i + 1) % (segments + 1)) * 2;
+
+                // Dois triângulos por parede
+                indices.push(base, next, base + 1);
+                indices.push(next, next + 1, base + 1);
             }
 
             return createBuffers(positions, colors, textureCoords, normals, indices);
@@ -585,6 +771,84 @@
             return createBuffers(positions, colors, textureCoords, normals, indices);
         }
 
+        // Função principal para criar as 3 paredes no centro
+        function createReflectiveWalls() {
+            const walls = [];
+
+            // Parede 1 - Vertical (frente)
+            walls.push(createWall(0, 3, -2, 6, 6, 0.2, 0));
+
+            // Parede 2 - Diagonal esquerda (120 graus)
+            walls.push(createWall(-3, 3, 1.5, 6, 6, 0.2, Math.PI * 2/3));
+
+            // Parede 3 - Diagonal direita (-120 graus)
+            walls.push(createWall(3, 3, 1.5, 6, 6, 0.2, -Math.PI * 2/3));
+
+            return walls;
+        }
+
+        // Função para criar uma única parede
+        function createWall(x, y, z, width, height, depth, rotationY) {
+            const positions = [];
+            const colors = [];
+            const textureCoords = [];
+            const normals = [];
+            const indices = [];
+
+            const halfWidth = width / 2;
+            const halfHeight = height / 2;
+            const halfDepth = depth / 2;
+
+            // Vértices base da parede
+            const baseVertices = [
+                [-halfWidth, -halfHeight, halfDepth], // Bottom left
+                [halfWidth, -halfHeight, halfDepth],  // Bottom right
+                [halfWidth, halfHeight, halfDepth],   // Top right
+                [-halfWidth, halfHeight, halfDepth],  // Top left
+                [-halfWidth, -halfHeight, -halfDepth], // Bottom left back
+                [halfWidth, -halfHeight, -halfDepth],  // Bottom right back
+                [halfWidth, halfHeight, -halfDepth],   // Top right back
+                [-halfWidth, halfHeight, -halfDepth],  // Top left back
+            ];
+
+            // Aplicar rotação e translação
+            const cos = Math.cos(rotationY);
+            const sin = Math.sin(rotationY);
+
+            baseVertices.forEach((vertex) => {
+                const rotatedX = vertex[0] * cos - vertex[2] * sin;
+                const rotatedZ = vertex[0] * sin + vertex[2] * cos;
+
+                positions.push(rotatedX + x, vertex[1] + y, rotatedZ + z);
+                colors.push(0.8, 0.8, 1.0, 1.0);
+            });
+
+            // Coordenadas de textura
+            const texCoords = [0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1];
+            textureCoords.push(...texCoords);
+
+            // Normais
+            const frontNormal = [sin, 0, cos];
+            const backNormal = [-sin, 0, -cos];
+
+            for (let i = 0; i < 4; i++) normals.push(...frontNormal);
+            for (let i = 0; i < 4; i++) normals.push(...backNormal);
+
+            // Índices
+            const faceIndices = [
+                0, 1, 2, 0, 2, 3,  // Face frontal
+                4, 6, 5, 4, 7, 6,  // Face traseira
+                3, 2, 6, 3, 6, 7,  // Face superior
+                0, 5, 1, 0, 4, 5,  // Face inferior
+                0, 3, 7, 0, 7, 4,  // Face esquerda
+                1, 6, 2, 1, 5, 6   // Face direita
+            ];
+
+            indices.push(...faceIndices);
+
+            return createBuffers(positions, colors, textureCoords, normals, indices);
+        }
+
         function createBuffers(positions, colors, textureCoords, normals, indices) {
             const positionBuffer = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -625,6 +889,10 @@
             gl.enable(gl.DEPTH_TEST);
             gl.depthFunc(gl.LEQUAL);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+            // Habilitar transparência
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
             // Create projection matrix
             const canvas = gl.canvas;
@@ -686,6 +954,11 @@
                 drawObject(light);
             });
 
+            // Draw reflective walls
+            gl.uniform1i(programInfo.uniformLocations.objectType, 4);
+            sceneBuffers.walls.forEach(wall => {
+                drawObject(wall);
+            });
             requestAnimationFrame(drawScene);
         }
 
