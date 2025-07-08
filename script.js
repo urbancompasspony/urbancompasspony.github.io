@@ -41,7 +41,7 @@
     status: 'online'
 },
 {
-    name: 'benchmark',
+    name: 'stress',
     title: 'Estresse de GPU com WebGL 1.0',
     description: 'Ferramenta para estressar placas de vídeo tipo Intel HD Graphics e VideoCore IV (Raspberry Pi)',
     icon: '🧊',
@@ -49,7 +49,7 @@
     status: 'online'
 },
 {
-    name: 'benchmark2',
+    name: 'stress2',
     title: 'Estresse de GPU com WebGL 2.0',
     description: 'Ferramenta para estressar placas de vídeo topo de linha como a RTX 4060!',
     icon: '🔥',
