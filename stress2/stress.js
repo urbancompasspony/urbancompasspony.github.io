@@ -617,6 +617,7 @@ void main() {
 let gl, shaderProgram, programInfo, buffers;
 let rotationX = 0, rotationY = 0, speedX = 2, speedY = 1.5, wireframe = false;
 let textureType = 0, benchmarkMode = 0, instanceCount = 1;
+let scale = 3.0;
 
 // Performance metrics
 let fps = 0, frameCount = 0, lastTime = 0, fpsUpdateTime = 0, frameTimeSum = 0, drawCalls = 0;
@@ -699,6 +700,11 @@ function setupControls() {
     document.getElementById('benchmarkMode').addEventListener('change', (e) => {
         benchmarkMode = parseInt(e.target.value);
         buffers = initBuffers(gl);
+    });
+
+    document.getElementById('scale').addEventListener('input', (e) => {
+        scale = parseFloat(e.target.value);
+        document.getElementById('scaleValue').textContent = scale.toFixed(1);
     });
 }
 
@@ -888,6 +894,7 @@ function drawScene() {
 
             // Update UI
             document.getElementById('fpsValue').textContent = fps;
+            document.getElementById('gpumodel').textContent = gl.getParameter(gl.VERSION);
             document.getElementById('frameTime').textContent = avgFrameTime;
             document.getElementById('frameCount').textContent = frameCount;
             document.getElementById('vertexCount').textContent = (buffers.vertexCount * instanceCount).toLocaleString();
@@ -928,6 +935,7 @@ function drawScene() {
     // Create model-view matrix
     const modelViewMatrix = mat4.create();
     mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, -8.0]);
+    mat4.scale(modelViewMatrix, modelViewMatrix, [scale, scale, scale]);
     mat4.rotate(modelViewMatrix, modelViewMatrix, rotationX, [1, 0, 0]);
     mat4.rotate(modelViewMatrix, modelViewMatrix, rotationY, [0, 1, 0]);
 
@@ -1058,7 +1066,30 @@ const mat4 = {
         out[9] = a01 * b20 + a11 * b21 + a21 * b22;
         out[10] = a02 * b20 + a12 * b21 + a22 * b22;
         out[11] = a03 * b20 + a13 * b21 + a23 * b22;
-    }
+    },
+
+    scale: function(out, a, v) {
+        // Copiar matriz original primeiro
+        if (out !== a) {
+            for (let i = 0; i < 16; i++) {
+                out[i] = a[i];
+            }
+        }
+
+        const x = v[0], y = v[1], z = v[2];
+        out[0] = a[0] * x;
+        out[1] = a[1] * x;
+        out[2] = a[2] * x;
+        out[3] = a[3] * x;
+        out[4] = a[4] * y;
+        out[5] = a[5] * y;
+        out[6] = a[6] * y;
+        out[7] = a[7] * y;
+        out[8] = a[8] * z;
+        out[9] = a[9] * z;
+        out[10] = a[10] * z;
+        out[11] = a[11] * z;
+    },
 };
 
 // Initialize when page loads
@@ -1085,6 +1116,13 @@ window.addEventListener('load', () => {
 // Keyboard shortcuts for better user experience
 document.addEventListener('keydown', (e) => {
     switch(e.key) {
+        case 's':
+        case 'S':
+            // Reset scale to 1.0
+            scale = 1.0;
+            document.getElementById('scale').value = scale;
+            document.getElementById('scaleValue').textContent = scale.toFixed(1);
+            break;
         case 'w':
         case 'W':
             const wireframeEl = document.getElementById('wireframe');

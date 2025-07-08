@@ -1,59 +1,59 @@
         body {
-          margin: 0;
-          padding: 20px;
-          background: linear-gradient(135deg, #0a0a0a, #1a1a2e, #16213e);
-          color: white;
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          overflow-x: hidden;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0a0a0a, #1a1a2e, #16213e);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
         }
         canvas {
-          display: block;
-          margin: 20px auto;
-          border: 3px solid #00ffff;
-          background: #000;
-          border-radius: 10px;
-          box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            display: block;
+            margin: 20px auto;
+            border: 3px solid #00ffff;
+            background: #000;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
         }
         .controls {
-          text-align: center;
-          margin-top: 20px;
-          background: rgba(0, 0, 0, 0.7);
-          padding: 20px;
-          border-radius: 15px;
-          border: 1px solid #333;
+            text-align: center;
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #333;
         }
         .controls label {
-          display: inline-block;
-          margin: 0 15px;
-          padding: 10px;
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 8px;
-          transition: all 0.3s ease;
+            display: inline-block;
+            margin: 0 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            transition: all 0.3s ease;
         }
         .controls label:hover {
-          background: rgba(0, 255, 255, 0.2);
-          transform: translateY(-2px);
+            background: rgba(0, 255, 255, 0.2);
+            transform: translateY(-2px);
         }
         .controls input, .controls select {
-          margin: 0 8px;
-          padding: 5px;
-          border-radius: 5px;
-          border: 1px solid #555;
-          background: #222;
-          color: white;
+            margin: 0 8px;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #555;
+            background: #222;
+            color: white;
         }
         h1 {
-          text-align: center;
-          color: #00ffff;
-          text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-          font-size: 2.5em;
-          margin-bottom: 10px;
+            text-align: center;
+            color: #00ffff;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            font-size: 2.5em;
+            margin-bottom: 10px;
         }
         .subtitle {
-          text-align: center;
-          color: #888;
-          font-size: 1.2em;
-          margin-bottom: 20px;
+            text-align: center;
+            color: #888;
+            font-size: 1.2em;
+            margin-bottom: 20px;
         }
         #metrics {
         position: absolute;
@@ -84,164 +84,164 @@
         animation: blink 1s infinite;
         }
         @keyframes blink {
-          0%, 50% { opacity: 1; }
-          51%, 100% { opacity: 0.3; }
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
         }
         .benchmark-info {
-          position: absolute;
-          top: 10px;
-          right: 10px;
-          background: rgba(0, 0, 0, 0.9);
-          color: #ffff00;
-          padding: 15px;
-          border-radius: 10px;
-          font-family: 'Courier New', monospace;
-          font-size: 12px;
-          border: 2px solid #ffff00;
-          box-shadow: 0 0 20px rgba(255, 255, 0, 0.3);
-          max-width: 300px;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            color: #ffff00;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            border: 2px solid #ffff00;
+            box-shadow: 0 0 20px rgba(255, 255, 0, 0.3);
+            max-width: 300px;
         }
         @keyframes pulse {
-          0% { opacity: 1; }
-          50% { opacity: 0.7; }
-          100% { opacity: 1; }
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
         }
 
         /* === DIÁLOGO DE AVISO === */
         .warning-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: rgba(0, 0, 0, 0.95);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          z-index: 10000;
-          animation: fadeIn 0.5s ease-out;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            animation: fadeIn 0.5s ease-out;
         }
 
         .warning-dialog {
-          background: linear-gradient(135deg, #1a1a1a, #2d1b69, #8b0000);
-          border: 3px solid #ff6b6b;
-          border-radius: 15px;
-          padding: 30px;
-          max-width: 600px;
-          text-align: center;
-          box-shadow: 0 0 50px rgba(255, 107, 107, 0.5);
-          animation: slideIn 0.6s ease-out;
+            background: linear-gradient(135deg, #1a1a1a, #2d1b69, #8b0000);
+            border: 3px solid #ff6b6b;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 600px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(255, 107, 107, 0.5);
+            animation: slideIn 0.6s ease-out;
         }
 
         .warning-title {
-          font-size: 2.2em;
-          color: #ff6b6b;
-          margin-bottom: 20px;
-          text-shadow: 0 0 10px rgba(255, 107, 107, 0.8);
-          animation: pulse 2s infinite;
+            font-size: 2.2em;
+            color: #ff6b6b;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.8);
+            animation: pulse 2s infinite;
         }
 
         .warning-content {
-          font-size: 1.1em;
-          line-height: 1.6;
-          margin-bottom: 25px;
-          color: #ffffff;
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            color: #ffffff;
         }
 
         .warning-list {
-          text-align: left;
-          background: rgba(0, 0, 0, 0.3);
-          padding: 15px;
-          border-radius: 8px;
-          margin: 20px 0;
-          border-left: 4px solid #ff6b6b;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #ff6b6b;
         }
 
         .warning-list li {
-          margin: 8px 0;
-          color: #ffdddd;
+            margin: 8px 0;
+            color: #ffdddd;
         }
 
         .warning-buttons {
-          display: flex;
-          gap: 15px;
-          justify-content: center;
-          margin-top: 25px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
         }
 
         .btn-safe, .btn-proceed {
-          padding: 12px 25px;
-          border: none;
-          border-radius: 8px;
-          font-size: 1.1em;
-          font-weight: bold;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          min-width: 140px;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 140px;
         }
 
         .btn-safe {
-          background: linear-gradient(135deg, #28a745, #20c997);
-          color: white;
-          box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
         }
 
         .btn-safe:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(40, 167, 69, 0.6);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.6);
         }
 
         .btn-proceed {
-          background: linear-gradient(135deg, #dc3545, #fd7e14);
-          color: white;
-          box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+            background: linear-gradient(135deg, #dc3545, #fd7e14);
+            color: white;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
         }
 
         .btn-proceed:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(220, 53, 69, 0.6);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.6);
         }
 
         .checkbox-container {
-          margin: 20px 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
         .checkbox-container input[type="checkbox"] {
-          width: 18px;
-          height: 18px;
-          accent-color: #ff6b6b;
+            width: 18px;
+            height: 18px;
+            accent-color: #ff6b6b;
         }
 
         .checkbox-container label {
-          color: #ffdddd;
-          font-size: 0.95em;
+            color: #ffdddd;
+            font-size: 0.95em;
         }
 
         @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateY(-50px) scale(0.9);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
         /* Ocultar conteúdo principal inicialmente */
         .main-content {
-          display: none;
+            display: none;
         }
 
         .main-content.visible {
-          display: block;
+            display: block;
         }
