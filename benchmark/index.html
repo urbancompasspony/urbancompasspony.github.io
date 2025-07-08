@@ -65,6 +65,8 @@
         <div class="fps-value">FPS: <span id="fpsValue">0</span></div>
         <div>Frame Time: <span id="frameTime">0</span>ms</div>
         <div>Frames: <span id="frameCount">0</span></div>
+        <div>Vértices: <span id="vertexCount">0</span></div>
+        <div>Triângulos: <span id="triangleCount">0</span></div>
     </div>
 
     <canvas id="glCanvas" width="800" height="600"></canvas>
@@ -118,7 +120,7 @@
             }
         `;
 
-        // Fragment shader (processa cada pixel) - CORRIGIDO
+        // Fragment shader (processa cada pixel)
         const fsSource = `
             precision mediump float;
 
@@ -158,7 +160,6 @@
                 float amplitude = 0.5;
                 float frequency = 1.0;
 
-                // Usar número fixo de iterações para compatibilidade WebGL
                 for (int i = 0; i < 8; i++) {
                     if (i >= octaves) break;
                     value += amplitude * noise(st * frequency);
@@ -170,17 +171,26 @@
 
             // Padrão xadrez
             vec3 checkerboard(vec2 uv) {
-                float scale = uBenchmarkMode ? 32.0 : 8.0;
+                float scale = uBenchmarkMode ? 64.0 : 8.0;
                 vec2 c = abs(floor(uv * scale));
                 float checker = mod(c.x + c.y, 2.0);
 
                 if (uBenchmarkMode) {
-                    float detail = fbm(uv * 64.0, 4) * 0.2;
-                    checker += detail;
+                    // Múltiplas camadas de detalhes
+                    float detail1 = fbm(uv * 128.0, 6) * 0.3;
+                    float detail2 = fbm(uv * 256.0, 4) * 0.15;
+                    float detail3 = fbm(uv * 512.0, 3) * 0.1;
+                    checker += detail1 + detail2 + detail3;
 
+                    // Bordas suaves com anti-aliasing
                     vec2 grid = fract(uv * scale);
                     float border = min(min(grid.x, 1.0 - grid.x), min(grid.y, 1.0 - grid.y));
-                    border = smoothstep(0.0, 0.05, border);
+                    border = smoothstep(0.0, 0.02, border);
+                    
+                    // Efeito de distorção temporal
+                    float distortion = sin(uv.x * 100.0 + uTime * 3.0) * sin(uv.y * 100.0 + uTime * 2.0) * 0.05;
+                    checker += distortion;
+                    
                     checker *= border;
                 }
 
@@ -189,23 +199,47 @@
 
             // Padrão de ondas
             vec3 waves(vec2 uv) {
-                float scale = uBenchmarkMode ? 40.0 : 20.0;
+                float scale = uBenchmarkMode ? 80.0 : 20.0;
 
                 float wave1 = sin(uv.x * scale + uTime * 2.0) * 0.5 + 0.5;
                 float wave2 = sin(uv.y * (scale * 0.75) + uTime * 1.5) * 0.5 + 0.5;
 
                 if (uBenchmarkMode) {
-                    // Usar loops com constantes para compatibilidade WebGL
-                    for (int i = 1; i < 9; i++) {
+                    // Múltiplas camadas de ondas complexas
+                    for (int i = 1; i < 16; i++) {
                         float fi = float(i);
-                        wave1 += sin(uv.x * scale * fi + uTime * (2.0 + fi)) * (0.5 / fi);
-                        wave2 += sin(uv.y * scale * fi + uTime * (1.5 + fi)) * (0.5 / fi);
+                        float freq = fi * 0.5;
+                        float amp = 0.3 / fi;
+                        
+                        wave1 += sin(uv.x * scale * freq + uTime * (2.0 + fi * 0.3)) * amp;
+                        wave2 += sin(uv.y * scale * freq + uTime * (1.5 + fi * 0.2)) * amp;
+                        
+                        // Ondas diagonais
+                        wave1 += sin((uv.x + uv.y) * scale * freq * 0.7 + uTime * fi) * (amp * 0.5);
+                        wave2 += sin((uv.x - uv.y) * scale * freq * 0.7 + uTime * fi * 1.1) * (amp * 0.5);
                     }
-                    wave1 /= 8.0;
-                    wave2 /= 8.0;
+                    
+                    // Interferência complexa
+                    float interference = sin(uv.x * 200.0 + uTime * 5.0) * sin(uv.y * 150.0 + uTime * 3.0) * 0.1;
+                    wave1 += interference;
+                    wave2 += interference;
+                    
+                    wave1 /= 16.0;
+                    wave2 /= 16.0;
                 }
 
                 float combined = wave1 * wave2;
+                
+                if (uBenchmarkMode) {
+                    // Cores mais complexas baseadas em fase
+                    float phase = atan(wave2, wave1);
+                    return vec3(
+                        combined,
+                        combined * 0.5 + sin(phase * 3.0) * 0.3,
+                        1.0 - combined + cos(phase * 5.0) * 0.2
+                    );
+                }
+                
                 return vec3(combined, combined * 0.5, 1.0 - combined);
             }
 
@@ -213,39 +247,84 @@
             vec3 circles(vec2 uv) {
                 vec2 center = vec2(0.5);
                 float dist = distance(uv, center);
-                float frequency = uBenchmarkMode ? 60.0 : 30.0;
+                float frequency = uBenchmarkMode ? 120.0 : 30.0;
 
                 float circle = sin(dist * frequency - uTime * 3.0) * 0.5 + 0.5;
 
                 if (uBenchmarkMode) {
-                    // Múltiplos centros de círculos com loop fixo
-                    for (int i = 0; i < 4; i++) {
+                    // Múltiplos centros de círculos animados
+                    for (int i = 0; i < 8; i++) {
                         float fi = float(i);
-                        vec2 offset = vec2(sin(uTime + fi), cos(uTime + fi * 1.5)) * 0.3;
+                        vec2 offset = vec2(
+                            sin(uTime * 0.7 + fi * 2.0) * 0.4,
+                            cos(uTime * 0.5 + fi * 1.5) * 0.4
+                        );
                         float d = distance(uv, center + offset);
-                        circle += sin(d * frequency * 0.5 - uTime * 2.0) * 0.3;
+                        circle += sin(d * frequency * 0.3 - uTime * (4.0 + fi)) * (0.4 / (fi + 1.0));
+                        
+                        // Círculos secundários
+                        circle += sin(d * frequency * 0.7 - uTime * (2.0 + fi * 0.5)) * (0.2 / (fi + 1.0));
                     }
-                    circle /= 3.0;
-                    circle += fbm(uv * 20.0, 3) * 0.1;
+                    
+                    // Ondas radiais complexas
+                    float radial1 = sin(dist * 80.0 - uTime * 6.0) * 0.15;
+                    float radial2 = sin(dist * 160.0 - uTime * 8.0) * 0.1;
+                    float radial3 = sin(dist * 320.0 - uTime * 12.0) * 0.05;
+                    
+                    circle += radial1 + radial2 + radial3;
+                    
+                    // Textura de ruído para mais detalhes
+                    circle += fbm(uv * 50.0 + vec2(uTime * 0.5), 4) * 0.2;
+                    
+                    circle /= 6.0;
                 }
 
+                if (uBenchmarkMode) {
+                    // Cores iridescentes baseadas na distância
+                    float hue = dist * 10.0 + uTime;
+                    return vec3(
+                        circle + sin(hue) * 0.3,
+                        circle * 0.7 + sin(hue + 2.0) * 0.3,
+                        circle * 0.5 + sin(hue + 4.0) * 0.3
+                    );
+                }
+                
                 return vec3(circle, 0.5, 1.0 - circle);
             }
 
             // Mármore procedural
             vec3 marble(vec2 uv) {
-                int octaves = uBenchmarkMode ? 6 : 3;
-                float scale = uBenchmarkMode ? 15.0 : 5.0;
+                int octaves = uBenchmarkMode ? 8 : 3;
+                float scale = uBenchmarkMode ? 25.0 : 5.0;
 
                 float n = fbm(uv * scale, octaves);
-                float marble = sin((uv.x + n) * 20.0);
+                float marble = sin((uv.x + n) * 30.0);
                 marble = marble * 0.5 + 0.5;
 
                 if (uBenchmarkMode) {
-                    float vein1 = sin((uv.y + n * 2.0) * 15.0) * 0.3;
-                    float vein2 = sin((uv.x + uv.y + n) * 25.0) * 0.2;
-                    marble += vein1 + vein2;
+                    // Múltiplas camadas de veios
+                    float vein1 = sin((uv.y + n * 3.0) * 25.0) * 0.4;
+                    float vein2 = sin((uv.x + uv.y + n * 2.0) * 40.0) * 0.3;
+                    float vein3 = sin((uv.x - uv.y + n * 1.5) * 60.0) * 0.2;
+                    float vein4 = sin((uv.x * 2.0 + uv.y + n) * 80.0) * 0.15;
+                    
+                    marble += vein1 + vein2 + vein3 + vein4;
+                    
+                    // Turbulência adicional
+                    float turbulence = fbm(uv * 100.0 + vec2(uTime * 0.1), 4) * 0.1;
+                    marble += turbulence;
+                    
+                    // Variações de cor baseadas na posição
+                    float colorVar = fbm(uv * 15.0, 3);
+                    
                     marble = clamp(marble, 0.0, 1.0);
+                    
+                    // Cores mais realistas do mármore
+                    return vec3(
+                        marble * (0.9 + colorVar * 0.1),
+                        marble * (0.85 + colorVar * 0.15),
+                        marble * (0.8 + colorVar * 0.2)
+                    );
                 }
 
                 return vec3(marble * 0.9, marble * 0.8, marble * 0.7);
@@ -253,18 +332,48 @@
 
             // Madeira procedural
             vec3 wood(vec2 uv) {
-                float complexity = uBenchmarkMode ? 20.0 : 10.0;
-                float scale = uBenchmarkMode ? 80.0 : 40.0;
+                float complexity = uBenchmarkMode ? 40.0 : 10.0;
+                float scale = uBenchmarkMode ? 150.0 : 40.0;
 
-                float rings = sin(distance(uv, vec2(0.5)) * scale + fbm(uv * complexity, 4) * 4.0);
+                float rings = sin(distance(uv, vec2(0.5)) * scale + fbm(uv * complexity, 6) * 6.0);
                 rings = rings * 0.5 + 0.5;
 
                 if (uBenchmarkMode) {
-                    float grain = fbm(vec2(uv.x * 100.0, uv.y * 20.0), 4) * 0.1;
-                    rings += grain;
+                    // Grãos da madeira em múltiplas escalas
+                    float grain1 = fbm(vec2(uv.x * 200.0, uv.y * 40.0), 6) * 0.15;
+                    float grain2 = fbm(vec2(uv.x * 400.0, uv.y * 80.0), 4) * 0.1;
+                    float grain3 = fbm(vec2(uv.x * 800.0, uv.y * 20.0), 3) * 0.05;
+                    
+                    rings += grain1 + grain2 + grain3;
 
-                    float knot = smoothstep(0.1, 0.0, distance(uv, vec2(0.3, 0.7))) * 0.3;
-                    rings -= knot;
+                    // Múltiplos nós na madeira
+                    for (int i = 0; i < 6; i++) {
+                        float fi = float(i);
+                        vec2 knotPos = vec2(
+                            0.2 + fi * 0.15,
+                            0.3 + sin(fi * 2.0) * 0.4
+                        );
+                        float knotDist = distance(uv, knotPos);
+                        float knot = smoothstep(0.15, 0.0, knotDist) * 0.4;
+                        
+                        // Turbulência ao redor do nó
+                        float knotTurb = fbm(uv * 50.0 + knotPos * 100.0, 4) * knot * 0.5;
+                        rings -= knot - knotTurb;
+                    }
+                    
+                    // Anéis irregulares
+                    float irregularity = fbm(uv * 30.0 + vec2(uTime * 0.02), 4) * 0.1;
+                    rings += irregularity;
+                    
+                    rings = clamp(rings, 0.0, 1.0);
+                    
+                    // Cores mais variadas da madeira
+                    float colorShift = fbm(uv * 20.0, 3);
+                    return vec3(
+                        rings * (0.7 + colorShift * 0.2),
+                        rings * (0.4 + colorShift * 0.3),
+                        rings * (0.15 + colorShift * 0.15)
+                    );
                 }
 
                 return vec3(rings * 0.8, rings * 0.5, rings * 0.2);
@@ -272,23 +381,61 @@
 
             // Fogo procedural
             vec3 fire(vec2 uv) {
-                float intensity = uBenchmarkMode ? 3.0 : 1.0;
-                int octaves = uBenchmarkMode ? 6 : 3;
+                float intensity = uBenchmarkMode ? 5.0 : 1.0;
+                int octaves = uBenchmarkMode ? 8 : 3;
 
-                float flame = fbm(vec2(uv.x * 8.0, uv.y * 16.0 - uTime * 4.0), octaves);
-                flame = pow(flame * intensity, 2.0) * (1.0 - uv.y);
+                // Chama principal
+                float flame = fbm(vec2(uv.x * 12.0, uv.y * 24.0 - uTime * 6.0), octaves);
+                flame = pow(flame * intensity, 2.5) * (1.0 - uv.y * 0.8);
 
                 if (uBenchmarkMode) {
-                    float flame2 = fbm(vec2(uv.x * 12.0, uv.y * 20.0 - uTime * 6.0), 4) * 0.5;
-                    float flame3 = fbm(vec2(uv.x * 16.0, uv.y * 24.0 - uTime * 8.0), 3) * 0.3;
+                    // Múltiplas camadas de fogo em diferentes escalas
+                    float flame2 = fbm(vec2(uv.x * 18.0, uv.y * 30.0 - uTime * 8.0), 6) * 0.7;
+                    float flame3 = fbm(vec2(uv.x * 24.0, uv.y * 36.0 - uTime * 10.0), 5) * 0.5;
+                    float flame4 = fbm(vec2(uv.x * 36.0, uv.y * 48.0 - uTime * 12.0), 4) * 0.3;
+                    float flame5 = fbm(vec2(uv.x * 48.0, uv.y * 60.0 - uTime * 15.0), 3) * 0.2;
 
-                    flame += flame2 + flame3;
-
-                    float red = flame;
-                    float green = flame * 0.3 + pow(flame, 3.0) * 0.5;
-                    float blue = pow(flame, 4.0) * 0.8;
-
-                    return vec3(red, green, blue);
+                    flame += flame2 + flame3 + flame4 + flame5;
+                    
+                    // Turbulência lateral
+                    float turbulence = fbm(vec2(uv.x * 60.0 + uTime * 2.0, uv.y * 40.0), 4) * 0.15;
+                    flame += turbulence;
+                    
+                    // Efeito de cintilação
+                    float flicker = sin(uTime * 20.0 + uv.x * 50.0) * sin(uTime * 15.0 + uv.y * 30.0) * 0.05;
+                    flame += flicker;
+                    
+                    // Gradiente de intensidade mais complexo
+                    float gradient = pow(1.0 - uv.y, 1.5);
+                    flame *= gradient;
+                    
+                    // Cores ultra-realistas do fogo
+                    float temperature = flame + uv.y * 0.3;
+                    
+                    // Núcleo azul-branco (muito quente)
+                    float coreHeat = smoothstep(0.8, 1.0, temperature);
+                    
+                    // Chama laranja-vermelha
+                    float mainFlame = smoothstep(0.3, 0.8, temperature);
+                    
+                    // Bordas vermelhas escuras
+                    float edges = smoothstep(0.1, 0.4, temperature);
+                    
+                    vec3 blue = vec3(0.4, 0.6, 1.0);
+                    vec3 white = vec3(1.0, 1.0, 0.9);
+                    vec3 yellow = vec3(1.0, 0.9, 0.3);
+                    vec3 orange = vec3(1.0, 0.5, 0.1);
+                    vec3 red = vec3(0.8, 0.2, 0.0);
+                    vec3 darkRed = vec3(0.3, 0.0, 0.0);
+                    
+                    // Mistura complexa de cores
+                    vec3 color = mix(darkRed, red, edges);
+                    color = mix(color, orange, mainFlame * 0.8);
+                    color = mix(color, yellow, mainFlame * temperature);
+                    color = mix(color, white, coreHeat * 0.7);
+                    color = mix(color, blue, coreHeat * temperature * 0.3);
+                    
+                    return color * flame;
                 }
 
                 return vec3(flame, flame * 0.5, flame * 0.1);
@@ -431,7 +578,7 @@
         }
 
         function initBuffers(gl) {
-            const subdivisions = benchmarkMode ? 16 : 1;
+            const subdivisions = benchmarkMode ? 64 : 1; // 64x mais vértices no modo benchmark
 
             const positions = [];
             const colors = [];
@@ -530,6 +677,17 @@
                     document.getElementById('fpsValue').textContent = fps;
                     document.getElementById('frameTime').textContent = avgFrameTime;
                     document.getElementById('frameCount').textContent = frameCount;
+                    
+                    // Atualizar informações de geometria (verificar se elementos existem)
+                    const vertexCountEl = document.getElementById('vertexCount');
+                    const triangleCountEl = document.getElementById('triangleCount');
+                    
+                    if (vertexCountEl && triangleCountEl) {
+                        const vertexCount = buffers.indexCount;
+                        const triangleCount = Math.floor(vertexCount / 3);
+                        vertexCountEl.textContent = vertexCount.toLocaleString();
+                        triangleCountEl.textContent = triangleCount.toLocaleString();
+                    }
 
                     frameTimeSum = 0;
                     frameCount = 0;
