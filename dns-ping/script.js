@@ -57,6 +57,23 @@
             return ipv6Regex.test(ip);
         }
 
+        // Bloqueia IPs reservados/não públicos para DNS customizado
+        function isPublicResolvableIp(ip) {
+            const reservedRanges = [
+                /^0\./,                   // 0.0.0.0/8
+                /^10\./,                  // 10.0.0.0/8
+                /^127\./,                 // 127.0.0.0/8
+                /^169\.254\./,            // 169.254.0.0/16
+                /^172\.(1[6-9]|2\d|3[01])\./, // 172.16.0.0/12
+                /^192\.0\.0\./,           // 192.0.0.0/24
+                /^192\.168\./,            // 192.168.0.0/16
+                /^224\./,                 // 224.0.0.0/4 (multicast)
+                /^240\./,                 // 240.0.0.0/4 (futuro/experimental)
+                /^255\.255\.255\.255$/,   // broadcast
+            ];
+            return !reservedRanges.some(r => r.test(ip));
+        }
+
         function detectIpType(ip) {
             if (isValidIp(ip)) return 'ipv4';
             if (isValidIpv6(ip)) return 'ipv6';
@@ -98,6 +115,12 @@
             const ipType = detectIpType(ip);
             if (ipType === 'invalid') {
                 alert('IP inválido! Use o formato IPv4 (192.168.1.1) ou IPv6 (2001:4860:4860::8888)');
+                return;
+            }
+
+            // NOVO: Bloquear IPs reservados para IPv4 custom
+            if (ipType === 'ipv4' && !isPublicResolvableIp(ip)) {
+                alert('Este IP está na faixa reservada/não pública e não pode ser usado como DNS!');
                 return;
             }
 
@@ -191,9 +214,14 @@
         }
 
         function switchTab(tabType) {
-            // Bloquear troca de abas durante teste em execução
             if (isTestRunning) {
                 return;
+            }
+
+            // Mostra/oculta banner de aviso do custom
+            var customBanner = document.getElementById('customBanner');
+            if (customBanner) {
+                customBanner.style.display = (tabType === 'custom') ? 'block' : 'none';
             }
 
             // Remover active de todas as abas

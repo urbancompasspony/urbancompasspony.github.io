@@ -783,4 +783,17 @@
           .ranking-details {
             grid-template-columns: 1fr;
           }
+
+          .custom-banner {
+            background: #fffbe6;
+            color: #664d03;
+            border: 1px solid #ffe58f;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 16px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
         }
