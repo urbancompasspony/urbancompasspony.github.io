@@ -252,6 +252,20 @@
             color: #495057;
         }
 
+        .tab.disabled {
+            background: #e9ecef !important;
+            color: #6c757d !important;
+            cursor: not-allowed !important;
+            opacity: 0.6 !important;
+        }
+
+        .tab.disabled:hover {
+            background: #e9ecef !important;
+            color: #6c757d !important;
+            transform: none !important;
+            cursor: not-allowed !important;
+        }
+
         .tab-content {
             display: none;
         }
@@ -694,6 +708,51 @@
             font-style: italic;
         }
 
+        .cache-info {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border: 2px solid #2196f3;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(33, 150, 243, 0.2);
+        }
+
+        .cache-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .cache-icon {
+            font-size: 1.2rem;
+        }
+
+        .cache-text {
+            flex: 1;
+            color: #1565c0;
+            font-weight: 500;
+            min-width: 200px;
+        }
+
+        .cache-refresh {
+            background: linear-gradient(135deg, #4caf50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .cache-refresh:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+        }
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 2rem;
@@ -881,42 +940,50 @@
     <script>
         const defaultDnsServers = [
             // IPv4 Servers (originais)
-            { provider: 'Google', ip: '8.8.4.4', protocol: 'ipv4' },
-            { provider: 'Google', ip: '8.8.8.8', protocol: 'ipv4' },
-            { provider: 'OpenDNS', ip: '208.67.222.222', protocol: 'ipv4' },
-            { provider: 'OpenDNS', ip: '208.67.220.220', protocol: 'ipv4' },
-            { provider: 'Level3', ip: '4.2.2.1', protocol: 'ipv4' },
-            { provider: 'Level3', ip: '4.2.2.2', protocol: 'ipv4' },
-            { provider: 'Comodo', ip: '8.26.56.26', protocol: 'ipv4' },
-            { provider: 'Comodo', ip: '8.20.247.20', protocol: 'ipv4' },
-            { provider: 'DNSWATCH', ip: '84.200.69.80', protocol: 'ipv4' },
-            { provider: 'DNSWATCH', ip: '84.200.70.40', protocol: 'ipv4' },
-            { provider: 'Quad9', ip: '9.9.9.9', protocol: 'ipv4' },
-            { provider: 'Quad9', ip: '149.112.112.112', protocol: 'ipv4' },
-            { provider: 'Cloudflare', ip: '1.1.1.1', protocol: 'ipv4' },
-            { provider: 'Cloudflare', ip: '1.0.0.1', protocol: 'ipv4' },
-            { provider: 'Algar', ip: '200.225.197.34', protocol: 'ipv4' },
-            { provider: 'Algar', ip: '200.225.197.37', protocol: 'ipv4' },
-            { provider: 'GigaDNS', ip: '189.38.95.95', protocol: 'ipv4' },
-            { provider: 'GigaDNS', ip: '189.38.95.96', protocol: 'ipv4' },
-            { provider: 'Claro', ip: '181.213.132.2', protocol: 'ipv4' },
-            { provider: 'Claro', ip: '181.213.132.3', protocol: 'ipv4' },
+            { provider: 'Google 1', ip: '8.8.4.4', protocol: 'ipv4' },
+            { provider: 'Google 2', ip: '8.8.8.8', protocol: 'ipv4' },
+            { provider: 'OpenDNS 1', ip: '208.67.222.222', protocol: 'ipv4' },
+            { provider: 'OpenDNS 2', ip: '208.67.220.220', protocol: 'ipv4' },
+            { provider: 'Level3 1', ip: '4.2.2.1', protocol: 'ipv4' },
+            { provider: 'Level3 2', ip: '4.2.2.2', protocol: 'ipv4' },
+            { provider: 'Comodo 1', ip: '8.26.56.26', protocol: 'ipv4' },
+            { provider: 'Comodo 2', ip: '8.20.247.20', protocol: 'ipv4' },
+            { provider: 'DNSWATCH 1', ip: '84.200.69.80', protocol: 'ipv4' },
+            { provider: 'DNSWATCH 2', ip: '84.200.70.40', protocol: 'ipv4' },
+            { provider: 'Quad9 1', ip: '9.9.9.9', protocol: 'ipv4' },
+            { provider: 'Quad9 2', ip: '149.112.112.112', protocol: 'ipv4' },
+            { provider: 'Cloudflare 1', ip: '1.1.1.1', protocol: 'ipv4' },
+            { provider: 'Cloudflare 2', ip: '1.0.0.1', protocol: 'ipv4' },
+            { provider: 'Algar 1', ip: '200.225.197.34', protocol: 'ipv4' },
+            { provider: 'Algar 2', ip: '200.225.197.37', protocol: 'ipv4' },
+            { provider: 'GigaDNS 1', ip: '189.38.95.95', protocol: 'ipv4' },
+            { provider: 'GigaDNS 2', ip: '189.38.95.96', protocol: 'ipv4' },
+            { provider: 'Claro 1', ip: '181.213.132.2', protocol: 'ipv4' },
+            { provider: 'Claro 2', ip: '181.213.132.3', protocol: 'ipv4' },
 
             // IPv6 Servers (adicionados)
-            { provider: 'Google', ip: '2001:4860:4860::8888', protocol: 'ipv6' },
-            { provider: 'Google', ip: '2001:4860:4860::8844', protocol: 'ipv6' },
-            { provider: 'Cloudflare', ip: '2606:4700:4700::1111', protocol: 'ipv6' },
-            { provider: 'Cloudflare', ip: '2606:4700:4700::1001', protocol: 'ipv6' },
-            { provider: 'Quad9', ip: '2620:fe::fe', protocol: 'ipv6' },
-            { provider: 'Quad9', ip: '2620:fe::9', protocol: 'ipv6' },
-            { provider: 'OpenDNS', ip: '2620:119:35::35', protocol: 'ipv6' },
-            { provider: 'OpenDNS', ip: '2620:119:53::53', protocol: 'ipv6' }
+            { provider: 'Google 1', ip: '2001:4860:4860::8888', protocol: 'ipv6' },
+            { provider: 'Google 2', ip: '2001:4860:4860::8844', protocol: 'ipv6' },
+            { provider: 'Cloudflare 1', ip: '2606:4700:4700::1111', protocol: 'ipv6' },
+            { provider: 'Cloudflare 2', ip: '2606:4700:4700::1001', protocol: 'ipv6' },
+            { provider: 'Quad9 1', ip: '2620:fe::fe', protocol: 'ipv6' },
+            { provider: 'Quad9 2', ip: '2620:fe::9', protocol: 'ipv6' },
+            { provider: 'OpenDNS 1', ip: '2620:119:35::35', protocol: 'ipv6' },
+            { provider: 'OpenDNS 2', ip: '2620:119:53::53', protocol: 'ipv6' }
         ];
 
         let customDnsServers = [];
         let isTestRunning = false;
         let testResults = [];
         let currentTestType = 'all'; // Armazenar o tipo de teste atual
+
+        // Sistema de cache para resultados por tipo de teste
+        let testCache = {
+            'ipv4': { results: [], completed: false },
+            'ipv6': { results: [], completed: false },
+            'custom': { results: [], completed: false },
+            'all': { results: [], completed: false }
+        };
 
         // Função original mantida
         function isValidIp(ip) {
@@ -1064,6 +1131,11 @@
         }
 
         function switchTab(tabType) {
+            // Bloquear troca de abas durante teste em execução
+            if (isTestRunning) {
+                return;
+            }
+
             // Remover active de todas as abas
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -1071,6 +1143,9 @@
             // Adicionar active na aba selecionada
             document.getElementById(`tab-${tabType}`).classList.add('active');
             document.getElementById(`content-${tabType}`).classList.add('active');
+
+            // Carregar resultados do cache para a aba selecionada
+            loadCachedResults(tabType);
         }
 
         function updateProgress(current, total, message) {
@@ -1080,6 +1155,202 @@
 
             progressFill.style.width = percentage + '%';
             progressText.textContent = message;
+        }
+
+        // Função para salvar resultados no cache
+        function saveCacheResults(testType, results) {
+            testCache[testType] = {
+                results: [...results],
+                completed: true,
+                timestamp: Date.now()
+            };
+        }
+
+        // Função para carregar resultados do cache
+        function loadCachedResults(testType) {
+            currentTestType = testType;
+
+            if (testCache[testType].completed && testCache[testType].results.length > 0) {
+                testResults = [...testCache[testType].results];
+
+                // Renderizar os cards dos resultados
+                renderCachedResults(testType);
+
+                // Atualizar estatísticas
+                updateStats();
+
+                // Mostrar informação de cache
+                showCacheInfo(testType);
+            } else {
+                // Limpar resultados se não há cache
+                testResults = [];
+                document.getElementById('dnsGrid').innerHTML = '';
+                document.getElementById('stats').style.display = 'none';
+
+                // Remover card de detalhes do Top 3
+                const existingCard = document.getElementById('top3DetailsCard');
+                if (existingCard) {
+                    existingCard.remove();
+                }
+
+                // Esconder informação de cache
+                hideCacheInfo();
+            }
+        }
+
+        // Função para renderizar resultados do cache
+        function renderCachedResults(testType) {
+            const dnsGrid = document.getElementById('dnsGrid');
+            const allServers = getAllDnsServers(testType);
+
+            // Criar cards baseados nos servidores do tipo de teste atual
+            dnsGrid.innerHTML = allServers.map((server, index) => {
+                // Encontrar resultado correspondente no cache
+                const result = testResults.find(r => r.server.ip === server.ip);
+
+                if (result) {
+                    return createCompletedDnsCard(server, result, index);
+                } else {
+                    return createDnsCard(server, index);
+                }
+            }).join('');
+        }
+
+        // Função para criar card com resultado completo
+        function createCompletedDnsCard(server, result, index) {
+            const customClass = server.custom ? ' custom' : '';
+            const protocolClass = server.protocol === 'ipv6' ? ' ipv6' : '';
+            const customBadge = server.custom ? '<span class="custom-badge">CUSTOM</span>' : '';
+            const protocolBadge = `<span class="protocol-badge ${server.protocol}">${server.protocol.toUpperCase()}</span>`;
+
+            const statusClass = result.success ? 'success' : 'error';
+            const statusText = result.success ? 'Online' : 'Falha';
+            const statusBadgeClass = result.success ? 'status-success' : 'status-error';
+
+            let pingContent = '';
+            if (result.success) {
+                let methodIcon = '';
+                switch (result.method) {
+                    case 'dns-over-https':
+                        methodIcon = '🔒';
+                        break;
+                    case 'ipv6-doh':
+                        methodIcon = '🔒🆕';
+                        break;
+                    case 'brazil-connectivity':
+                        methodIcon = '🇧🇷';
+                        break;
+                    case 'global-connectivity':
+                        methodIcon = '🌐';
+                        break;
+                    case 'ipv6-connectivity':
+                        methodIcon = '🌐🆕';
+                        break;
+                    case 'custom-connectivity':
+                        methodIcon = '⚙️';
+                        break;
+                }
+
+                let attemptBadge = '';
+                if (result.attempts === 1) {
+                    attemptBadge = '<span class="attempt-badge first-try">1ª tentativa</span>';
+                } else if (result.attempts === 2) {
+                    attemptBadge = '<span class="attempt-badge second-try">2ª tentativa</span>';
+                } else if (result.attempts === 3) {
+                    attemptBadge = '<span class="attempt-badge third-try">3ª tentativa</span>';
+                }
+
+                pingContent = `✅ ${result.time}ms ${methodIcon}${attemptBadge}`;
+            } else {
+                const errorMsg = result.error || 'Sem resposta';
+                const protocolWarning = server.protocol === 'ipv6' ? ' (IPv6 pode estar indisponível)' : '';
+                const attemptInfo = result.attempts > 1 ? ` após ${result.attempts} tentativas` : '';
+                pingContent = `❌ ${errorMsg}${protocolWarning}${attemptInfo}`;
+            }
+
+            return `
+                <div class="dns-card ${statusClass}${customClass}${protocolClass}" id="card-${index}">
+                    <div class="dns-header">
+                        <div class="dns-provider">
+                            ${server.provider}
+                            ${protocolBadge}
+                            ${customBadge}
+                        </div>
+                        <div class="dns-status ${statusBadgeClass}" id="status-${index}">${statusText}</div>
+                    </div>
+                    <div class="dns-ip">${server.ip}</div>
+                    <div class="dns-ping" id="ping-${index}">${pingContent}</div>
+                </div>
+            `;
+        }
+
+        // Função para mostrar informação de cache
+        function showCacheInfo(testType) {
+            // Remover info anterior se existir
+            hideCacheInfo();
+
+            const cache = testCache[testType];
+            if (!cache.completed) return;
+
+            const timeAgo = Math.round((Date.now() - cache.timestamp) / 1000 / 60); // minutos
+            const timeText = timeAgo < 1 ? 'agora mesmo' :
+                           timeAgo === 1 ? 'há 1 minuto' :
+                           `há ${timeAgo} minutos`;
+
+            const testTitles = {
+                'all': 'Todos os DNS (IPv4 + IPv6)',
+                'ipv4': 'DNS IPv4',
+                'ipv6': 'DNS IPv6',
+                'custom': 'DNS Customizados'
+            };
+
+            const cacheInfo = document.createElement('div');
+            cacheInfo.id = 'cacheInfo';
+            cacheInfo.innerHTML = `
+                <div class="cache-info">
+                    <div class="cache-content">
+                        <span class="cache-icon">💾</span>
+                        <span class="cache-text">
+                            Exibindo resultados salvos de <strong>${testTitles[testType]}</strong>
+                            (testado ${timeText})
+                        </span>
+                        <button class="cache-refresh" onclick="clearCache('${testType}')" title="Limpar cache e testar novamente">
+                            🔄 Novo Teste
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Inserir antes do grid de DNS
+            const dnsGrid = document.getElementById('dnsGrid');
+            dnsGrid.parentNode.insertBefore(cacheInfo, dnsGrid);
+        }
+
+        // Função para esconder informação de cache
+        function hideCacheInfo() {
+            const existingInfo = document.getElementById('cacheInfo');
+            if (existingInfo) {
+                existingInfo.remove();
+            }
+        }
+
+        // Função para limpar cache específico
+        function clearCache(testType) {
+            testCache[testType] = { results: [], completed: false };
+            loadCachedResults(testType);
+        }
+
+        // Função para bloquear/desbloquear abas durante teste
+        function lockTabs(lock) {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                if (lock) {
+                    tab.classList.add('disabled');
+                    // Não mexer no pointer-events aqui, só visual
+                } else {
+                    tab.classList.remove('disabled');
+                }
+            });
         }
 
         // Nova função de ping com rotação de rotas entre tentativas
@@ -1331,7 +1602,7 @@
             if (successfulTests.length > 0) {
                 const fastest = successfulTests.sort((a, b) => a.time - b.time)[0];
                 const protocolIcon = fastest.server.protocol === 'ipv6' ? '🆕' : '';
-                fastestDns = `${fastest.server.provider} ${protocolIcon}(${fastest.time}ms)`;
+                fastestDns = `${fastest.server.provider} ${protocolIcon}(${fastest.time}ms)<br><small style="font-size: 0.8rem; color: #666; font-family: 'Courier New', monospace;">${fastest.server.ip}</small>`;
             }
 
             document.getElementById('successCount').textContent = successCount;
@@ -1511,6 +1782,9 @@
             testResults = [];
             currentTestType = testType; // Armazenar o tipo de teste atual
 
+            // Bloquear todas as abas durante o teste
+            lockTabs(true);
+
             const allServers = getAllDnsServers(testType);
 
             // Verificar se há servidores para testar
@@ -1521,6 +1795,7 @@
                     alert('Nenhum servidor DNS encontrado para este tipo de teste!');
                 }
                 isTestRunning = false;
+                lockTabs(false); // Desbloquear abas
                 return;
             }
 
@@ -1570,10 +1845,18 @@
                 };
                 const completedMessage = completedMessages[testType] || `Teste concluído! (${allServers.length} servidores)`;
                 updateProgress(allServers.length, allServers.length, completedMessage);
+
+                // Salvar resultados no cache
+                saveCacheResults(testType, testResults);
+
                 updateStats();
             }
 
             isTestRunning = false;
+
+            // Desbloquear abas
+            lockTabs(false);
+
             // Habilitar botões de todas as abas
             document.querySelectorAll('.btn-primary, .btn-custom').forEach(btn => btn.disabled = false);
             document.querySelectorAll('.btn-secondary').forEach(btn => btn.disabled = true);
@@ -1588,6 +1871,10 @@
 
         function stopTest() {
             isTestRunning = false;
+
+            // Desbloquear abas
+            lockTabs(false);
+
             // Habilitar botões de todas as abas
             document.querySelectorAll('.btn-primary, .btn-custom').forEach(btn => btn.disabled = false);
             document.querySelectorAll('.btn-secondary').forEach(btn => btn.disabled = true);
@@ -1598,8 +1885,12 @@
         }
 
         function clearResults() {
+            // Limpar apenas o cache do tipo atual
+            if (currentTestType && testCache[currentTestType]) {
+                testCache[currentTestType] = { results: [], completed: false };
+            }
+
             testResults = [];
-            currentTestType = 'all'; // Reset para padrão
             document.getElementById('dnsGrid').innerHTML = '';
             document.getElementById('stats').style.display = 'none';
             document.getElementById('progressContainer').style.display = 'none';
@@ -1609,6 +1900,9 @@
             if (existingCard) {
                 existingCard.remove();
             }
+
+            // Remover info de cache
+            hideCacheInfo();
         }
 
         // Event listeners para adicionar DNS com Enter
@@ -1616,6 +1910,9 @@
             // Desabilitar todos os botões "Parar" inicialmente
             document.querySelectorAll('.btn-secondary').forEach(btn => btn.disabled = true);
             document.getElementById('customTestBtn').disabled = true; // Inicialmente desabilitado
+
+            // Carregar resultados do cache para a aba ativa inicial (IPv4)
+            loadCachedResults('ipv4');
 
             // Adicionar DNS com Enter no campo IP
             document.getElementById('customDnsIp').addEventListener('keypress', function(e) {
