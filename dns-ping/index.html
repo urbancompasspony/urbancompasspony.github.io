@@ -10,14 +10,20 @@
     <div class="container">
         <div class="header">
             <h1>🌐 Teste DNS Real</h1>
-            <p>Ferramenta para testar latência REAL da sua internet com servidores DNS IPv4 e IPv6</p>
+            <p>Ferramenta que testa a latência REAL da sua internet com servidores DNS IPv4 e IPv6.</p>
+            <p>O teste executa localmente a partir do seu navegador enviando as requisições para o provedor desejado.</p>
         </div>
 
         <div class="custom-dns">
             <div id="customBanner" class="custom-banner" style="display:none;">
-                ⚠️ <strong>Aviso:</strong> O teste de DNS customizado é limitado pelas regras de CORS do navegador e infelizmente não terá a precisão que gostaríamos.<br>
-                O teste verificará principalmente se o DNS é válido e se há conectividade com o IP informado, portanto, não verifica latência real ou funcionamento do DNS.<br>
-                <br>
+            <div class="alert">
+            <b>⚠️ Aviso</b> O DNS Customizado é limitado pelas regras de Cross-Origin Resource Sharing (CORS) do seu navegador e:
+            <ul>
+                <li>NÃO informa se o endereço está online ou offline, sempre resultando em ping bem-sucedido dado ao fallback do método.</li>
+                <li>NÃO analisa DNS Local como pfSense, Adguard ou PiHole: O uso de endereços reservados está vetado neste teste.</li>
+                Certifique-se de que o endereço DNS customizado esteja online com a porta 53 disponível, assim o teste dará o resultado desejado.</li>
+            </ul>
+            </div>
             </div>
             <h3>⚙️ Adicionar DNS Customizado</h3>
             <div class="dns-input-group">
@@ -25,7 +31,7 @@
                     type="text"
                     class="dns-input"
                     id="customDnsIp"
-                    placeholder="Digite o IP do DNS (IPv4: 1.1.1.1 ou IPv6: 2001:4860:4860::8888)"
+                    placeholder="Digite o DNS (IPv4: 1.1.1.1 ou IPv6: 2001:4860:4860::8888)"
                     oninput="validateIpInput()"
                 >
                 <span class="ip-type-indicator" id="ipTypeIndicator" style="display: none;"></span>
@@ -47,29 +53,29 @@
             <div class="tabs-container">
                 <div class="tabs">
                     <button class="tab active" onclick="switchTab('ipv4')" id="tab-ipv4">
-                        🔵 IPv4 Only
+                        🔵 Somente IPv4
                     </button>
                     <button class="tab" onclick="switchTab('ipv6')" id="tab-ipv6">
-                        🟢 IPv6 Only
+                        🟢 Somente IPv6
                     </button>
                     <button class="tab" onclick="switchTab('custom')" id="tab-custom">
                         ⚙️ Customizados
                     </button>
                     <button class="tab" onclick="switchTab('all')" id="tab-all">
-                        🌐 Todos os DNS
+                        🌐 Todos
                     </button>
                 </div>
 
                 <div class="tab-content active" id="content-ipv4">
                     <div class="button-group">
                         <button class="btn btn-primary" onclick="startTest('ipv4')">
-                            ▶️ Testar Apenas IPv4
+                            ▶️ Testar
                         </button>
                         <button class="btn btn-secondary" onclick="stopTest()">
-                            ⏹️ Parar Teste
+                            ⏹️ Parar
                         </button>
                         <button class="btn btn-info" onclick="clearResults()">
-                            🗑️ Limpar Resultados
+                            🗑️ Limpar
                         </button>
                     </div>
                 </div>
@@ -77,13 +83,13 @@
                 <div class="tab-content" id="content-ipv6">
                     <div class="button-group">
                         <button class="btn btn-primary" onclick="startTest('ipv6')">
-                            ▶️ Testar Apenas IPv6
+                            ▶️ Testar
                         </button>
                         <button class="btn btn-secondary" onclick="stopTest()">
-                            ⏹️ Parar Teste
+                            ⏹️ Parar
                         </button>
                         <button class="btn btn-info" onclick="clearResults()">
-                            🗑️ Limpar Resultados
+                            🗑️ Limpar
                         </button>
                     </div>
                 </div>
@@ -91,13 +97,13 @@
                 <div class="tab-content" id="content-custom">
                     <div class="button-group">
                         <button class="btn btn-custom" onclick="startTest('custom')" id="customTestBtn" disabled>
-                            ⚙️ Testar Apenas Customizados
+                            ⚙️ Testar
                         </button>
                         <button class="btn btn-secondary" onclick="stopTest()">
-                            ⏹️ Parar Teste
+                            ⏹️ Parar
                         </button>
                         <button class="btn btn-info" onclick="clearResults()">
-                            🗑️ Limpar Resultados
+                            🗑️ Limpar
                         </button>
                     </div>
                 </div>
@@ -105,13 +111,13 @@
                 <div class="tab-content" id="content-all">
                     <div class="button-group">
                         <button class="btn btn-primary" onclick="startTest('all')">
-                            ▶️ Teste Completo (IPv4 + IPv6)
+                            ▶️ Testar
                         </button>
                         <button class="btn btn-secondary" onclick="stopTest()">
-                            ⏹️ Parar Teste
+                            ⏹️ Parar
                         </button>
                         <button class="btn btn-info" onclick="clearResults()">
-                            🗑️ Limpar Resultados
+                            🗑️ Limpar
                         </button>
                     </div>
                 </div>
