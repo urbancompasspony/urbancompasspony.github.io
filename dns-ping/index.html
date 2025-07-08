@@ -170,7 +170,7 @@
         }
 
         .custom-dns-tag.ipv6 {
-            border-color: #e74c3c;
+            border-color: #27ae60;
         }
 
         .protocol-badge {
@@ -183,7 +183,7 @@
         }
 
         .protocol-badge.ipv6 {
-            background: #e74c3c;
+            background: #2c3e50;
         }
 
         .remove-dns {
@@ -324,16 +324,20 @@
             box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
         }
 
+        .dns-card.pending {
+            border-left-color: #ff9800 !important;
+        }
+
         .dns-card.success {
             border-left-color: #4CAF50;
         }
 
-        .dns-card.error {
-            border-left-color: #f44336;
+        .dns-card.success.ipv6 {
+            border-left-color: #1e7e34;
         }
 
-        .dns-card.pending {
-            border-left-color: #ff9800;
+        .dns-card.error {
+            border-left-color: #f44336 !important;
         }
 
         .dns-card.custom {
@@ -341,7 +345,7 @@
         }
 
         .dns-card.ipv6 {
-            border-left-color: #e74c3c;
+            border-left-color: #1e7e34;
         }
 
         .dns-header {
@@ -584,7 +588,7 @@
                     </div>
                     <div class="stat-item">
                         <div class="stat-number" id="top3Dns" style="color: #FF9800; font-size: 1rem; line-height: 1.3;">-</div>
-                        <div class="stat-label">Top 3 Mais Rápidos</div>
+                        <div class="stat-label">DNS Mais Rápido</div>
                     </div>
                 </div>
                 <div style="text-align: center; margin-top: 15px; font-size: 0.9rem; color: #666;">
@@ -1055,9 +1059,12 @@
 
             if (successfulTests.length === 0) return;
 
-            const top3 = successfulTests
-                .sort((a, b) => a.time - b.time)
-                .slice(0, 3);
+            // Separar resultados por protocolo
+            const ipv4Results = successfulTests.filter(r => r.server.protocol === 'ipv4');
+            const ipv6Results = successfulTests.filter(r => r.server.protocol === 'ipv6');
+
+            const top3IPv4 = ipv4Results.sort((a, b) => a.time - b.time).slice(0, 3);
+            const top3IPv6 = ipv6Results.sort((a, b) => a.time - b.time).slice(0, 3);
 
             function getMethodDescription(method) {
                 const descriptions = {
@@ -1087,59 +1094,77 @@
                 return 'Rota Personalizada';
             }
 
-            const top3Html = top3.map((result, index) => {
-                const medal = ['🥇', '🥈', '🥉'][index];
-                const protocolBadge = result.server.protocol === 'ipv6' ?
-                    '<span class="protocol-badge ipv6">IPv6</span>' :
-                    '<span class="protocol-badge">IPv4</span>';
+            function createRankingSection(results, title, protocolClass) {
+                if (results.length === 0) {
+                    return `
+                        <div class="ranking-section">
+                            <h4 class="ranking-title ${protocolClass}">${title}</h4>
+                            <div class="no-results">
+                                <p>Nenhum DNS ${protocolClass === 'ipv4' ? 'IPv4' : 'IPv6'} respondeu com sucesso</p>
+                            </div>
+                        </div>
+                    `;
+                }
 
-                const customBadge = result.server.custom ?
-                    '<span class="custom-badge">CUSTOM</span>' : '';
+                const rankingHtml = results.map((result, index) => {
+                    const medal = ['🥇', '🥈', '🥉'][index];
+                    const customBadge = result.server.custom ?
+                        '<span class="custom-badge">CUSTOM</span>' : '';
 
-                const attemptBadge = result.attempts > 1 ?
-                    `<span class="attempt-badge ${result.attempts === 2 ? 'second-try' : 'third-try'}">${result.attempts}ª tent.</span>` :
-                    '<span class="attempt-badge first-try">1ª tent.</span>';
+                    const attemptBadge = result.attempts > 1 ?
+                        `<span class="attempt-badge ${result.attempts === 2 ? 'second-try' : 'third-try'}">${result.attempts}ª tent.</span>` :
+                        '<span class="attempt-badge first-try">1ª tent.</span>';
+
+                    return `
+                        <div class="ranking-item ${protocolClass}">
+                            <div class="ranking-header">
+                                <span class="medal">${medal}</span>
+                                <div class="dns-name">
+                                    <strong>${result.server.provider}</strong>
+                                    ${customBadge}
+                                </div>
+                                <div class="ping-time">${result.time}ms</div>
+                            </div>
+                            <div class="ranking-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">📍 Endereço:</span>
+                                    <span class="detail-value">${result.server.ip}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">🛣️ Método:</span>
+                                    <span class="detail-value">${getMethodDescription(result.method)}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">🌐 Rota:</span>
+                                    <span class="detail-value">${getRouteDescription(result.route)}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">🔄 Tentativas:</span>
+                                    <span class="detail-value">${attemptBadge}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
 
                 return `
-                    <div class="top3-item">
-                        <div class="top3-header">
-                            <span class="medal">${medal}</span>
-                            <div class="dns-name">
-                                <strong>${result.server.provider}</strong>
-                                ${protocolBadge}
-                                ${customBadge}
-                            </div>
-                            <div class="ping-time">${result.time}ms</div>
-                        </div>
-                        <div class="top3-details">
-                            <div class="detail-item">
-                                <span class="detail-label">📍 Endereço:</span>
-                                <span class="detail-value">${result.server.ip}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">🛣️ Método:</span>
-                                <span class="detail-value">${getMethodDescription(result.method)}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">🌐 Rota:</span>
-                                <span class="detail-value">${getRouteDescription(result.route)}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">🔄 Tentativas:</span>
-                                <span class="detail-value">${attemptBadge}</span>
-                            </div>
+                    <div class="ranking-section">
+                        <h4 class="ranking-title ${protocolClass}">${title}</h4>
+                        <div class="ranking-list">
+                            ${rankingHtml}
                         </div>
                     </div>
                 `;
-            }).join('');
+            }
 
             const top3Card = document.createElement('div');
             top3Card.id = 'top3DetailsCard';
             top3Card.innerHTML = `
                 <div class="top3-details-card">
-                    <h3 class="top3-title">🏆 Top 3 DNS Mais Rápidos - Detalhes Técnicos</h3>
-                    <div class="top3-list">
-                        ${top3Html}
+                    <h3 class="top3-title">🏆 Rankings DNS - Detalhes Técnicos por Protocolo</h3>
+                    <div class="rankings-container">
+                        ${createRankingSection(top3IPv4, '🌐 Top 3 IPv4', 'ipv4')}
+                        ${createRankingSection(top3IPv6, '🆕 Top 3 IPv6', 'ipv6')}
                     </div>
                 </div>
             `;
@@ -1158,37 +1183,86 @@
 
                 .top3-title {
                     color: #2c3e50;
-                    margin-bottom: 20px;
+                    margin-bottom: 25px;
                     text-align: center;
                     font-size: 1.3rem;
                 }
 
-                .top3-list {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 15px;
+                .rankings-container {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+                    gap: 25px;
                 }
 
-                .top3-item {
+                .ranking-section {
                     background: #f8f9fa;
                     border-radius: 12px;
-                    padding: 15px;
+                    padding: 20px;
                     border-left: 4px solid;
                 }
 
-                .top3-item:nth-child(1) { border-left-color: #ffd700; }
-                .top3-item:nth-child(2) { border-left-color: #c0c0c0; }
-                .top3-item:nth-child(3) { border-left-color: #cd7f32; }
+                .ranking-section.ipv4 {
+                    border-left-color: #4CAF50;
+                }
 
-                .top3-header {
+                .ranking-section.ipv6 {
+                    border-left-color: #1e7e34;
+                }
+
+                .ranking-title {
+                    margin-bottom: 15px;
+                    font-size: 1.1rem;
+                    font-weight: 700;
+                    text-align: center;
+                    padding: 8px 16px;
+                    border-radius: 20px;
+                    color: white;
+                }
+
+                .ranking-title.ipv4 {
+                    background: linear-gradient(135deg, #4CAF50, #45a049);
+                }
+
+                .ranking-title.ipv6 {
+                    background: linear-gradient(135deg, #1e7e34, #155724);
+                }
+
+                .ranking-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                }
+
+                .ranking-item {
+                    background: white;
+                    border-radius: 10px;
+                    padding: 15px;
+                    border-left: 3px solid;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                }
+
+                .ranking-item.ipv4 {
+                    border-left-color: #3498db;
+                }
+
+                .ranking-item.ipv6 {
+                    border-left-color: #27ae60;
+                }
+
+                .ranking-item:nth-child(1) {
+                    border-left-width: 4px;
+                    transform: scale(1.02);
+                }
+
+                .ranking-header {
                     display: flex;
                     align-items: center;
                     gap: 15px;
-                    margin-bottom: 12px;
+                    margin-bottom: 10px;
                 }
 
                 .medal {
-                    font-size: 1.5rem;
+                    font-size: 1.3rem;
                 }
 
                 .dns-name {
@@ -1196,56 +1270,99 @@
                     display: flex;
                     align-items: center;
                     gap: 8px;
-                    font-size: 1.1rem;
+                    font-size: 1rem;
                 }
 
                 .ping-time {
-                    font-size: 1.2rem;
+                    font-size: 1.1rem;
                     font-weight: 700;
                     color: #27ae60;
                     background: #d4edda;
-                    padding: 4px 12px;
-                    border-radius: 20px;
+                    padding: 4px 10px;
+                    border-radius: 15px;
                 }
 
-                .top3-details {
+                .ranking-details {
                     display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                    gap: 8px;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 6px;
                 }
 
                 .detail-item {
                     display: flex;
                     align-items: center;
                     gap: 8px;
-                    padding: 4px 0;
+                    padding: 3px 0;
                 }
 
                 .detail-label {
                     font-weight: 600;
                     color: #666;
-                    min-width: 80px;
-                    font-size: 0.9rem;
+                    min-width: 75px;
+                    font-size: 0.85rem;
                 }
 
                 .detail-value {
                     font-family: 'Courier New', monospace;
-                    background: white;
-                    padding: 2px 8px;
-                    border-radius: 6px;
+                    background: #f8f9fa;
+                    padding: 2px 6px;
+                    border-radius: 4px;
                     border: 1px solid #dee2e6;
-                    font-size: 0.85rem;
+                    font-size: 0.8rem;
                     word-break: break-all;
+                    flex: 1;
+                }
+
+                .no-results {
+                    text-align: center;
+                    padding: 20px;
+                    color: #666;
+                    font-style: italic;
+                }
+
+                .attempt-badge {
+                    display: inline-block;
+                    color: white;
+                    padding: 1px 6px;
+                    border-radius: 8px;
+                    font-size: 0.7rem;
+                    font-weight: 600;
+                }
+
+                .attempt-badge.first-try {
+                    background: #28a745;
+                }
+
+                .attempt-badge.second-try {
+                    background: #ffc107;
+                    color: #212529;
+                }
+
+                .attempt-badge.third-try {
+                    background: #fd7e14;
+                }
+
+                .custom-badge {
+                    background: #9c27b0;
+                    color: white;
+                    padding: 2px 6px;
+                    border-radius: 10px;
+                    font-size: 0.7rem;
                 }
 
                 @media (max-width: 768px) {
-                    .top3-header {
+                    .rankings-container {
+                        grid-template-columns: 1fr;
+                        gap: 20px;
+                    }
+
+                    .ranking-header {
                         flex-direction: column;
                         align-items: start;
                         gap: 8px;
                     }
 
-                    .top3-details {
+                    .ranking-details {
                         grid-template-columns: 1fr;
                     }
                 }
