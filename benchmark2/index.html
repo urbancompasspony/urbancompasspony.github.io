@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1200, initial-scale=1.0">
+    <title>Cubo 3D WebGL 2.0 - Ultra Benchmark</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0a0a0a, #1a1a2e, #16213e);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+        canvas {
+            display: block;
+            margin: 20px auto;
+            border: 3px solid #00ffff;
+            background: #000;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        .controls {
+            text-align: center;
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #333;
+        }
+        .controls label {
+            display: inline-block;
+            margin: 0 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .controls label:hover {
+            background: rgba(0, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        .controls input, .controls select {
+            margin: 0 8px;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #555;
+            background: #222;
+            color: white;
+        }
+        h1 {
+            text-align: center;
+            color: #00ffff;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+        #metrics {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border: 2px solid #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+            min-width: 250px;
+        }
+        #metrics .fps-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #00ffff;
+        }
+        #metrics .warning {
+            color: #ff6600;
+            font-weight: bold;
+        }
+        #metrics .critical {
+            color: #ff0000;
+            font-weight: bold;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+        .benchmark-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            color: #ffff00;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            border: 2px solid #ffff00;
+            box-shadow: 0 0 20px rgba(255, 255, 0, 0.3);
+            max-width: 300px;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <h1>🔥 WebGL 2.0 Ultra Benchmark 🔥</h1>
+    <div class="subtitle">Stress Test Extremo para GPU • Instancing • Compute-like Effects</div>
+
+    <div id="metrics">
+        <div class="fps-value">FPS: <span id="fpsValue">0</span></div>
+        <div>Frame Time: <span id="frameTime">0</span>ms</div>
+        <div>Frames: <span id="frameCount">0</span></div>
+        <div>Vértices: <span id="vertexCount">0</span></div>
+        <div>Triângulos: <span id="triangleCount">0</span></div>
+        <div>Instâncias: <span id="instanceCount">1</span></div>
+        <div>Draw Calls: <span id="drawCalls">0</span></div>
+        <div>GPU Load: <span id="gpuLoad">0</span>%</div>
+    </div>
+
+    <div class="benchmark-info">
+        <div><strong>WebGL 2.0 Features:</strong></div>
+        <div>• Instanced Rendering</div>
+        <div>• 3D Textures</div>
+        <div>• Multiple Render Targets</div>
+        <div>• Transform Feedback</div>
+        <div>• Advanced GLSL ES 3.00</div>
+        <div>• Uniform Buffer Objects</div>
+        <div><br><strong>Benchmark Modes:</strong></div>
+        <div>🟢 Normal: 1 cubo, basic shaders</div>
+        <div>🟡 Heavy: 64x subdivisões</div>
+        <div>🔴 Extreme: 1000+ instâncias</div>
+        <div>💀 INSANE: Compute-like effects</div>
+    </div>
+
+    <canvas id="glCanvas" width="1200" height="800"></canvas>
+
+    <div class="controls">
+        <label>
+            Velocidade X: <input type="range" id="speedX" min="0" max="10" value="2" step="0.1">
+        </label>
+        <label>
+            Velocidade Y: <input type="range" id="speedY" min="0" max="10" value="1.5" step="0.1">
+        </label>
+        <label>
+            <input type="checkbox" id="wireframe"> Wireframe
+        </label>
+        <label>
+            Textura:
+            <select id="textureType">
+                <option value="0">Cores Sólidas</option>
+                <option value="1">Xadrez Procedural</option>
+                <option value="2">Ondas Complexas</option>
+                <option value="3">Círculos Fractais</option>
+                <option value="4">Mármore 3D</option>
+                <option value="5">Madeira Orgânica</option>
+                <option value="6">Fogo Realista</option>
+                <option value="7">Plasma Energético</option>
+                <option value="8">Voronoi Noise</option>
+                <option value="9">Turbulência 4D</option>
+            </select>
+        </label>
+        <label>
+            Instâncias: <input type="range" id="instances" min="1" max="2000" value="1" step="1">
+        </label>
+        <label>
+            Modo Benchmark:
+            <select id="benchmarkMode">
+                <option value="0">🟢 Normal</option>
+                <option value="1">🟡 Heavy</option>
+                <option value="2">🔴 Extreme</option>
+                <option value="3">💀 INSANE</option>
+            </select>
+        </label>
+    </div>
+
+    <script src="benchmark.js"></script>
+
+</body>
+</html>
