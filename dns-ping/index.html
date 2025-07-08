@@ -404,6 +404,30 @@
             color: #333;
         }
 
+        .attempt-badge {
+            display: inline-block;
+            background: #17a2b8;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .attempt-badge.first-try {
+            background: #28a745;
+        }
+
+        .attempt-badge.second-try {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .attempt-badge.third-try {
+            background: #fd7e14;
+        }
+
         .stats {
             margin-top: 30px;
             padding: 25px;
@@ -564,7 +588,7 @@
                     </div>
                 </div>
                 <div style="text-align: center; margin-top: 15px; font-size: 0.9rem; color: #666;">
-                    🔒 DNS over HTTPS &nbsp;|&nbsp; 🇧🇷 Sites Brasileiros &nbsp;|&nbsp; 🌐 Sites Globais &nbsp;|&nbsp; 🚀 Fallback BR &nbsp;|&nbsp; ⚙️ DNS Customizado &nbsp;|&nbsp; 🆕 IPv6
+                    🔒 DNS over HTTPS &nbsp;|&nbsp; 🇧🇷 Sites Brasileiros &nbsp;|&nbsp; 🌐 Sites Globais &nbsp;|&nbsp; ⚙️ DNS Customizado &nbsp;|&nbsp; 🆕 IPv6
                 </div>
             </div>
         </div>
@@ -759,156 +783,163 @@
             progressText.textContent = message;
         }
 
-        async function pingServer(ip, provider, protocol = 'ipv4') {
-            const startTime = performance.now();
+        // Nova função de ping com rotação de rotas entre tentativas
+        async function pingServerWithRetries(ip, provider, protocol = 'ipv4', maxAttempts = 3) {
+            let lastError = null;
 
-            try {
-                const controller = new AbortController();
-
-                // Timeout específico por protocolo
-                const timeout = protocol === 'ipv6' ? 3000 : 1500;
-                const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-                let testUrl;
-                let testMethod = 'connectivity';
-
-                // Estratégias específicas por protocolo e provedor
+            // Definir estratégias de teste por tentativa
+            function getTestStrategy(attempt, provider, protocol) {
                 if (protocol === 'ipv6') {
-                    // Para IPv6, usar DNS over HTTPS com consultas AAAA
-                    switch (provider.toLowerCase()) {
-                        case 'google':
-                            testUrl = 'https://dns.google/resolve?name=ipv6.google.com&type=AAAA';
-                            testMethod = 'ipv6-doh';
-                            break;
-                        case 'cloudflare':
-                            testUrl = 'https://cloudflare-dns.com/dns-query?name=ipv6.cloudflare.com&type=AAAA';
-                            testMethod = 'ipv6-doh';
-                            break;
-                        case 'quad9':
-                            testUrl = 'https://dns.quad9.net:5053/dns-query?name=ipv6.quad9.net&type=AAAA';
-                            testMethod = 'ipv6-doh';
-                            break;
-                        default:
-                            // Para outros provedores IPv6, testar conectividade IPv6
-                            const ipv6Sites = [
-                                'https://ipv6.google.com/generate_204',
-                                'https://test-ipv6.com/json/',
-                                'https://ipv6-test.com/api/myip.php'
-                            ];
-                            testUrl = ipv6Sites[Math.floor(Math.random() * ipv6Sites.length)];
-                            testMethod = 'ipv6-connectivity';
-                            break;
-                    }
+                    const ipv6Strategies = [
+                        // Tentativa 1: DNS over HTTPS específico do provedor
+                        {
+                            urls: {
+                                'google': 'https://dns.google/resolve?name=ipv6.google.com&type=AAAA',
+                                'cloudflare': 'https://cloudflare-dns.com/dns-query?name=ipv6.cloudflare.com&type=AAAA',
+                                'quad9': 'https://dns.quad9.net:5053/dns-query?name=ipv6.quad9.net&type=AAAA',
+                                'default': 'https://dns.google/resolve?name=test-ipv6.com&type=AAAA'
+                            },
+                            method: 'ipv6-doh',
+                            fetchMethod: 'GET',
+                            headers: { 'Accept': 'application/dns-json' }
+                        },
+                        // Tentativa 2: Conectividade IPv6 direta
+                        {
+                            urls: {
+                                'default': 'https://ipv6.google.com/generate_204'
+                            },
+                            method: 'ipv6-connectivity',
+                            fetchMethod: 'HEAD',
+                            headers: {}
+                        },
+                        // Tentativa 3: Teste IPv6 alternativo
+                        {
+                            urls: {
+                                'default': 'https://test-ipv6.com/json/'
+                            },
+                            method: 'ipv6-test',
+                            fetchMethod: 'GET',
+                            headers: {}
+                        }
+                    ];
+                    return ipv6Strategies[attempt - 1] || ipv6Strategies[0];
                 } else {
-                    // Estratégias IPv4 (código original mantido)
-                    switch (provider.toLowerCase()) {
-                        case 'google':
-                            testUrl = 'https://dns.google/resolve?name=example.com&type=A';
-                            testMethod = 'dns-over-https';
-                            break;
-                        case 'cloudflare':
-                            testUrl = 'https://cloudflare-dns.com/dns-query?name=example.com&type=A';
-                            testMethod = 'dns-over-https';
-                            break;
-                        case 'quad9':
-                            testUrl = 'https://dns.quad9.net:5053/dns-query?name=example.com&type=A';
-                            testMethod = 'dns-over-https';
-                            break;
-                        case 'algar':
-                        case 'gigadns':
-                        case 'claro':
-                            // Testa conectividade usando sites brasileiros rápidos
-                            const brazilianSites = [
-                                'https://www.google.com.br/generate_204', // Google Brasil - endpoint de conectividade
-                                'https://www.uol.com.br/favicon.ico',     // UOL - servidor brasileiro
-                                'https://g1.globo.com/favicon.ico'       // Globo - CDN brasileiro
-                            ];
-                            testUrl = brazilianSites[Math.floor(Math.random() * brazilianSites.length)];
-                            testMethod = 'brazil-connectivity';
-                            break;
-                        default:
-                            // Para outros provedores (incluindo customizados), usa sites globais com presença no Brasil
-                            const globalSites = [
-                                'https://www.google.com/generate_204',    // Google global com edge no Brasil
-                                'https://api.github.com/zen',             // GitHub com CDN global
-                                'https://httpstat.us/200'                 // Httpstat.us - mais leve que httpbin
-                            ];
-                            testUrl = globalSites[Math.floor(Math.random() * globalSites.length)];
-                            testMethod = provider === 'Customizado' || provider.includes('Custom') ? 'custom-connectivity' : 'global-connectivity';
-                            break;
-                    }
+                    // IPv4 strategies
+                    const ipv4Strategies = [
+                        // Tentativa 1: DNS over HTTPS específico do provedor
+                        {
+                            urls: {
+                                'google': 'https://dns.google/resolve?name=example.com&type=A',
+                                'cloudflare': 'https://cloudflare-dns.com/dns-query?name=example.com&type=A',
+                                'quad9': 'https://dns.quad9.net:5053/dns-query?name=example.com&type=A',
+                                'algar': 'https://dns.google/resolve?name=globo.com&type=A',
+                                'gigadns': 'https://dns.google/resolve?name=uol.com.br&type=A',
+                                'claro': 'https://dns.google/resolve?name=terra.com.br&type=A',
+                                'default': 'https://dns.google/resolve?name=example.com&type=A'
+                            },
+                            method: 'dns-over-https',
+                            fetchMethod: 'GET',
+                            headers: { 'Accept': 'application/dns-json' }
+                        },
+                        // Tentativa 2: Sites brasileiros (boa para ISPs brasileiros)
+                        {
+                            urls: {
+                                'default': ['https://www.google.com.br/generate_204', 'https://www.uol.com.br/favicon.ico', 'https://g1.globo.com/favicon.ico'][Math.floor(Math.random() * 3)]
+                            },
+                            method: 'brazil-connectivity',
+                            fetchMethod: 'HEAD',
+                            headers: {}
+                        },
+                        // Tentativa 3: Sites globais com CDN
+                        {
+                            urls: {
+                                'default': ['https://www.google.com/generate_204', 'https://api.github.com/zen', 'https://httpstat.us/200'][Math.floor(Math.random() * 3)]
+                            },
+                            method: 'global-connectivity',
+                            fetchMethod: 'GET',
+                            headers: {}
+                        }
+                    ];
+                    return ipv4Strategies[attempt - 1] || ipv4Strategies[0];
                 }
+            }
 
-                const fetchOptions = {
-                    method: testMethod.includes('connectivity') ? 'HEAD' : 'GET',
-                    signal: controller.signal,
-                    mode: 'cors',
-                    cache: 'no-cache',
-                    headers: (testMethod === 'dns-over-https' || testMethod.includes('doh')) ? {
-                        'Accept': 'application/dns-json'
-                    } : {}
-                };
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                const startTime = performance.now();
 
-                const response = await fetch(testUrl, fetchOptions);
-
-                clearTimeout(timeoutId);
-                const endTime = performance.now();
-                const pingTime = Math.round(endTime - startTime);
-
-                return {
-                    success: response.ok && response.status < 400,
-                    time: pingTime,
-                    status: response.status,
-                    method: testMethod
-                };
-
-            } catch (error) {
-                const endTime = performance.now();
-                const pingTime = Math.round(endTime - startTime);
-
-                // Fallback específico por protocolo
                 try {
-                    const fallbackStart = performance.now();
-                    const controller2 = new AbortController();
-                    const timeoutId2 = setTimeout(() => controller2.abort(), 4000);
+                    const controller = new AbortController();
+                    const timeout = protocol === 'ipv6' ? 4000 : 2500;
+                    const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-                    let fallbackUrl;
-                    if (protocol === 'ipv6') {
-                        // Fallback IPv6 usando teste de conectividade IPv6
-                        fallbackUrl = 'https://ipv6.google.com/generate_204';
-                    } else {
-                        // Fallback IPv4 brasileiro
-                        fallbackUrl = 'https://www.google.com.br/generate_204';
-                    }
+                    // Obter estratégia para esta tentativa
+                    const strategy = getTestStrategy(attempt, provider, protocol);
+                    const providerKey = provider.toLowerCase();
+                    const testUrl = strategy.urls[providerKey] || strategy.urls['default'];
+                    const testMethod = strategy.method;
 
-                    const fallbackResponse = await fetch(fallbackUrl, {
-                        method: 'HEAD',
-                        signal: controller2.signal,
-                        mode: 'no-cors', // no-cors para evitar problemas de CORS
-                        cache: 'no-cache'
-                    });
-
-                    clearTimeout(timeoutId2);
-                    const fallbackTime = Math.round(performance.now() - fallbackStart);
-
-                    return {
-                        success: true, // no-cors sempre "funciona"
-                        time: fallbackTime,
-                        status: 200,
-                        method: protocol === 'ipv6' ? 'ipv6-fallback' : 'brazil-fallback'
+                    const fetchOptions = {
+                        method: strategy.fetchMethod,
+                        signal: controller.signal,
+                        mode: 'cors',
+                        cache: 'no-cache',
+                        headers: strategy.headers
                     };
 
-                } catch (fallbackError) {
-                    // Se todos os métodos falharem, retorna erro real
+                    const response = await fetch(testUrl, fetchOptions);
+                    clearTimeout(timeoutId);
+
+                    const endTime = performance.now();
+                    const pingTime = Math.round(endTime - startTime);
+
+                    if (response.ok && response.status < 400) {
+                        return {
+                            success: true,
+                            time: pingTime,
+                            status: response.status,
+                            method: testMethod,
+                            attempts: attempt,
+                            route: testUrl
+                        };
+                    } else {
+                        lastError = `HTTP ${response.status}`;
+                        if (attempt < maxAttempts) {
+                            await new Promise(resolve => setTimeout(resolve, 500)); // Pausa entre tentativas
+                            continue;
+                        }
+                    }
+
+                } catch (error) {
+                    const endTime = performance.now();
+                    const pingTime = Math.round(endTime - startTime);
+
+                    lastError = error.name === 'AbortError' ? 'Timeout' : error.message;
+
+                    if (attempt < maxAttempts) {
+                        await new Promise(resolve => setTimeout(resolve, 500)); // Pausa entre tentativas
+                        continue;
+                    }
+
                     return {
                         success: false,
                         time: pingTime,
                         status: 0,
                         method: 'failed',
-                        error: error.name === 'AbortError' ? 'Timeout' : error.message
+                        error: lastError,
+                        attempts: attempt
                     };
                 }
             }
+
+            // Se chegou aqui, todas as tentativas falharam
+            return {
+                success: false,
+                time: 0,
+                status: 0,
+                method: 'failed',
+                error: lastError || 'Falha em todas as tentativas',
+                attempts: maxAttempts
+            };
         }
 
         async function testSingleDns(server, index) {
@@ -919,7 +950,7 @@
             card.className = card.className.replace('pending', 'pending loading');
 
             try {
-                const result = await pingServer(server.ip, server.provider, server.protocol);
+                const result = await pingServerWithRetries(server.ip, server.provider, server.protocol);
 
                 if (result.success) {
                     card.className = card.className.replace('pending loading', 'success');
@@ -929,52 +960,62 @@
                     let methodIcon = '';
                     switch (result.method) {
                         case 'dns-over-https':
-                            methodIcon = '🔒'; // DNS over HTTPS
+                            methodIcon = '🔒';
                             break;
                         case 'ipv6-doh':
-                            methodIcon = '🔒🆕'; // DNS over HTTPS IPv6
+                            methodIcon = '🔒🆕';
                             break;
                         case 'brazil-connectivity':
-                            methodIcon = '🇧🇷'; // Sites brasileiros
+                            methodIcon = '🇧🇷';
                             break;
                         case 'global-connectivity':
-                            methodIcon = '🌐'; // Sites globais
+                            methodIcon = '🌐';
                             break;
                         case 'ipv6-connectivity':
-                            methodIcon = '🌐🆕'; // Sites IPv6
+                            methodIcon = '🌐🆕';
                             break;
                         case 'custom-connectivity':
-                            methodIcon = '⚙️'; // DNS customizado
-                            break;
-                        case 'brazil-fallback':
-                            methodIcon = '🚀'; // Fallback brasileiro
-                            break;
-                        case 'ipv6-fallback':
-                            methodIcon = '🚀🆕'; // Fallback IPv6
-                            break;
-                        case 'fallback-connectivity':
-                            methodIcon = '🔄'; // Fallback geral
+                            methodIcon = '⚙️';
                             break;
                     }
 
-                    ping.innerHTML = `✅ ${result.time}ms ${methodIcon}`;
-                    testResults.push({ server, success: true, time: result.time, method: result.method });
+                    // Badge de tentativas
+                    let attemptBadge = '';
+                    if (result.attempts === 1) {
+                        attemptBadge = '<span class="attempt-badge first-try">1ª tentativa</span>';
+                    } else if (result.attempts === 2) {
+                        attemptBadge = '<span class="attempt-badge second-try">2ª tentativa</span>';
+                    } else if (result.attempts === 3) {
+                        attemptBadge = '<span class="attempt-badge third-try">3ª tentativa</span>';
+                    }
+
+                    ping.innerHTML = `✅ ${result.time}ms ${methodIcon}${attemptBadge}`;
+                    testResults.push({
+                        server,
+                        success: true,
+                        time: result.time,
+                        method: result.method,
+                        attempts: result.attempts,
+                        route: result.route
+                    });
                 } else {
                     card.className = card.className.replace('pending loading', 'error');
                     status.className = 'dns-status status-error';
                     status.textContent = 'Falha';
 
                     const errorMsg = result.error || 'Sem resposta';
-                    const protocolWarning = server.protocol === 'ipv6' ? ' (IPv6 indisponível)' : '';
-                    ping.innerHTML = `❌ ${errorMsg}${protocolWarning} (${result.time}ms)`;
-                    testResults.push({ server, success: false, time: result.time, error: errorMsg });
+                    const protocolWarning = server.protocol === 'ipv6' ? ' (IPv6 pode estar indisponível)' : '';
+                    const attemptInfo = result.attempts > 1 ? ` após ${result.attempts} tentativas` : '';
+
+                    ping.innerHTML = `❌ ${errorMsg}${protocolWarning}${attemptInfo}`;
+                    testResults.push({ server, success: false, time: result.time, error: errorMsg, attempts: result.attempts });
                 }
             } catch (error) {
                 card.className = card.className.replace('pending loading', 'error');
                 status.className = 'dns-status status-error';
                 status.textContent = 'Erro';
                 ping.innerHTML = '❌ Erro crítico';
-                testResults.push({ server, success: false, time: 0, error: 'Erro crítico' });
+                testResults.push({ server, success: false, time: 0, error: 'Erro crítico', attempts: 1 });
             }
         }
 
@@ -986,28 +1027,238 @@
                 ? Math.round(successfulTests.reduce((sum, r) => sum + r.time, 0) / successfulTests.length)
                 : 0;
 
-            // Calcular top 3 mais rápidos
-            let top3Dns = '-';
+            // Calcular DNS mais rápido (apenas o primeiro)
+            let fastestDns = '-';
             if (successfulTests.length > 0) {
-                const sortedBySpeed = successfulTests
-                    .sort((a, b) => a.time - b.time)
-                    .slice(0, 3);
-
-                top3Dns = sortedBySpeed
-                    .map((result, index) => {
-                        const medal = ['🥇', '🥈', '🥉'][index];
-                        const protocolIcon = result.server.protocol === 'ipv6' ? '🆕' : '';
-                        return `${medal} ${result.server.provider} ${protocolIcon}(${result.server.ip}) - ${result.time}ms`;
-                    })
-                    .join('<br>');
+                const fastest = successfulTests.sort((a, b) => a.time - b.time)[0];
+                const protocolIcon = fastest.server.protocol === 'ipv6' ? '🆕' : '';
+                fastestDns = `${fastest.server.provider} ${protocolIcon}(${fastest.time}ms)`;
             }
 
             document.getElementById('successCount').textContent = successCount;
             document.getElementById('errorCount').textContent = errorCount;
             document.getElementById('avgPing').textContent = avgPing + 'ms';
-            document.getElementById('top3Dns').innerHTML = top3Dns;
+            document.getElementById('top3Dns').innerHTML = fastestDns;
+
+            // Criar card de detalhes do Top 3
+            createTop3DetailsCard(successfulTests);
 
             document.getElementById('stats').style.display = 'block';
+        }
+
+        function createTop3DetailsCard(successfulTests) {
+            // Remover card anterior se existir
+            const existingCard = document.getElementById('top3DetailsCard');
+            if (existingCard) {
+                existingCard.remove();
+            }
+
+            if (successfulTests.length === 0) return;
+
+            const top3 = successfulTests
+                .sort((a, b) => a.time - b.time)
+                .slice(0, 3);
+
+            function getMethodDescription(method) {
+                const descriptions = {
+                    'dns-over-https': '🔒 DNS over HTTPS',
+                    'ipv6-doh': '🔒🆕 DNS over HTTPS IPv6',
+                    'brazil-connectivity': '🇧🇷 Site Brasileiro',
+                    'global-connectivity': '🌐 Site Global',
+                    'ipv6-connectivity': '🌐🆕 Conectividade IPv6',
+                    'ipv6-test': '🆕 Teste IPv6',
+                    'custom-connectivity': '⚙️ Conectividade Customizada'
+                };
+                return descriptions[method] || method;
+            }
+
+            function getRouteDescription(route) {
+                if (route.includes('dns.google')) return 'Google DNS API';
+                if (route.includes('cloudflare-dns.com')) return 'Cloudflare DNS API';
+                if (route.includes('dns.quad9.net')) return 'Quad9 DNS API';
+                if (route.includes('google.com.br')) return 'Google Brasil';
+                if (route.includes('google.com/generate_204')) return 'Google Global';
+                if (route.includes('uol.com.br')) return 'UOL Brasil';
+                if (route.includes('globo.com')) return 'Globo Brasil';
+                if (route.includes('github.com')) return 'GitHub Global';
+                if (route.includes('httpstat.us')) return 'HTTPStat.us';
+                if (route.includes('ipv6.google.com')) return 'Google IPv6';
+                if (route.includes('test-ipv6.com')) return 'Test-IPv6.com';
+                return 'Rota Personalizada';
+            }
+
+            const top3Html = top3.map((result, index) => {
+                const medal = ['🥇', '🥈', '🥉'][index];
+                const protocolBadge = result.server.protocol === 'ipv6' ?
+                    '<span class="protocol-badge ipv6">IPv6</span>' :
+                    '<span class="protocol-badge">IPv4</span>';
+
+                const customBadge = result.server.custom ?
+                    '<span class="custom-badge">CUSTOM</span>' : '';
+
+                const attemptBadge = result.attempts > 1 ?
+                    `<span class="attempt-badge ${result.attempts === 2 ? 'second-try' : 'third-try'}">${result.attempts}ª tent.</span>` :
+                    '<span class="attempt-badge first-try">1ª tent.</span>';
+
+                return `
+                    <div class="top3-item">
+                        <div class="top3-header">
+                            <span class="medal">${medal}</span>
+                            <div class="dns-name">
+                                <strong>${result.server.provider}</strong>
+                                ${protocolBadge}
+                                ${customBadge}
+                            </div>
+                            <div class="ping-time">${result.time}ms</div>
+                        </div>
+                        <div class="top3-details">
+                            <div class="detail-item">
+                                <span class="detail-label">📍 Endereço:</span>
+                                <span class="detail-value">${result.server.ip}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">🛣️ Método:</span>
+                                <span class="detail-value">${getMethodDescription(result.method)}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">🌐 Rota:</span>
+                                <span class="detail-value">${getRouteDescription(result.route)}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">🔄 Tentativas:</span>
+                                <span class="detail-value">${attemptBadge}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const top3Card = document.createElement('div');
+            top3Card.id = 'top3DetailsCard';
+            top3Card.innerHTML = `
+                <div class="top3-details-card">
+                    <h3 class="top3-title">🏆 Top 3 DNS Mais Rápidos - Detalhes Técnicos</h3>
+                    <div class="top3-list">
+                        ${top3Html}
+                    </div>
+                </div>
+            `;
+
+            // Adicionar estilos CSS para o novo card
+            const style = document.createElement('style');
+            style.textContent = `
+                .top3-details-card {
+                    margin-top: 20px;
+                    background: white;
+                    border-radius: 15px;
+                    padding: 25px;
+                    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+                    border-left: 5px solid #ffd700;
+                }
+
+                .top3-title {
+                    color: #2c3e50;
+                    margin-bottom: 20px;
+                    text-align: center;
+                    font-size: 1.3rem;
+                }
+
+                .top3-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 15px;
+                }
+
+                .top3-item {
+                    background: #f8f9fa;
+                    border-radius: 12px;
+                    padding: 15px;
+                    border-left: 4px solid;
+                }
+
+                .top3-item:nth-child(1) { border-left-color: #ffd700; }
+                .top3-item:nth-child(2) { border-left-color: #c0c0c0; }
+                .top3-item:nth-child(3) { border-left-color: #cd7f32; }
+
+                .top3-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                    margin-bottom: 12px;
+                }
+
+                .medal {
+                    font-size: 1.5rem;
+                }
+
+                .dns-name {
+                    flex: 1;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    font-size: 1.1rem;
+                }
+
+                .ping-time {
+                    font-size: 1.2rem;
+                    font-weight: 700;
+                    color: #27ae60;
+                    background: #d4edda;
+                    padding: 4px 12px;
+                    border-radius: 20px;
+                }
+
+                .top3-details {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                    gap: 8px;
+                }
+
+                .detail-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 4px 0;
+                }
+
+                .detail-label {
+                    font-weight: 600;
+                    color: #666;
+                    min-width: 80px;
+                    font-size: 0.9rem;
+                }
+
+                .detail-value {
+                    font-family: 'Courier New', monospace;
+                    background: white;
+                    padding: 2px 8px;
+                    border-radius: 6px;
+                    border: 1px solid #dee2e6;
+                    font-size: 0.85rem;
+                    word-break: break-all;
+                }
+
+                @media (max-width: 768px) {
+                    .top3-header {
+                        flex-direction: column;
+                        align-items: start;
+                        gap: 8px;
+                    }
+
+                    .top3-details {
+                        grid-template-columns: 1fr;
+                    }
+                }
+            `;
+
+            if (!document.getElementById('top3Styles')) {
+                style.id = 'top3Styles';
+                document.head.appendChild(style);
+            }
+
+            // Inserir o card após as estatísticas
+            const statsElement = document.getElementById('stats');
+            statsElement.parentNode.insertBefore(top3Card, statsElement.nextSibling);
         }
 
         async function startTest(testType = 'all') {
@@ -1053,7 +1304,7 @@
                 await testSingleDns(allServers[i], i);
 
                 // Pequena pausa entre testes para visualização
-                await new Promise(resolve => setTimeout(resolve, 200));
+                await new Promise(resolve => setTimeout(resolve, 300));
             }
 
             if (isTestRunning) {
@@ -1087,6 +1338,12 @@
             document.getElementById('dnsGrid').innerHTML = '';
             document.getElementById('stats').style.display = 'none';
             document.getElementById('progressContainer').style.display = 'none';
+
+            // Remover card de detalhes do Top 3
+            const existingCard = document.getElementById('top3DetailsCard');
+            if (existingCard) {
+                existingCard.remove();
+            }
         }
 
         // Event listeners para adicionar DNS com Enter
