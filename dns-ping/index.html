@@ -537,6 +537,163 @@
             opacity: 0.7;
         }
 
+        .top3-details-card {
+            margin-top: 20px;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #ffd700;
+        }
+
+        .top3-title {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 1.3rem;
+        }
+
+        .rankings-container {
+            display: grid;
+            gap: 25px;
+        }
+
+        .rankings-container.dual-column {
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        }
+
+        .rankings-container.single-column {
+            grid-template-columns: 1fr;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .ranking-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid;
+        }
+
+        .ranking-section.ipv4 {
+            border-left-color: #4CAF50;
+        }
+
+        .ranking-section.ipv6 {
+            border-left-color: #1e7e34;
+        }
+
+        .ranking-title {
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: white;
+        }
+
+        .ranking-title.ipv4 {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+        }
+
+        .ranking-title.ipv6 {
+            background: linear-gradient(135deg, #1e7e34, #155724);
+        }
+
+        .ranking-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .ranking-item {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            border-left: 3px solid;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .ranking-item.ipv4 {
+            border-left-color: #3498db;
+        }
+
+        .ranking-item.ipv6 {
+            border-left-color: #27ae60;
+        }
+
+        .ranking-item:nth-child(1) {
+            border-left-width: 4px;
+            transform: scale(1.02);
+        }
+
+        .ranking-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .medal {
+            font-size: 1.3rem;
+        }
+
+        .dns-name {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+        }
+
+        .ping-time {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #27ae60;
+            background: #d4edda;
+            padding: 4px 10px;
+            border-radius: 15px;
+        }
+
+        .ranking-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 6px;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 3px 0;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #666;
+            min-width: 75px;
+            font-size: 0.85rem;
+        }
+
+        .detail-value {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+            font-size: 0.8rem;
+            word-break: break-all;
+            flex: 1;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-style: italic;
+        }
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 2rem;
@@ -558,6 +715,21 @@
 
             .dns-input, .provider-input {
                 width: 100%;
+            }
+
+            .rankings-container.dual-column {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .ranking-header {
+                flex-direction: column;
+                align-items: start;
+                gap: 8px;
+            }
+
+            .ranking-details {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -744,6 +916,7 @@
         let customDnsServers = [];
         let isTestRunning = false;
         let testResults = [];
+        let currentTestType = 'all'; // Armazenar o tipo de teste atual
 
         // Função original mantida
         function isValidIp(ip) {
@@ -1185,6 +1358,27 @@
             const ipv4Results = successfulTests.filter(r => r.server.protocol === 'ipv4');
             const ipv6Results = successfulTests.filter(r => r.server.protocol === 'ipv6');
 
+            // Definir quais rankings mostrar baseado no tipo de teste atual
+            let showIPv4 = false;
+            let showIPv6 = false;
+            let isCustomTest = currentTestType === 'custom';
+
+            if (currentTestType === 'ipv4') {
+                showIPv4 = ipv4Results.length > 0;
+            } else if (currentTestType === 'ipv6') {
+                showIPv6 = ipv6Results.length > 0;
+            } else if (currentTestType === 'custom') {
+                // Para custom, só mostra se tiver 2+ DNS do respectivo protocolo
+                showIPv4 = ipv4Results.length >= 2;
+                showIPv6 = ipv6Results.length >= 2;
+            } else { // 'all'
+                showIPv4 = ipv4Results.length > 0;
+                showIPv6 = ipv6Results.length > 0;
+            }
+
+            // Se não há rankings para mostrar, não criar o card
+            if (!showIPv4 && !showIPv6) return;
+
             const top3IPv4 = ipv4Results.sort((a, b) => a.time - b.time).slice(0, 3);
             const top3IPv6 = ipv6Results.sort((a, b) => a.time - b.time).slice(0, 3);
 
@@ -1218,14 +1412,7 @@
 
             function createRankingSection(results, title, protocolClass) {
                 if (results.length === 0) {
-                    return `
-                        <div class="ranking-section">
-                            <h4 class="ranking-title ${protocolClass}">${title}</h4>
-                            <div class="no-results">
-                                <p>Nenhum DNS ${protocolClass === 'ipv4' ? 'IPv4' : 'IPv6'} respondeu com sucesso</p>
-                            </div>
-                        </div>
-                    `;
+                    return '';
                 }
 
                 const rankingHtml = results.map((result, index) => {
@@ -1279,221 +1466,38 @@
                 `;
             }
 
+            // Construir seções de ranking
+            let rankingSections = '';
+            if (showIPv4) {
+                rankingSections += createRankingSection(top3IPv4, '🌐 Top 3 IPv4', 'ipv4');
+            }
+            if (showIPv6) {
+                rankingSections += createRankingSection(top3IPv6, '🆕 Top 3 IPv6', 'ipv6');
+            }
+
+            // Determinar layout (single ou dual column)
+            const layoutClass = (showIPv4 && showIPv6) ? 'dual-column' : 'single-column';
+
+            // Construir título personalizado baseado no teste
+            let cardTitle = '🏆 Rankings DNS - Detalhes Técnicos';
+            if (currentTestType === 'ipv4') {
+                cardTitle = '🏆 Ranking IPv4 - Detalhes Técnicos';
+            } else if (currentTestType === 'ipv6') {
+                cardTitle = '🏆 Ranking IPv6 - Detalhes Técnicos';
+            } else if (currentTestType === 'custom') {
+                cardTitle = '🏆 Rankings DNS Customizados - Detalhes Técnicos';
+            }
+
             const top3Card = document.createElement('div');
             top3Card.id = 'top3DetailsCard';
             top3Card.innerHTML = `
                 <div class="top3-details-card">
-                    <h3 class="top3-title">🏆 Rankings DNS - Detalhes Técnicos por Protocolo</h3>
-                    <div class="rankings-container">
-                        ${createRankingSection(top3IPv4, '🌐 Top 3 IPv4', 'ipv4')}
-                        ${createRankingSection(top3IPv6, '🆕 Top 3 IPv6', 'ipv6')}
+                    <h3 class="top3-title">${cardTitle}</h3>
+                    <div class="rankings-container ${layoutClass}">
+                        ${rankingSections}
                     </div>
                 </div>
             `;
-
-            // Adicionar estilos CSS para o novo card
-            const style = document.createElement('style');
-            style.textContent = `
-                .top3-details-card {
-                    margin-top: 20px;
-                    background: white;
-                    border-radius: 15px;
-                    padding: 25px;
-                    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-                    border-left: 5px solid #ffd700;
-                }
-
-                .top3-title {
-                    color: #2c3e50;
-                    margin-bottom: 25px;
-                    text-align: center;
-                    font-size: 1.3rem;
-                }
-
-                .rankings-container {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-                    gap: 25px;
-                }
-
-                .ranking-section {
-                    background: #f8f9fa;
-                    border-radius: 12px;
-                    padding: 20px;
-                    border-left: 4px solid;
-                }
-
-                .ranking-section.ipv4 {
-                    border-left-color: #4CAF50;
-                }
-
-                .ranking-section.ipv6 {
-                    border-left-color: #1e7e34;
-                }
-
-                .ranking-title {
-                    margin-bottom: 15px;
-                    font-size: 1.1rem;
-                    font-weight: 700;
-                    text-align: center;
-                    padding: 8px 16px;
-                    border-radius: 20px;
-                    color: white;
-                }
-
-                .ranking-title.ipv4 {
-                    background: linear-gradient(135deg, #4CAF50, #45a049);
-                }
-
-                .ranking-title.ipv6 {
-                    background: linear-gradient(135deg, #1e7e34, #155724);
-                }
-
-                .ranking-list {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                }
-
-                .ranking-item {
-                    background: white;
-                    border-radius: 10px;
-                    padding: 15px;
-                    border-left: 3px solid;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                }
-
-                .ranking-item.ipv4 {
-                    border-left-color: #3498db;
-                }
-
-                .ranking-item.ipv6 {
-                    border-left-color: #27ae60;
-                }
-
-                .ranking-item:nth-child(1) {
-                    border-left-width: 4px;
-                    transform: scale(1.02);
-                }
-
-                .ranking-header {
-                    display: flex;
-                    align-items: center;
-                    gap: 15px;
-                    margin-bottom: 10px;
-                }
-
-                .medal {
-                    font-size: 1.3rem;
-                }
-
-                .dns-name {
-                    flex: 1;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    font-size: 1rem;
-                }
-
-                .ping-time {
-                    font-size: 1.1rem;
-                    font-weight: 700;
-                    color: #27ae60;
-                    background: #d4edda;
-                    padding: 4px 10px;
-                    border-radius: 15px;
-                }
-
-                .ranking-details {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 6px;
-                }
-
-                .detail-item {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    padding: 3px 0;
-                }
-
-                .detail-label {
-                    font-weight: 600;
-                    color: #666;
-                    min-width: 75px;
-                    font-size: 0.85rem;
-                }
-
-                .detail-value {
-                    font-family: 'Courier New', monospace;
-                    background: #f8f9fa;
-                    padding: 2px 6px;
-                    border-radius: 4px;
-                    border: 1px solid #dee2e6;
-                    font-size: 0.8rem;
-                    word-break: break-all;
-                    flex: 1;
-                }
-
-                .no-results {
-                    text-align: center;
-                    padding: 20px;
-                    color: #666;
-                    font-style: italic;
-                }
-
-                .attempt-badge {
-                    display: inline-block;
-                    color: white;
-                    padding: 1px 6px;
-                    border-radius: 8px;
-                    font-size: 0.7rem;
-                    font-weight: 600;
-                }
-
-                .attempt-badge.first-try {
-                    background: #28a745;
-                }
-
-                .attempt-badge.second-try {
-                    background: #ffc107;
-                    color: #212529;
-                }
-
-                .attempt-badge.third-try {
-                    background: #fd7e14;
-                }
-
-                .custom-badge {
-                    background: #9c27b0;
-                    color: white;
-                    padding: 2px 6px;
-                    border-radius: 10px;
-                    font-size: 0.7rem;
-                }
-
-                @media (max-width: 768px) {
-                    .rankings-container {
-                        grid-template-columns: 1fr;
-                        gap: 20px;
-                    }
-
-                    .ranking-header {
-                        flex-direction: column;
-                        align-items: start;
-                        gap: 8px;
-                    }
-
-                    .ranking-details {
-                        grid-template-columns: 1fr;
-                    }
-                }
-            `;
-
-            if (!document.getElementById('top3Styles')) {
-                style.id = 'top3Styles';
-                document.head.appendChild(style);
-            }
 
             // Inserir o card após as estatísticas
             const statsElement = document.getElementById('stats');
@@ -1505,12 +1509,17 @@
 
             isTestRunning = true;
             testResults = [];
+            currentTestType = testType; // Armazenar o tipo de teste atual
 
             const allServers = getAllDnsServers(testType);
 
             // Verificar se há servidores para testar
             if (allServers.length === 0) {
-                alert('Nenhum DNS customizado foi adicionado!');
+                if (testType === 'custom') {
+                    alert('Nenhum DNS customizado foi adicionado!');
+                } else {
+                    alert('Nenhum servidor DNS encontrado para este tipo de teste!');
+                }
                 isTestRunning = false;
                 return;
             }
@@ -1590,6 +1599,7 @@
 
         function clearResults() {
             testResults = [];
+            currentTestType = 'all'; // Reset para padrão
             document.getElementById('dnsGrid').innerHTML = '';
             document.getElementById('stats').style.display = 'none';
             document.getElementById('progressContainer').style.display = 'none';
