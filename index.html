@@ -2,556 +2,749 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=1200, initial-scale=1.0">
-    <title>Cubo 3D WebGL 2.0 - Ultra Benchmark</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio de Zoio The Green Eye</title>
     <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #0a0a0a, #1a1a2e, #16213e);
-            color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow-x: hidden;
-        }
-        canvas {
-            display: block;
-            margin: 20px auto;
-            border: 3px solid #00ffff;
-            background: #000;
-            border-radius: 10px;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
-        }
-        .controls {
-            text-align: center;
-            margin-top: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 20px;
-            border-radius: 15px;
-            border: 1px solid #333;
-        }
-        .controls label {
-            display: inline-block;
-            margin: 0 15px;
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-        .controls label:hover {
-            background: rgba(0, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-        .controls input, .controls select {
-            margin: 0 8px;
-            padding: 5px;
-            border-radius: 5px;
-            border: 1px solid #555;
-            background: #222;
-            color: white;
-        }
-        h1 {
-            text-align: center;
-            color: #00ffff;
-            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }
-        .subtitle {
-            text-align: center;
-            color: #888;
-            font-size: 1.2em;
-            margin-bottom: 20px;
-        }
-        #metrics {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(0, 0, 0, 0.9);
-            color: #00ff00;
-            padding: 15px;
-            border-radius: 10px;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            border: 2px solid #00ff00;
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
-            min-width: 250px;
-        }
-        #metrics .fps-value {
-            font-size: 20px;
-            font-weight: bold;
-            color: #00ffff;
-        }
-        #metrics .warning {
-            color: #ff6600;
-            font-weight: bold;
-        }
-        #metrics .critical {
-            color: #ff0000;
-            font-weight: bold;
-            animation: blink 1s infinite;
-        }
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0.3; }
-        }
-        .benchmark-info {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.9);
-            color: #ffff00;
-            padding: 15px;
-            border-radius: 10px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            border: 2px solid #ffff00;
-            box-shadow: 0 0 20px rgba(255, 255, 0, 0.3);
-            max-width: 300px;
-        }
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary-gradient: linear-gradient(135deg, #2d5a4b 0%, #4a7c63 100%);
+            --secondary-gradient: linear-gradient(135deg, #6ba085 0%, #4a7c63 100%);
+            --accent-gradient: linear-gradient(135deg, #2d5a4b 0%, #6ba085 100%);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.8);
+            --shadow-light: 0 8px 32px rgba(31, 38, 135, 0.2);
+            --shadow-heavy: 0 15px 45px rgba(0, 0, 0, 0.3);
         }
 
-        /* === DIÁLOGO DE AVISO === */
-        .warning-overlay {
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated background particles */
+        .background-particles {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.95);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.5; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header Section */
+        .header {
+            text-align: center;
+            margin-bottom: 4rem;
+            color: var(--text-primary);
+            position: relative;
+        }
+
+        .profile-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            background: var(--accent-gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            box-shadow: var(--shadow-light);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            display: block;
+        }
+        
+        .profile-avatar::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .header h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            background: linear-gradient(45deg, #fff, #f0f8ff, #fff);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-text 3s ease infinite;
+        }
+
+        @keyframes gradient-text {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .header .subtitle {
+            font-size: 1.3rem;
+            font-weight: 400;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .stats-section {
             display: flex;
             justify-content: center;
-            align-items: center;
-            z-index: 10000;
-            animation: fadeIn 0.5s ease-out;
+            gap: 2rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
         }
 
-        .warning-dialog {
-            background: linear-gradient(135deg, #1a1a1a, #2d1b69, #8b0000);
-            border: 3px solid #ff6b6b;
+        .stat-item {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
             border-radius: 15px;
-            padding: 30px;
-            max-width: 600px;
+            padding: 1rem 1.5rem;
             text-align: center;
-            box-shadow: 0 0 50px rgba(255, 107, 107, 0.5);
-            animation: slideIn 0.6s ease-out;
+            min-width: 120px;
         }
 
-        .warning-title {
-            font-size: 2.2em;
-            color: #ff6b6b;
-            margin-bottom: 20px;
-            text-shadow: 0 0 10px rgba(255, 107, 107, 0.8);
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* Search Section */
+        .search-container {
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .search-wrapper {
+            position: relative;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1.2rem 1.8rem 1.2rem 3.5rem;
+            border: none;
+            border-radius: 60px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 400;
+            border: 2px solid var(--glass-border);
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-light);
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .search-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Filter Section */
+        .filter-section {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 25px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-light);
+        }
+
+        /* Projects Grid */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .project-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 2rem;
+            border: 1px solid var(--glass-border);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-light);
+            transform-style: preserve-3d;
+        }
+
+        .project-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-heavy);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .project-card:hover::before {
+            left: 100%;
+        }
+
+        .project-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .project-icon {
+            width: 70px;
+            height: 70px;
+            background: var(--secondary-gradient);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .project-card:hover .project-icon {
+            transform: rotate(5deg) scale(1.1);
+        }
+
+        .project-info {
+            flex: 1;
+        }
+
+        .project-title {
+            color: var(--text-primary);
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            line-height: 1.3;
+        }
+
+        .project-category {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .project-description {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .project-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .project-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid var(--glass-border);
+        }
+
+        .project-link:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .project-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4ade80;
             animation: pulse 2s infinite;
         }
 
-        .warning-content {
-            font-size: 1.1em;
-            line-height: 1.6;
-            margin-bottom: 25px;
-            color: #ffffff;
+        .status-dot.exemplo {
+            background: #fbbf24;
         }
 
-        .warning-list {
-            text-align: left;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-            border-left: 4px solid #ff6b6b;
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
-        .warning-list li {
-            margin: 8px 0;
-            color: #ffdddd;
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 3rem 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 4rem;
         }
 
-        .warning-buttons {
+        .footer-content {
             display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 25px;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
         }
 
-        .btn-safe, .btn-proceed {
-            padding: 12px 25px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1em;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 140px;
+        .social-links {
+            display: flex;
+            gap: 1rem;
         }
 
-        .btn-safe {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            color: white;
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
-        }
-
-        .btn-safe:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.6);
-        }
-
-        .btn-proceed {
-            background: linear-gradient(135deg, #dc3545, #fd7e14);
-            color: white;
-            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
-        }
-
-        .btn-proceed:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.6);
-        }
-
-        .checkbox-container {
-            margin: 20px 0;
+        .social-link {
+            width: 50px;
+            height: 50px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
         }
 
-        .checkbox-container input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: #ff6b6b;
+        .social-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            transform: translateY(-3px);
         }
 
-        .checkbox-container label {
-            color: #ffdddd;
-            font-size: 0.95em;
+        .footer-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-50px) scale(0.9);
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
             }
+            
+            .projects-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .stats-section {
+                gap: 1rem;
+            }
+            
+            .filter-section {
+                gap: 0.5rem;
+            }
+            
+            .project-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .project-footer {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        /* Loading animation */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        @keyframes fadeInUp {
             to {
                 opacity: 1;
-                transform: translateY(0) scale(1);
+                transform: translateY(0);
             }
-        }
-
-        /* Ocultar conteúdo principal inicialmente */
-        .main-content {
-            display: none;
-        }
-
-        .main-content.visible {
-            display: block;
         }
     </style>
 </head>
 <body>
-    <!-- DIÁLOGO DE AVISO -->
-    <div class="warning-overlay" id="warningOverlay">
-        <div class="warning-dialog">
-            <div class="warning-title">⚠️ AVISO IMPORTANTE ⚠️</div>
-
-            <div class="warning-content">
-                <strong>Este é um benchmark EXTREMO para testar os limites da sua GPU!</strong>
-                <br><br>
-                Os modos avançados podem causar:
+    <div class="background-particles" id="particles"></div>
+    
+    <div class="container">
+        <header class="header">
+        <div class="profile-section">
+            <div class="profile-avatar">
+                <img src="images/untitled.png" alt="Zoio The Green Eye" style="width: 120px; height: 120px;">
             </div>
-
-            <ul class="warning-list">
-                <li>🔥 <strong>Sobrecarga da GPU</strong> - Temperaturas altas</li>
-                <li>🖥️ <strong>Travamento do sistema</strong> - Especialmente no modo INSANE</li>
-                <li>⚡ <strong>Alto consumo de energia</strong> - Bateria/energia</li>
-                <li>🎮 <strong>Driver crashes</strong> - Possível reinicialização do driver</li>
-                <li>💻 <strong>Lentidão geral</strong> - Sistema pode ficar lento</li>
-            </ul>
-
-            <div class="warning-content">
-                <strong>Recomendações de segurança:</strong><br>
-                • Comece sempre no modo <span style="color: #00ff00;">🟢 Normal</span><br>
-                • Monitore a temperatura da GPU<br>
-                • Feche outros programas antes de testar<br>
-                • Use modos extremos por pouco tempo<br>
-            </div>
-
-            <div class="checkbox-container">
-                <input type="checkbox" id="dontShowAgain">
-                <label for="dontShowAgain">Não mostrar este aviso novamente</label>
-            </div>
-
-            <div class="warning-buttons">
-                <button class="btn-safe" onclick="startSafeMode()">
-                    🛡️ Modo Seguro (Normal)
-                </button>
-                <button class="btn-proceed" onclick="proceedWithWarning()">
-                    🔥 Entendi os Riscos
-                </button>
+            <div>
+                <h1>Zoio The Green Eye</h1>
+                <p class="subtitle">Portfólio Pessoal de Projetos Diversos!</p>
             </div>
         </div>
-    </div>
+            <div class="stats-section">
+                <div class="stat-item">
+                    <span class="stat-number" id="projectCount">7</span>
+                    <span class="stat-label">Projetos</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">∞</span>
+                    <span class="stat-label">Ideias</span>
+                </div>
+            </div>
+        </header>
 
-    <!-- CONTEÚDO PRINCIPAL -->
-    <div class="main-content" id="mainContent">
-        <h1>🔥 WebGL 2.0 Ultra Benchmark 🔥</h1>
-        <div class="subtitle">Stress Test Extremo para GPU • Instancing • Compute-like Effects</div>
-
-        <div id="metrics">
-            <div class="fps-value">FPS: <span id="fpsValue">0</span></div>
-            <div>Frame Time: <span id="frameTime">0</span>ms</div>
-            <div>Frames: <span id="frameCount">0</span></div>
-            <div>Vértices: <span id="vertexCount">0</span></div>
-            <div>Triângulos: <span id="triangleCount">0</span></div>
-            <div>Instâncias: <span id="instanceCount">1</span></div>
-            <div>Draw Calls: <span id="drawCalls">0</span></div>
-            <div>GPU Load: <span id="gpuLoad">0</span>%</div>
+        <div class="search-container">
+            <div class="search-wrapper">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" placeholder="Buscar projetos..." id="searchInput">
+            </div>
         </div>
 
-        <div class="benchmark-info">
-            <div><strong>WebGL 2.0 Features:</strong></div>
-            <div>• Instanced Rendering</div>
-            <div>• 3D Textures</div>
-            <div>• Multiple Render Targets</div>
-            <div>• Transform Feedback</div>
-            <div>• Advanced GLSL ES 3.00</div>
-            <div>• Uniform Buffer Objects</div>
-            <div><br><strong>Benchmark Modes:</strong></div>
-            <div>🟢 Normal: 1 cubo, basic shaders</div>
-            <div>🟡 Heavy: 64x subdivisões</div>
-            <div>🔴 Extreme: 1000+ instâncias</div>
-            <div>💀 INSANE: Compute-like effects</div>
+        <div class="filter-section">
+            <button class="filter-btn active" data-filter="all">Todos</button>
+            <button class="filter-btn" data-filter="web">Web</button>
+            <button class="filter-btn" data-filter="tools">Ferramentas</button>
+            <button class="filter-btn" data-filter="services">Serviços</button>
+            <button class="filter-btn" data-filter="examples">Exemplos</button>
         </div>
 
-        <canvas id="glCanvas" width="1200" height="800"></canvas>
-
-        <div class="controls">
-            <label>
-                Velocidade X: <input type="range" id="speedX" min="0" max="10" value="2" step="0.1">
-            </label>
-            <label>
-                Velocidade Y: <input type="range" id="speedY" min="0" max="10" value="1.5" step="0.1">
-            </label>
-            <label>
-                <input type="checkbox" id="wireframe"> Wireframe
-            </label>
-            <label>
-                Textura:
-                <select id="textureType">
-                    <option value="0">Cores Sólidas</option>
-                    <option value="1">Xadrez Procedural</option>
-                    <option value="2">Ondas Complexas</option>
-                    <option value="3">Círculos Fractais</option>
-                    <option value="4">Mármore 3D</option>
-                    <option value="5">Madeira Orgânica</option>
-                    <option value="6">Fogo Realista</option>
-                    <option value="7">Plasma Energético</option>
-                    <option value="8">Voronoi Noise</option>
-                    <option value="9">Turbulência 4D</option>
-                </select>
-            </label>
-            <label>
-                Instâncias: <input type="range" id="instances" min="1" max="2000" value="1" step="1">
-            </label>
-            <label>
-                Modo Benchmark:
-                <select id="benchmarkMode">
-                    <option value="0">🟢 Normal</option>
-                    <option value="1">🟡 Heavy</option>
-                    <option value="2">🔴 Extreme</option>
-                    <option value="3">💀 INSANE</option>
-                </select>
-            </label>
+        <div class="projects-grid" id="projectsGrid">
+            <!-- Os projetos serão carregados aqui dinamicamente -->
         </div>
+
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="social-links">
+                    <a href="#" class="social-link">💼</a>
+                    <a href="#" class="social-link">📧</a>
+                    <a href="#" class="social-link">🐙</a>
+                    <a href="#" class="social-link">🐦</a>
+                </div>
+                <p class="footer-text">💻 Desenvolvido com ❤️ por José Humberto</p>
+            </div>
+        </footer>
     </div>
 
     <script>
-        // === SISTEMA DE AVISO DE SEGURANÇA ===
-
-        function checkPreviousWarning() {
-            // Verifica se o usuário já disse para não mostrar o aviso
-            const dontShow = localStorage.getItem('webgl_benchmark_dont_warn');
-            if (dontShow === 'true') {
-                showMainContent();
-                return;
+        // Lista de projetos expandida
+        const projects = [
+            {
+                name: 'linuxuniverse',
+                title: 'Linux Universe',
+                description: 'Site completo sobre notícias, tutoriais e guias do mundo Linux. Uma fonte confiável para entusiastas e profissionais.',
+                icon: '🐧',
+                category: 'web',
+                status: 'online'
+            },
+            {
+                name: 'p',
+                title: 'Publicações Recentes',
+                description: 'Central de publicações mais recentes e integração com redes sociais da Linux Universe.',
+                icon: '📝',
+                category: 'web',
+                status: 'online'
+            },
+            {
+                name: 't',
+                title: 'PowerShell',
+                description: 'Coleção de ferramentas úteis para Windows.',
+                icon: '⚡',
+                category: 'tools',
+                status: 'online'
+            },
+            {
+                name: 'apps',
+                title: 'Serviços Prestados pela SuitIT',
+                description: 'Lista completa de serviços prestados em servidores para diversas necessidades empresariais.',
+                icon: '🖥️',
+                category: 'services',
+                status: 'online'
+            },
+            {
+                name: 'dns-ping',
+                title: 'DNS Ping Tester',
+                description: 'Ferramenta para teste de ping e latência em tempo real de diversos provedores DNS.',
+                icon: '📡',
+                category: 'tools',
+                status: 'online'
+            },
+            {
+                name: 'benchmark',
+                title: 'Estresse de GPU com WebGL 1.0',
+                description: 'Ferramenta para estressar placas de vídeo tipo Intel HD Graphics e VideoCore IV (Raspberry Pi)',
+                icon: '🧊',
+                category: 'tools',
+                status: 'online'
+            },
+            {
+                name: 'benchmark2',
+                title: 'Estresse de GPU com WebGL 2.0',
+                description: 'Ferramenta para estressar placas de vídeo topo de linha como a RTX 4060!',
+                icon: '🔥',
+                category: 'tools',
+                status: 'online'
+            },
+            {
+                name: 'domain-webui',
+                title: 'WebUI Active Directory (Exemplo)',
+                description: 'Interface web unificada que substitui o RSAT no gerenciamento do Active Directory e Domain Controller.',
+                icon: '🖥️',
+                category: 'examples',
+                status: 'exemplo'
+            },
+            {
+                name: 'system-diagnostic',
+                title: 'Diagnóstico do Sistema (Exemplo)',
+                description: 'Página que permite executar uma série de testes no servidor!',
+                icon: '🖥️',
+                category: 'examples',
+                status: 'exemplo'
+            },
+            {
+                name: 'pentest',
+                title: 'Project Pandora Pentest (Exemplo)',
+                description: 'Sistema automatizado de pentesting com relatórios gerados automaticamente e gerenciado por WebUI!',
+                icon: '🔰',
+                category: 'examples',
+                status: 'exemplo'
+            },
+            {
+                name: '404',
+                title: 'Página de Erro 404',
+                description: 'Página de erro personalizada e elegante para quando algo não é encontrado.',
+                icon: '❌',
+                category: 'web',
+                status: 'online'
             }
+        ];
 
-            // Mostra o aviso
-            document.getElementById('warningOverlay').style.display = 'flex';
+        let currentFilter = 'all';
+        let searchTerm = '';
+
+        // Criar partículas de fundo
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 50;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                particlesContainer.appendChild(particle);
+            }
         }
 
-        function startSafeMode() {
-            // Salva preferência se checkbox marcado
-            const dontShow = document.getElementById('dontShowAgain').checked;
-            if (dontShow) {
-                localStorage.setItem('webgl_benchmark_dont_warn', 'true');
-            }
-
-            // Força modo Normal e baixo número de instâncias
-            showMainContent(() => {
-                document.getElementById('benchmarkMode').value = '0';
-                document.getElementById('instances').value = '1';
-
-                // Mostra dica de segurança
-                setTimeout(() => {
-                    showSafetyTip();
-                }, 1000);
+        function getFilteredProjects() {
+            return projects.filter(project => {
+                const matchesFilter = currentFilter === 'all' || project.category === currentFilter;
+                const matchesSearch = searchTerm === '' || 
+                    project.title.toLowerCase().includes(searchTerm) || 
+                    project.description.toLowerCase().includes(searchTerm) ||
+                    project.name.toLowerCase().includes(searchTerm);
+                return matchesFilter && matchesSearch;
             });
         }
 
-        function proceedWithWarning() {
-            // Salva preferência se checkbox marcado
-            const dontShow = document.getElementById('dontShowAgain').checked;
-            if (dontShow) {
-                localStorage.setItem('webgl_benchmark_dont_warn', 'true');
-            }
-
-            // Inicia no modo Heavy para usuários que entendem os riscos
-            showMainContent(() => {
-                document.getElementById('benchmarkMode').value = '1'; // Heavy mode
-                document.getElementById('instances').value = '50';    // 50 instâncias
-
-                // Mostra dica de modo avançado
-                setTimeout(() => {
-                    showAdvancedTip();
-                }, 1000);
+        function renderProjects() {
+            const grid = document.getElementById('projectsGrid');
+            const filteredProjects = getFilteredProjects();
+            
+            grid.innerHTML = '';
+            
+            filteredProjects.forEach((project, index) => {
+                const projectCard = document.createElement('div');
+                projectCard.className = 'project-card fade-in';
+                projectCard.style.animationDelay = `${index * 0.1}s`;
+                projectCard.onclick = () => window.open(`./${project.name}/`, '_blank');
+                
+                projectCard.innerHTML = `
+                    <div class="project-header">
+                        <div class="project-icon">${project.icon}</div>
+                        <div class="project-info">
+                            <h3 class="project-title">${project.title}</h3>
+                            <span class="project-category">${project.category}</span>
+                        </div>
+                    </div>
+                    <p class="project-description">${project.description}</p>
+                    <div class="project-footer">
+                        <a href="./${project.name}/" class="project-link" onclick="event.stopPropagation()">
+                            Acessar →
+                        </a>
+                        <div class="project-status">
+                            <div class="status-dot ${project.status === 'exemplo' ? 'exemplo' : ''}"></div>
+                            <span>${project.status}</span>
+                        </div>
+                    </div>
+                `;
+                
+                grid.appendChild(projectCard);
             });
+            
+            // Atualizar contador de projetos
+            document.getElementById('projectCount').textContent = filteredProjects.length;
         }
 
-        function showMainContent(callback) {
-            const overlay = document.getElementById('warningOverlay');
-            const mainContent = document.getElementById('mainContent');
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            searchTerm = e.target.value.toLowerCase();
+            renderProjects();
+        });
 
-            // Fade out do overlay
-            overlay.style.animation = 'fadeOut 0.5s ease-out forwards';
+        // Filtros
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.filter;
+                renderProjects();
+            });
+        });
 
-            setTimeout(() => {
-                overlay.style.display = 'none';
-                mainContent.classList.add('visible');
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+            renderProjects();
+        });
 
-                // Inicia o benchmark
-                if (typeof main === 'function') {
-                    main();
-                }
-
-                if (callback) callback();
-            }, 500);
-        }
-
-        function showAdvancedTip() {
-            const tip = document.createElement('div');
-            tip.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: linear-gradient(135deg, #dc3545, #fd7e14);
-                color: white;
-                padding: 20px;
-                border-radius: 10px;
-                text-align: center;
-                z-index: 9999;
-                box-shadow: 0 0 30px rgba(220, 53, 69, 0.5);
-                max-width: 400px;
-                animation: slideIn 0.5s ease-out;
-                border: 2px solid rgba(255, 255, 255, 0.3);
-            `;
-
-            tip.innerHTML = `
-                <div style="font-size: 1.3em; margin-bottom: 10px;">🔥 Modo Heavy Ativado!</div>
-                <div style="font-size: 0.9em; opacity: 0.9;">
-                    Iniciando com 64x subdivisões e 50 instâncias.<br>
-                    <strong>Monitore a temperatura da GPU!</strong><br>
-                    <span style="font-size: 0.8em; opacity: 0.8;">Você pode ajustar conforme necessário.</span>
-                </div>
-                <button onclick="this.parentElement.remove()" style="
-                    background: rgba(255,255,255,0.2);
-                    border: none;
-                    color: white;
-                    padding: 8px 15px;
-                    border-radius: 5px;
-                    margin-top: 15px;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                " onmouseover="this.style.background='rgba(255,255,255,0.3)'"
-                   onmouseout="this.style.background='rgba(255,255,255,0.2)'">Entendi!</button>
-            `;
-
-            document.body.appendChild(tip);
-
-            // Remove automaticamente após 6 segundos
-            setTimeout(() => {
-                if (tip.parentElement) {
-                    tip.remove();
-                }
-            }, 6000);
-        }
-
-        function showSafetyTip() {
-            const tip = document.createElement('div');
-            tip.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: linear-gradient(135deg, #28a745, #20c997);
-                color: white;
-                padding: 20px;
-                border-radius: 10px;
-                text-align: center;
-                z-index: 9999;
-                box-shadow: 0 0 30px rgba(40, 167, 69, 0.5);
-                max-width: 400px;
-                animation: slideIn 0.5s ease-out;
-            `;
-
-            tip.innerHTML = `
-                <div style="font-size: 1.3em; margin-bottom: 10px;">✅ Modo Seguro Ativado!</div>
-                <div style="font-size: 0.9em; opacity: 0.9;">
-                    Você está no modo Normal com 1 instância.<br>
-                    Aumente gradualmente conforme necessário.
-                </div>
-                <button onclick="this.parentElement.remove()" style="
-                    background: rgba(255,255,255,0.2);
-                    border: none;
-                    color: white;
-                    padding: 8px 15px;
-                    border-radius: 5px;
-                    margin-top: 15px;
-                    cursor: pointer;
-                ">OK</button>
-            `;
-
-            document.body.appendChild(tip);
-
-            // Remove automaticamente após 5 segundos
-            setTimeout(() => {
-                if (tip.parentElement) {
-                    tip.remove();
-                }
-            }, 5000);
-        }
-
-        // Adiciona animação de fadeOut
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes fadeOut {
-                from { opacity: 1; }
-                to { opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
-
-        // Inicia o sistema de aviso quando a página carrega
-        document.addEventListener('DOMContentLoaded', checkPreviousWarning);
+        // Smooth scroll para links internos
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
     </script>
-
-    <script src="benchmark.js"></script>
 </body>
 </html>
