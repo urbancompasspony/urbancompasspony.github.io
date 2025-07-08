@@ -210,6 +210,56 @@
             border-bottom: 1px solid #e9ecef;
         }
 
+        .tabs-container {
+            margin-bottom: 25px;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            background: #e9ecef;
+            border-radius: 12px;
+            padding: 5px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            max-width: 200px;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tab.active {
+            background: white;
+            color: #2c3e50;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.7);
+            color: #495057;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
         .button-group {
             display: flex;
             gap: 15px;
@@ -545,19 +595,77 @@
         </div>
 
         <div class="controls">
-            <div class="button-group">
-                <button class="btn btn-primary" onclick="startTest('all')">
-                    ▶️ Teste Completo (Todos)
-                </button>
-                <button class="btn btn-custom" onclick="startTest('custom')" id="customTestBtn" disabled>
-                    ⚙️ Testar Apenas Customizados
-                </button>
-                <button class="btn btn-secondary" onclick="stopTest()">
-                    ⏹️ Parar Teste
-                </button>
-                <button class="btn btn-info" onclick="clearResults()">
-                    🗑️ Limpar Resultados
-                </button>
+            <div class="tabs-container">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('ipv4')" id="tab-ipv4">
+                        🔵 IPv4 Only
+                    </button>
+                    <button class="tab" onclick="switchTab('ipv6')" id="tab-ipv6">
+                        🟢 IPv6 Only
+                    </button>
+                    <button class="tab" onclick="switchTab('custom')" id="tab-custom">
+                        ⚙️ Customizados
+                    </button>
+                    <button class="tab" onclick="switchTab('all')" id="tab-all">
+                        🌐 Todos os DNS
+                    </button>
+                </div>
+
+                <div class="tab-content active" id="content-ipv4">
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="startTest('ipv4')">
+                            ▶️ Testar Apenas IPv4
+                        </button>
+                        <button class="btn btn-secondary" onclick="stopTest()">
+                            ⏹️ Parar Teste
+                        </button>
+                        <button class="btn btn-info" onclick="clearResults()">
+                            🗑️ Limpar Resultados
+                        </button>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="content-ipv6">
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="startTest('ipv6')">
+                            ▶️ Testar Apenas IPv6
+                        </button>
+                        <button class="btn btn-secondary" onclick="stopTest()">
+                            ⏹️ Parar Teste
+                        </button>
+                        <button class="btn btn-info" onclick="clearResults()">
+                            🗑️ Limpar Resultados
+                        </button>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="content-custom">
+                    <div class="button-group">
+                        <button class="btn btn-custom" onclick="startTest('custom')" id="customTestBtn" disabled>
+                            ⚙️ Testar Apenas Customizados
+                        </button>
+                        <button class="btn btn-secondary" onclick="stopTest()">
+                            ⏹️ Parar Teste
+                        </button>
+                        <button class="btn btn-info" onclick="clearResults()">
+                            🗑️ Limpar Resultados
+                        </button>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="content-all">
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="startTest('all')">
+                            ▶️ Teste Completo (IPv4 + IPv6)
+                        </button>
+                        <button class="btn btn-secondary" onclick="stopTest()">
+                            ⏹️ Parar Teste
+                        </button>
+                        <button class="btn btn-info" onclick="clearResults()">
+                            🗑️ Limpar Resultados
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -750,6 +858,10 @@
         function getAllDnsServers(testType = 'all') {
             if (testType === 'custom') {
                 return customDnsServers;
+            } else if (testType === 'ipv4') {
+                return [...defaultDnsServers.filter(dns => dns.protocol === 'ipv4'), ...customDnsServers.filter(dns => dns.protocol === 'ipv4')];
+            } else if (testType === 'ipv6') {
+                return [...defaultDnsServers.filter(dns => dns.protocol === 'ipv6'), ...customDnsServers.filter(dns => dns.protocol === 'ipv6')];
             }
             return [...defaultDnsServers, ...customDnsServers];
         }
@@ -776,6 +888,16 @@
                     </div>
                 </div>
             `;
+        }
+
+        function switchTab(tabType) {
+            // Remover active de todas as abas
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            // Adicionar active na aba selecionada
+            document.getElementById(`tab-${tabType}`).classList.add('active');
+            document.getElementById(`content-${tabType}`).classList.add('active');
         }
 
         function updateProgress(current, total, message) {
@@ -1399,13 +1521,19 @@
             const progressContainer = document.getElementById('progressContainer');
             const dnsGrid = document.getElementById('dnsGrid');
 
-            startBtn.disabled = true;
-            customBtn.disabled = true;
-            stopBtn.disabled = false;
+            // Desabilitar todos os botões de teste
+            document.querySelectorAll('.btn-primary, .btn-custom').forEach(btn => btn.disabled = true);
+            document.querySelectorAll('.btn-secondary').forEach(btn => btn.disabled = false);
             progressContainer.style.display = 'block';
 
             // Atualizar título do progresso baseado no tipo de teste
-            const testTitle = testType === 'custom' ? 'DNS Customizados' : 'Todos os DNS (IPv4 + IPv6)';
+            const testTitles = {
+                'all': 'Todos os DNS (IPv4 + IPv6)',
+                'ipv4': 'DNS IPv4',
+                'ipv6': 'DNS IPv6',
+                'custom': 'DNS Customizados'
+            };
+            const testTitle = testTitles[testType] || 'DNS';
             updateProgress(0, allServers.length, `Iniciando teste de ${testTitle}...`);
 
             // Criar cards para os servidores selecionados
@@ -1425,17 +1553,24 @@
             }
 
             if (isTestRunning) {
-                const completedMessage = testType === 'custom'
-                    ? `Teste de DNS customizados concluído! (${allServers.length} servidores)`
-                    : `Teste completo concluído! (${allServers.length} servidores IPv4 + IPv6)`;
+                const completedMessages = {
+                    'all': `Teste completo concluído! (${allServers.length} servidores IPv4 + IPv6)`,
+                    'ipv4': `Teste IPv4 concluído! (${allServers.length} servidores)`,
+                    'ipv6': `Teste IPv6 concluído! (${allServers.length} servidores)`,
+                    'custom': `Teste de DNS customizados concluído! (${allServers.length} servidores)`
+                };
+                const completedMessage = completedMessages[testType] || `Teste concluído! (${allServers.length} servidores)`;
                 updateProgress(allServers.length, allServers.length, completedMessage);
                 updateStats();
             }
 
             isTestRunning = false;
-            startBtn.disabled = false;
-            customBtn.disabled = customDnsServers.length === 0;
-            stopBtn.disabled = true;
+            // Habilitar botões de todas as abas
+            document.querySelectorAll('.btn-primary, .btn-custom').forEach(btn => btn.disabled = false);
+            document.querySelectorAll('.btn-secondary').forEach(btn => btn.disabled = true);
+
+            // Manter estado do botão customizado
+            document.getElementById('customTestBtn').disabled = customDnsServers.length === 0;
 
             setTimeout(() => {
                 progressContainer.style.display = 'none';
@@ -1444,10 +1579,13 @@
 
         function stopTest() {
             isTestRunning = false;
-            document.querySelector('.btn-primary').disabled = false;
-            document.querySelector('.btn-custom').disabled = customDnsServers.length === 0;
-            document.querySelector('.btn-secondary').disabled = true;
+            // Habilitar botões de todas as abas
+            document.querySelectorAll('.btn-primary, .btn-custom').forEach(btn => btn.disabled = false);
+            document.querySelectorAll('.btn-secondary').forEach(btn => btn.disabled = true);
             document.getElementById('progressContainer').style.display = 'none';
+
+            // Manter estado do botão customizado
+            document.getElementById('customTestBtn').disabled = customDnsServers.length === 0;
         }
 
         function clearResults() {
@@ -1465,8 +1603,9 @@
 
         // Event listeners para adicionar DNS com Enter
         document.addEventListener('DOMContentLoaded', function() {
-            document.querySelector('.btn-secondary').disabled = true;
-            document.querySelector('.btn-custom').disabled = true; // Inicialmente desabilitado
+            // Desabilitar todos os botões "Parar" inicialmente
+            document.querySelectorAll('.btn-secondary').forEach(btn => btn.disabled = true);
+            document.getElementById('customTestBtn').disabled = true; // Inicialmente desabilitado
 
             // Adicionar DNS com Enter no campo IP
             document.getElementById('customDnsIp').addEventListener('keypress', function(e) {
