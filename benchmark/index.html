@@ -12,33 +12,33 @@
             color: white;
             font-family: Arial, sans-serif;
         }
-        
+
         canvas {
             display: block;
             margin: 20px auto;
             border: 2px solid #333;
             background: #000;
         }
-        
+
         .controls {
             text-align: center;
             margin-top: 20px;
         }
-        
+
         .controls label {
             display: inline-block;
             margin: 0 10px;
         }
-        
+
         .controls input {
             margin: 0 5px;
         }
-        
+
         h1 {
             text-align: center;
             color: #4CAF50;
         }
-        
+
         #fpsCounter {
             position: absolute;
             top: 10px;
@@ -51,7 +51,7 @@
             font-size: 14px;
             border: 1px solid #333;
         }
-        
+
         #fpsCounter .fps-value {
             font-size: 18px;
             font-weight: bold;
@@ -60,15 +60,15 @@
 </head>
 <body>
     <h1>Cubo 3D com WebGL</h1>
-    
+
     <div id="fpsCounter">
         <div class="fps-value">FPS: <span id="fpsValue">0</span></div>
         <div>Frame Time: <span id="frameTime">0</span>ms</div>
         <div>Frames: <span id="frameCount">0</span></div>
     </div>
-    
+
     <canvas id="glCanvas" width="800" height="600"></canvas>
-    
+
     <div class="controls">
         <label>
             Velocidade X: <input type="range" id="speedX" min="0" max="5" value="1" step="0.1">
@@ -91,6 +91,9 @@
                 <option value="6">Fogo</option>
             </select>
         </label>
+        <label>
+            <input type="checkbox" id="benchmark"> 🔥 Modo Benchmark
+        </label>
     </div>
 
     <script>
@@ -99,14 +102,14 @@
             attribute vec4 aVertexPosition;
             attribute vec4 aVertexColor;
             attribute vec2 aTextureCoord;
-            
+
             uniform mat4 uModelViewMatrix;
             uniform mat4 uProjectionMatrix;
-            
+
             varying lowp vec4 vColor;
             varying vec2 vTextureCoord;
             varying vec3 vPosition;
-            
+
             void main() {
                 gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
                 vColor = aVertexColor;
@@ -114,118 +117,206 @@
                 vPosition = aVertexPosition.xyz;
             }
         `;
-        
-        // Fragment shader (processa cada pixel)
+
+        // Fragment shader (processa cada pixel) - CORRIGIDO
         const fsSource = `
             precision mediump float;
-            
+
             varying lowp vec4 vColor;
             varying vec2 vTextureCoord;
             varying vec3 vPosition;
-            
+
             uniform float uTime;
             uniform int uTextureType;
-            
+            uniform bool uBenchmarkMode;
+
             // Função de ruído pseudo-aleatório
             float random(vec2 st) {
                 return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
             }
-            
+
             // Ruído suave
             float noise(vec2 st) {
                 vec2 i = floor(st);
                 vec2 f = fract(st);
-                
+
                 float a = random(i);
                 float b = random(i + vec2(1.0, 0.0));
                 float c = random(i + vec2(0.0, 1.0));
                 float d = random(i + vec2(1.0, 1.0));
-                
+
                 vec2 u = f * f * (3.0 - 2.0 * f);
-                
+
                 return mix(a, b, u.x) +
                        (c - a) * u.y * (1.0 - u.x) +
                        (d - b) * u.x * u.y;
             }
-            
+
+            // Ruído fractal browniano (FBM)
+            float fbm(vec2 st, int octaves) {
+                float value = 0.0;
+                float amplitude = 0.5;
+                float frequency = 1.0;
+
+                // Usar número fixo de iterações para compatibilidade WebGL
+                for (int i = 0; i < 8; i++) {
+                    if (i >= octaves) break;
+                    value += amplitude * noise(st * frequency);
+                    amplitude *= 0.5;
+                    frequency *= 2.0;
+                }
+                return value;
+            }
+
             // Padrão xadrez
             vec3 checkerboard(vec2 uv) {
-                vec2 c = abs(floor(uv * 8.0));
+                float scale = uBenchmarkMode ? 32.0 : 8.0;
+                vec2 c = abs(floor(uv * scale));
                 float checker = mod(c.x + c.y, 2.0);
+
+                if (uBenchmarkMode) {
+                    float detail = fbm(uv * 64.0, 4) * 0.2;
+                    checker += detail;
+
+                    vec2 grid = fract(uv * scale);
+                    float border = min(min(grid.x, 1.0 - grid.x), min(grid.y, 1.0 - grid.y));
+                    border = smoothstep(0.0, 0.05, border);
+                    checker *= border;
+                }
+
                 return vec3(checker);
             }
-            
+
             // Padrão de ondas
             vec3 waves(vec2 uv) {
-                float wave1 = sin(uv.x * 20.0 + uTime * 2.0) * 0.5 + 0.5;
-                float wave2 = sin(uv.y * 15.0 + uTime * 1.5) * 0.5 + 0.5;
+                float scale = uBenchmarkMode ? 40.0 : 20.0;
+
+                float wave1 = sin(uv.x * scale + uTime * 2.0) * 0.5 + 0.5;
+                float wave2 = sin(uv.y * (scale * 0.75) + uTime * 1.5) * 0.5 + 0.5;
+
+                if (uBenchmarkMode) {
+                    // Usar loops com constantes para compatibilidade WebGL
+                    for (int i = 1; i < 9; i++) {
+                        float fi = float(i);
+                        wave1 += sin(uv.x * scale * fi + uTime * (2.0 + fi)) * (0.5 / fi);
+                        wave2 += sin(uv.y * scale * fi + uTime * (1.5 + fi)) * (0.5 / fi);
+                    }
+                    wave1 /= 8.0;
+                    wave2 /= 8.0;
+                }
+
                 float combined = wave1 * wave2;
                 return vec3(combined, combined * 0.5, 1.0 - combined);
             }
-            
+
             // Padrão de círculos
             vec3 circles(vec2 uv) {
                 vec2 center = vec2(0.5);
                 float dist = distance(uv, center);
-                float circle = sin(dist * 30.0 - uTime * 3.0) * 0.5 + 0.5;
+                float frequency = uBenchmarkMode ? 60.0 : 30.0;
+
+                float circle = sin(dist * frequency - uTime * 3.0) * 0.5 + 0.5;
+
+                if (uBenchmarkMode) {
+                    // Múltiplos centros de círculos com loop fixo
+                    for (int i = 0; i < 4; i++) {
+                        float fi = float(i);
+                        vec2 offset = vec2(sin(uTime + fi), cos(uTime + fi * 1.5)) * 0.3;
+                        float d = distance(uv, center + offset);
+                        circle += sin(d * frequency * 0.5 - uTime * 2.0) * 0.3;
+                    }
+                    circle /= 3.0;
+                    circle += fbm(uv * 20.0, 3) * 0.1;
+                }
+
                 return vec3(circle, 0.5, 1.0 - circle);
             }
-            
+
             // Mármore procedural
             vec3 marble(vec2 uv) {
-                float n = noise(uv * 5.0) * 0.5 + 
-                         noise(uv * 10.0) * 0.25 + 
-                         noise(uv * 20.0) * 0.125;
-                float marble = sin((uv.x + n) * 10.0);
+                int octaves = uBenchmarkMode ? 6 : 3;
+                float scale = uBenchmarkMode ? 15.0 : 5.0;
+
+                float n = fbm(uv * scale, octaves);
+                float marble = sin((uv.x + n) * 20.0);
                 marble = marble * 0.5 + 0.5;
+
+                if (uBenchmarkMode) {
+                    float vein1 = sin((uv.y + n * 2.0) * 15.0) * 0.3;
+                    float vein2 = sin((uv.x + uv.y + n) * 25.0) * 0.2;
+                    marble += vein1 + vein2;
+                    marble = clamp(marble, 0.0, 1.0);
+                }
+
                 return vec3(marble * 0.9, marble * 0.8, marble * 0.7);
             }
-            
+
             // Madeira procedural
             vec3 wood(vec2 uv) {
-                float rings = sin(distance(uv, vec2(0.5)) * 40.0 + noise(uv * 10.0) * 2.0);
+                float complexity = uBenchmarkMode ? 20.0 : 10.0;
+                float scale = uBenchmarkMode ? 80.0 : 40.0;
+
+                float rings = sin(distance(uv, vec2(0.5)) * scale + fbm(uv * complexity, 4) * 4.0);
                 rings = rings * 0.5 + 0.5;
+
+                if (uBenchmarkMode) {
+                    float grain = fbm(vec2(uv.x * 100.0, uv.y * 20.0), 4) * 0.1;
+                    rings += grain;
+
+                    float knot = smoothstep(0.1, 0.0, distance(uv, vec2(0.3, 0.7))) * 0.3;
+                    rings -= knot;
+                }
+
                 return vec3(rings * 0.8, rings * 0.5, rings * 0.2);
             }
-            
+
             // Fogo procedural
             vec3 fire(vec2 uv) {
-                float flame = noise(vec2(uv.x * 5.0, uv.y * 8.0 - uTime * 2.0));
-                flame += noise(vec2(uv.x * 10.0, uv.y * 16.0 - uTime * 4.0)) * 0.5;
-                flame = pow(flame, 2.0) * (1.0 - uv.y);
+                float intensity = uBenchmarkMode ? 3.0 : 1.0;
+                int octaves = uBenchmarkMode ? 6 : 3;
+
+                float flame = fbm(vec2(uv.x * 8.0, uv.y * 16.0 - uTime * 4.0), octaves);
+                flame = pow(flame * intensity, 2.0) * (1.0 - uv.y);
+
+                if (uBenchmarkMode) {
+                    float flame2 = fbm(vec2(uv.x * 12.0, uv.y * 20.0 - uTime * 6.0), 4) * 0.5;
+                    float flame3 = fbm(vec2(uv.x * 16.0, uv.y * 24.0 - uTime * 8.0), 3) * 0.3;
+
+                    flame += flame2 + flame3;
+
+                    float red = flame;
+                    float green = flame * 0.3 + pow(flame, 3.0) * 0.5;
+                    float blue = pow(flame, 4.0) * 0.8;
+
+                    return vec3(red, green, blue);
+                }
+
                 return vec3(flame, flame * 0.5, flame * 0.1);
             }
-            
+
             void main() {
                 vec3 color = vec3(1.0);
-                
+
                 if (uTextureType == 0) {
-                    // Cor sólida original
                     color = vColor.rgb;
                 } else if (uTextureType == 1) {
-                    // Xadrez
                     color = checkerboard(vTextureCoord);
                 } else if (uTextureType == 2) {
-                    // Ondas
                     color = waves(vTextureCoord);
                 } else if (uTextureType == 3) {
-                    // Círculos
                     color = circles(vTextureCoord);
                 } else if (uTextureType == 4) {
-                    // Mármore
                     color = marble(vTextureCoord);
                 } else if (uTextureType == 5) {
-                    // Madeira
                     color = wood(vTextureCoord);
                 } else if (uTextureType == 6) {
-                    // Fogo
                     color = fire(vTextureCoord);
                 }
-                
+
                 gl_FragColor = vec4(color, 1.0);
             }
         `;
-        
+
         let gl;
         let shaderProgram;
         let programInfo;
@@ -236,26 +327,30 @@
         let speedY = 1;
         let wireframe = false;
         let textureType = 0;
-        
+        let benchmarkMode = false;
+
         // Variáveis para FPS
         let fps = 0;
         let frameCount = 0;
         let lastTime = 0;
         let fpsUpdateTime = 0;
         let frameTimeSum = 0;
-        
+
         function main() {
             const canvas = document.getElementById('glCanvas');
             gl = canvas.getContext('webgl');
-            
+
             if (!gl) {
                 alert('WebGL não suportado pelo seu navegador');
                 return;
             }
-            
+
             // Inicializar shaders
             shaderProgram = initShaderProgram(gl, vsSource, fsSource);
-            
+            if (!shaderProgram) {
+                return;
+            }
+
             programInfo = {
                 program: shaderProgram,
                 attribLocations: {
@@ -268,104 +363,81 @@
                     modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
                     time: gl.getUniformLocation(shaderProgram, 'uTime'),
                     textureType: gl.getUniformLocation(shaderProgram, 'uTextureType'),
+                    benchmarkMode: gl.getUniformLocation(shaderProgram, 'uBenchmarkMode'),
                 },
             };
-            
+
             buffers = initBuffers(gl);
-            
+
             // Configurar controles
             document.getElementById('speedX').addEventListener('input', (e) => {
                 speedX = parseFloat(e.target.value);
             });
-            
+
             document.getElementById('speedY').addEventListener('input', (e) => {
                 speedY = parseFloat(e.target.value);
             });
-            
+
             document.getElementById('wireframe').addEventListener('change', (e) => {
                 wireframe = e.target.checked;
             });
-            
+
             document.getElementById('textureType').addEventListener('change', (e) => {
                 textureType = parseInt(e.target.value);
             });
-            
+
+            document.getElementById('benchmark').addEventListener('change', (e) => {
+                benchmarkMode = e.target.checked;
+                buffers = initBuffers(gl);
+            });
+
             // Iniciar o loop de renderização
-            drawScene();
+            requestAnimationFrame(drawScene);
         }
-        
+
         function initShaderProgram(gl, vsSource, fsSource) {
             const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
             const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
-            
+
+            if (!vertexShader || !fragmentShader) {
+                return null;
+            }
+
             const shaderProgram = gl.createProgram();
             gl.attachShader(shaderProgram, vertexShader);
             gl.attachShader(shaderProgram, fragmentShader);
             gl.linkProgram(shaderProgram);
-            
+
             if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-                alert('Erro ao inicializar shader program: ' + gl.getProgramInfoLog(shaderProgram));
+                console.error('Erro ao inicializar shader program: ' + gl.getProgramInfoLog(shaderProgram));
                 return null;
             }
-            
+
             return shaderProgram;
         }
-        
+
         function loadShader(gl, type, source) {
             const shader = gl.createShader(type);
             gl.shaderSource(shader, source);
             gl.compileShader(shader);
-            
+
             if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                alert('Erro ao compilar shader: ' + gl.getShaderInfoLog(shader));
+                console.error('Erro ao compilar shader: ' + gl.getShaderInfoLog(shader));
                 gl.deleteShader(shader);
                 return null;
             }
-            
+
             return shader;
         }
-        
+
         function initBuffers(gl) {
-            // Posições dos vértices do cubo
-            const positions = [
-                // Face frontal
-                -1.0, -1.0,  1.0,
-                 1.0, -1.0,  1.0,
-                 1.0,  1.0,  1.0,
-                -1.0,  1.0,  1.0,
-                
-                // Face traseira
-                -1.0, -1.0, -1.0,
-                -1.0,  1.0, -1.0,
-                 1.0,  1.0, -1.0,
-                 1.0, -1.0, -1.0,
-                
-                // Face superior
-                -1.0,  1.0, -1.0,
-                -1.0,  1.0,  1.0,
-                 1.0,  1.0,  1.0,
-                 1.0,  1.0, -1.0,
-                
-                // Face inferior
-                -1.0, -1.0, -1.0,
-                 1.0, -1.0, -1.0,
-                 1.0, -1.0,  1.0,
-                -1.0, -1.0,  1.0,
-                
-                // Face direita
-                 1.0, -1.0, -1.0,
-                 1.0,  1.0, -1.0,
-                 1.0,  1.0,  1.0,
-                 1.0, -1.0,  1.0,
-                
-                // Face esquerda
-                -1.0, -1.0, -1.0,
-                -1.0, -1.0,  1.0,
-                -1.0,  1.0,  1.0,
-                -1.0,  1.0, -1.0,
-            ];
-            
-            // Cores para cada face
+            const subdivisions = benchmarkMode ? 16 : 1;
+
+            const positions = [];
+            const colors = [];
+            const textureCoords = [];
+            const indices = [];
+
             const faceColors = [
                 [1.0, 0.0, 0.0, 1.0], // Vermelho
                 [0.0, 1.0, 0.0, 1.0], // Verde
@@ -374,170 +446,155 @@
                 [1.0, 0.0, 1.0, 1.0], // Magenta
                 [0.0, 1.0, 1.0, 1.0], // Ciano
             ];
-            
-            let colors = [];
-            for (let j = 0; j < faceColors.length; ++j) {
-                const c = faceColors[j];
-                colors = colors.concat(c, c, c, c);
-            }
-            
-            // Coordenadas de textura (UV mapping)
-            const textureCoords = [
-                // Face frontal
-                0.0, 0.0,
-                1.0, 0.0,
-                1.0, 1.0,
-                0.0, 1.0,
-                // Face traseira
-                0.0, 0.0,
-                1.0, 0.0,
-                1.0, 1.0,
-                0.0, 1.0,
-                // Face superior
-                0.0, 0.0,
-                1.0, 0.0,
-                1.0, 1.0,
-                0.0, 1.0,
-                // Face inferior
-                0.0, 0.0,
-                1.0, 0.0,
-                1.0, 1.0,
-                0.0, 1.0,
-                // Face direita
-                0.0, 0.0,
-                1.0, 0.0,
-                1.0, 1.0,
-                0.0, 1.0,
-                // Face esquerda
-                0.0, 0.0,
-                1.0, 0.0,
-                1.0, 1.0,
-                0.0, 1.0,
+
+            const faces = [
+                { normal: [0, 0, 1], right: [1, 0, 0], up: [0, 1, 0], offset: [0, 0, 1] },
+                { normal: [0, 0, -1], right: [-1, 0, 0], up: [0, 1, 0], offset: [0, 0, -1] },
+                { normal: [0, 1, 0], right: [1, 0, 0], up: [0, 0, -1], offset: [0, 1, 0] },
+                { normal: [0, -1, 0], right: [1, 0, 0], up: [0, 0, 1], offset: [0, -1, 0] },
+                { normal: [1, 0, 0], right: [0, 0, -1], up: [0, 1, 0], offset: [1, 0, 0] },
+                { normal: [-1, 0, 0], right: [0, 0, 1], up: [0, 1, 0], offset: [-1, 0, 0] },
             ];
-            
-            // Índices para desenhar triângulos
-            const indices = [
-                0,  1,  2,      0,  2,  3,    // frente
-                4,  5,  6,      4,  6,  7,    // trás
-                8,  9,  10,     8,  10, 11,   // topo
-                12, 13, 14,     12, 14, 15,   // baixo
-                16, 17, 18,     16, 18, 19,   // direita
-                20, 21, 22,     20, 22, 23,   // esquerda
-            ];
-            
+
+            let vertexCount = 0;
+
+            faces.forEach((face, faceIndex) => {
+                const color = faceColors[faceIndex];
+
+                for (let i = 0; i <= subdivisions; i++) {
+                    for (let j = 0; j <= subdivisions; j++) {
+                        const u = i / subdivisions;
+                        const v = j / subdivisions;
+
+                        const x = face.offset[0] + face.right[0] * (u - 0.5) * 2 + face.up[0] * (v - 0.5) * 2;
+                        const y = face.offset[1] + face.right[1] * (u - 0.5) * 2 + face.up[1] * (v - 0.5) * 2;
+                        const z = face.offset[2] + face.right[2] * (u - 0.5) * 2 + face.up[2] * (v - 0.5) * 2;
+
+                        positions.push(x, y, z);
+                        colors.push(...color);
+                        textureCoords.push(u, v);
+
+                        if (i < subdivisions && j < subdivisions) {
+                            const current = vertexCount + i * (subdivisions + 1) + j;
+                            const next = current + 1;
+                            const below = current + (subdivisions + 1);
+                            const belowNext = below + 1;
+
+                            indices.push(current, next, below);
+                            indices.push(next, belowNext, below);
+                        }
+                    }
+                }
+
+                vertexCount += (subdivisions + 1) * (subdivisions + 1);
+            });
+
             const positionBuffer = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
-            
+
             const colorBuffer = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-            
+
             const textureCoordBuffer = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
-            
+
             const indexBuffer = gl.createBuffer();
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
             gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
-            
+
             return {
                 position: positionBuffer,
                 color: colorBuffer,
                 textureCoord: textureCoordBuffer,
                 indices: indexBuffer,
+                indexCount: indices.length,
             };
         }
-        
+
         function drawScene() {
             const currentTime = performance.now();
-            
+
             // Calcular FPS
             if (lastTime !== 0) {
                 const deltaTime = currentTime - lastTime;
                 frameTimeSum += deltaTime;
                 frameCount++;
-                
-                // Atualizar FPS a cada 500ms
+
                 if (currentTime - fpsUpdateTime > 500) {
                     fps = Math.round(1000 / (frameTimeSum / frameCount));
                     const avgFrameTime = (frameTimeSum / frameCount).toFixed(2);
-                    
-                    // Atualizar display
+
                     document.getElementById('fpsValue').textContent = fps;
                     document.getElementById('frameTime').textContent = avgFrameTime;
                     document.getElementById('frameCount').textContent = frameCount;
-                    
-                    // Resetar contadores
+
                     frameTimeSum = 0;
                     frameCount = 0;
                     fpsUpdateTime = currentTime;
                 }
             }
             lastTime = currentTime;
-            
+
             gl.clearColor(0.0, 0.0, 0.0, 1.0);
             gl.clearDepth(1.0);
             gl.enable(gl.DEPTH_TEST);
             gl.depthFunc(gl.LEQUAL);
-            
+
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            
-            // Criar matriz de projeção
+
             const fieldOfView = 45 * Math.PI / 180;
             const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
             const zNear = 0.1;
             const zFar = 100.0;
             const projectionMatrix = mat4.create();
             mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
-            
-            // Criar matriz de modelo-visão
+
             const modelViewMatrix = mat4.create();
             mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, -6.0]);
             mat4.rotate(modelViewMatrix, modelViewMatrix, rotationX, [1, 0, 0]);
             mat4.rotate(modelViewMatrix, modelViewMatrix, rotationY, [0, 1, 0]);
-            
-            // Configurar atributos de posição
+
             gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
             gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition, 3, gl.FLOAT, false, 0, 0);
             gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
-            
-            // Configurar atributos de cor
+
             gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
             gl.vertexAttribPointer(programInfo.attribLocations.vertexColor, 4, gl.FLOAT, false, 0, 0);
             gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
-            
-            // Configurar coordenadas de textura
+
             gl.bindBuffer(gl.ARRAY_BUFFER, buffers.textureCoord);
             gl.vertexAttribPointer(programInfo.attribLocations.textureCoord, 2, gl.FLOAT, false, 0, 0);
             gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
-            
+
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
-            
+
             gl.useProgram(programInfo.program);
-            
+
             gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
             gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
             gl.uniform1f(programInfo.uniformLocations.time, currentTime * 0.001);
             gl.uniform1i(programInfo.uniformLocations.textureType, textureType);
-            
-            // Desenhar o cubo
+            gl.uniform1i(programInfo.uniformLocations.benchmarkMode, benchmarkMode);
+
+            const indexCount = buffers.indexCount;
             if (wireframe) {
-                for (let i = 0; i < 36; i += 3) {
+                for (let i = 0; i < indexCount; i += 3) {
                     gl.drawElements(gl.LINE_LOOP, 3, gl.UNSIGNED_SHORT, i * 2);
                 }
             } else {
-                gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
+                gl.drawElements(gl.TRIANGLES, indexCount, gl.UNSIGNED_SHORT, 0);
             }
-            
-            // Atualizar rotação
+
             rotationX += speedX * 0.01;
             rotationY += speedY * 0.01;
-            
+
             requestAnimationFrame(drawScene);
         }
-        
-        // Biblioteca matemática simples para matrizes 4x4
+
+        // Biblioteca matemática corrigida para matrizes 4x4
         const mat4 = {
             create: function() {
                 return new Float32Array([
@@ -547,11 +604,11 @@
                     0, 0, 0, 1
                 ]);
             },
-            
+
             perspective: function(out, fovy, aspect, near, far) {
                 const f = 1.0 / Math.tan(fovy / 2);
                 const nf = 1 / (near - far);
-                
+
                 out[0] = f / aspect;
                 out[1] = 0;
                 out[2] = 0;
@@ -569,29 +626,43 @@
                 out[14] = (2 * far * near) * nf;
                 out[15] = 0;
             },
-            
+
             translate: function(out, a, v) {
+                // Copiar matriz original primeiro
+                if (out !== a) {
+                    for (let i = 0; i < 16; i++) {
+                        out[i] = a[i];
+                    }
+                }
+
                 const x = v[0], y = v[1], z = v[2];
                 out[12] = a[0] * x + a[4] * y + a[8] * z + a[12];
                 out[13] = a[1] * x + a[5] * y + a[9] * z + a[13];
                 out[14] = a[2] * x + a[6] * y + a[10] * z + a[14];
                 out[15] = a[3] * x + a[7] * y + a[11] * z + a[15];
             },
-            
+
             rotate: function(out, a, rad, axis) {
+                // Copiar matriz original primeiro
+                if (out !== a) {
+                    for (let i = 0; i < 16; i++) {
+                        out[i] = a[i];
+                    }
+                }
+
                 const x = axis[0], y = axis[1], z = axis[2];
                 const s = Math.sin(rad);
                 const c = Math.cos(rad);
                 const t = 1 - c;
-                
+
                 const a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3];
                 const a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7];
                 const a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
-                
+
                 const b00 = x * x * t + c, b01 = y * x * t + z * s, b02 = z * x * t - y * s;
                 const b10 = x * y * t - z * s, b11 = y * y * t + c, b12 = z * y * t + x * s;
                 const b20 = x * z * t + y * s, b21 = y * z * t - x * s, b22 = z * z * t + c;
-                
+
                 out[0] = a00 * b00 + a10 * b01 + a20 * b02;
                 out[1] = a01 * b00 + a11 * b01 + a21 * b02;
                 out[2] = a02 * b00 + a12 * b01 + a22 * b02;
@@ -604,11 +675,23 @@
                 out[9] = a01 * b20 + a11 * b21 + a21 * b22;
                 out[10] = a02 * b20 + a12 * b21 + a22 * b22;
                 out[11] = a03 * b20 + a13 * b21 + a23 * b22;
+                
+                // Manter a última linha intacta (posição)
+                if (out !== a) {
+                    out[12] = a[12];
+                    out[13] = a[13];
+                    out[14] = a[14];
+                    out[15] = a[15];
+                }
             }
         };
-        
+
         // Inicializar quando a página carregar
-        window.onload = main;
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', main);
+        } else {
+            main();
+        }
     </script>
 </body>
 </html>
