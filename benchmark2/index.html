@@ -113,80 +113,387 @@
             50% { opacity: 0.7; }
             100% { opacity: 1; }
         }
+
+        /* === DIÁLOGO DE AVISO === */
+        .warning-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .warning-dialog {
+            background: linear-gradient(135deg, #1a1a1a, #2d1b69, #8b0000);
+            border: 3px solid #ff6b6b;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 600px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(255, 107, 107, 0.5);
+            animation: slideIn 0.6s ease-out;
+        }
+
+        .warning-title {
+            font-size: 2.2em;
+            color: #ff6b6b;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.8);
+            animation: pulse 2s infinite;
+        }
+
+        .warning-content {
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            color: #ffffff;
+        }
+
+        .warning-list {
+            text-align: left;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .warning-list li {
+            margin: 8px 0;
+            color: #ffdddd;
+        }
+
+        .warning-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        .btn-safe, .btn-proceed {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 140px;
+        }
+
+        .btn-safe {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-safe:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.6);
+        }
+
+        .btn-proceed {
+            background: linear-gradient(135deg, #dc3545, #fd7e14);
+            color: white;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+        }
+
+        .btn-proceed:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.6);
+        }
+
+        .checkbox-container {
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #ff6b6b;
+        }
+
+        .checkbox-container label {
+            color: #ffdddd;
+            font-size: 0.95em;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(-50px) scale(0.9);
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Ocultar conteúdo principal inicialmente */
+        .main-content {
+            display: none;
+        }
+
+        .main-content.visible {
+            display: block;
+        }
     </style>
 </head>
 <body>
-    <h1>🔥 WebGL 2.0 Ultra Benchmark 🔥</h1>
-    <div class="subtitle">Stress Test Extremo para GPU • Instancing • Compute-like Effects</div>
+    <!-- DIÁLOGO DE AVISO -->
+    <div class="warning-overlay" id="warningOverlay">
+        <div class="warning-dialog">
+            <div class="warning-title">⚠️ AVISO IMPORTANTE ⚠️</div>
+            
+            <div class="warning-content">
+                <strong>Este é um benchmark EXTREMO para testar os limites da sua GPU!</strong>
+                <br><br>
+                Os modos avançados podem causar:
+            </div>
 
-    <div id="metrics">
-        <div class="fps-value">FPS: <span id="fpsValue">0</span></div>
-        <div>Frame Time: <span id="frameTime">0</span>ms</div>
-        <div>Frames: <span id="frameCount">0</span></div>
-        <div>Vértices: <span id="vertexCount">0</span></div>
-        <div>Triângulos: <span id="triangleCount">0</span></div>
-        <div>Instâncias: <span id="instanceCount">1</span></div>
-        <div>Draw Calls: <span id="drawCalls">0</span></div>
-        <div>GPU Load: <span id="gpuLoad">0</span>%</div>
+            <ul class="warning-list">
+                <li>🔥 <strong>Sobrecarga da GPU</strong> - Temperaturas altas</li>
+                <li>🖥️ <strong>Travamento do sistema</strong> - Especialmente no modo INSANE</li>
+                <li>⚡ <strong>Alto consumo de energia</strong> - Bateria/energia</li>
+                <li>🎮 <strong>Driver crashes</strong> - Possível reinicialização do driver</li>
+                <li>💻 <strong>Lentidão geral</strong> - Sistema pode ficar lento</li>
+            </ul>
+
+            <div class="warning-content">
+                <strong>Recomendações de segurança:</strong><br>
+                • Comece sempre no modo <span style="color: #00ff00;">🟢 Normal</span><br>
+                • Monitore a temperatura da GPU<br>
+                • Feche outros programas antes de testar<br>
+                • Use modos extremos por pouco tempo<br>
+            </div>
+
+            <div class="checkbox-container">
+                <input type="checkbox" id="dontShowAgain">
+                <label for="dontShowAgain">Não mostrar este aviso novamente</label>
+            </div>
+
+            <div class="warning-buttons">
+                <button class="btn-safe" onclick="startSafeMode()">
+                    🛡️ Modo Seguro (Normal)
+                </button>
+                <button class="btn-proceed" onclick="proceedWithWarning()">
+                    🔥 Entendi os Riscos
+                </button>
+            </div>
+        </div>
     </div>
 
-    <div class="benchmark-info">
-        <div><strong>WebGL 2.0 Features:</strong></div>
-        <div>• Instanced Rendering</div>
-        <div>• 3D Textures</div>
-        <div>• Multiple Render Targets</div>
-        <div>• Transform Feedback</div>
-        <div>• Advanced GLSL ES 3.00</div>
-        <div>• Uniform Buffer Objects</div>
-        <div><br><strong>Benchmark Modes:</strong></div>
-        <div>🟢 Normal: 1 cubo, basic shaders</div>
-        <div>🟡 Heavy: 64x subdivisões</div>
-        <div>🔴 Extreme: 1000+ instâncias</div>
-        <div>💀 INSANE: Compute-like effects</div>
+    <!-- CONTEÚDO PRINCIPAL -->
+    <div class="main-content" id="mainContent">
+        <h1>🔥 WebGL 2.0 Ultra Benchmark 🔥</h1>
+        <div class="subtitle">Stress Test Extremo para GPU • Instancing • Compute-like Effects</div>
+
+        <div id="metrics">
+            <div class="fps-value">FPS: <span id="fpsValue">0</span></div>
+            <div>Frame Time: <span id="frameTime">0</span>ms</div>
+            <div>Frames: <span id="frameCount">0</span></div>
+            <div>Vértices: <span id="vertexCount">0</span></div>
+            <div>Triângulos: <span id="triangleCount">0</span></div>
+            <div>Instâncias: <span id="instanceCount">1</span></div>
+            <div>Draw Calls: <span id="drawCalls">0</span></div>
+            <div>GPU Load: <span id="gpuLoad">0</span>%</div>
+        </div>
+
+        <div class="benchmark-info">
+            <div><strong>WebGL 2.0 Features:</strong></div>
+            <div>• Instanced Rendering</div>
+            <div>• 3D Textures</div>
+            <div>• Multiple Render Targets</div>
+            <div>• Transform Feedback</div>
+            <div>• Advanced GLSL ES 3.00</div>
+            <div>• Uniform Buffer Objects</div>
+            <div><br><strong>Benchmark Modes:</strong></div>
+            <div>🟢 Normal: 1 cubo, basic shaders</div>
+            <div>🟡 Heavy: 64x subdivisões</div>
+            <div>🔴 Extreme: 1000+ instâncias</div>
+            <div>💀 INSANE: Compute-like effects</div>
+        </div>
+
+        <canvas id="glCanvas" width="1200" height="800"></canvas>
+
+        <div class="controls">
+            <label>
+                Velocidade X: <input type="range" id="speedX" min="0" max="10" value="2" step="0.1">
+            </label>
+            <label>
+                Velocidade Y: <input type="range" id="speedY" min="0" max="10" value="1.5" step="0.1">
+            </label>
+            <label>
+                <input type="checkbox" id="wireframe"> Wireframe
+            </label>
+            <label>
+                Textura:
+                <select id="textureType">
+                    <option value="0">Cores Sólidas</option>
+                    <option value="1">Xadrez Procedural</option>
+                    <option value="2">Ondas Complexas</option>
+                    <option value="3">Círculos Fractais</option>
+                    <option value="4">Mármore 3D</option>
+                    <option value="5">Madeira Orgânica</option>
+                    <option value="6">Fogo Realista</option>
+                    <option value="7">Plasma Energético</option>
+                    <option value="8">Voronoi Noise</option>
+                    <option value="9">Turbulência 4D</option>
+                </select>
+            </label>
+            <label>
+                Instâncias: <input type="range" id="instances" min="1" max="2000" value="1" step="1">
+            </label>
+            <label>
+                Modo Benchmark:
+                <select id="benchmarkMode">
+                    <option value="0">🟢 Normal</option>
+                    <option value="1">🟡 Heavy</option>
+                    <option value="2">🔴 Extreme</option>
+                    <option value="3">💀 INSANE</option>
+                </select>
+            </label>
+        </div>
     </div>
 
-    <canvas id="glCanvas" width="1200" height="800"></canvas>
+    <script>
+        // === SISTEMA DE AVISO DE SEGURANÇA ===
+        
+        function checkPreviousWarning() {
+            // Verifica se o usuário já disse para não mostrar o aviso
+            const dontShow = localStorage.getItem('webgl_benchmark_dont_warn');
+            if (dontShow === 'true') {
+                showMainContent();
+                return;
+            }
+            
+            // Mostra o aviso
+            document.getElementById('warningOverlay').style.display = 'flex';
+        }
 
-    <div class="controls">
-        <label>
-            Velocidade X: <input type="range" id="speedX" min="0" max="10" value="2" step="0.1">
-        </label>
-        <label>
-            Velocidade Y: <input type="range" id="speedY" min="0" max="10" value="1.5" step="0.1">
-        </label>
-        <label>
-            <input type="checkbox" id="wireframe"> Wireframe
-        </label>
-        <label>
-            Textura:
-            <select id="textureType">
-                <option value="0">Cores Sólidas</option>
-                <option value="1">Xadrez Procedural</option>
-                <option value="2">Ondas Complexas</option>
-                <option value="3">Círculos Fractais</option>
-                <option value="4">Mármore 3D</option>
-                <option value="5">Madeira Orgânica</option>
-                <option value="6">Fogo Realista</option>
-                <option value="7">Plasma Energético</option>
-                <option value="8">Voronoi Noise</option>
-                <option value="9">Turbulência 4D</option>
-            </select>
-        </label>
-        <label>
-            Instâncias: <input type="range" id="instances" min="1" max="2000" value="1" step="1">
-        </label>
-        <label>
-            Modo Benchmark:
-            <select id="benchmarkMode">
-                <option value="0">🟢 Normal</option>
-                <option value="1">🟡 Heavy</option>
-                <option value="2">🔴 Extreme</option>
-                <option value="3">💀 INSANE</option>
-            </select>
-        </label>
-    </div>
+        function startSafeMode() {
+            // Salva preferência se checkbox marcado
+            const dontShow = document.getElementById('dontShowAgain').checked;
+            if (dontShow) {
+                localStorage.setItem('webgl_benchmark_dont_warn', 'true');
+            }
+            
+            // Força modo Normal e baixo número de instâncias
+            showMainContent(() => {
+                document.getElementById('benchmarkMode').value = '0';
+                document.getElementById('instances').value = '1';
+                
+                // Mostra dica de segurança
+                setTimeout(() => {
+                    showSafetyTip();
+                }, 1000);
+            });
+        }
+
+        function proceedWithWarning() {
+            // Salva preferência se checkbox marcado
+            const dontShow = document.getElementById('dontShowAgain').checked;
+            if (dontShow) {
+                localStorage.setItem('webgl_benchmark_dont_warn', 'true');
+            }
+            
+            showMainContent();
+        }
+
+        function showMainContent(callback) {
+            const overlay = document.getElementById('warningOverlay');
+            const mainContent = document.getElementById('mainContent');
+            
+            // Fade out do overlay
+            overlay.style.animation = 'fadeOut 0.5s ease-out forwards';
+            
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                mainContent.classList.add('visible');
+                
+                // Inicia o benchmark
+                if (typeof main === 'function') {
+                    main();
+                }
+                
+                if (callback) callback();
+            }, 500);
+        }
+
+        function showSafetyTip() {
+            const tip = document.createElement('div');
+            tip.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, #28a745, #20c997);
+                color: white;
+                padding: 20px;
+                border-radius: 10px;
+                text-align: center;
+                z-index: 9999;
+                box-shadow: 0 0 30px rgba(40, 167, 69, 0.5);
+                max-width: 400px;
+                animation: slideIn 0.5s ease-out;
+            `;
+            
+            tip.innerHTML = `
+                <div style="font-size: 1.3em; margin-bottom: 10px;">✅ Modo Seguro Ativado!</div>
+                <div style="font-size: 0.9em; opacity: 0.9;">
+                    Você está no modo Normal com 1 instância.<br>
+                    Aumente gradualmente conforme necessário.
+                </div>
+                <button onclick="this.parentElement.remove()" style="
+                    background: rgba(255,255,255,0.2);
+                    border: none;
+                    color: white;
+                    padding: 8px 15px;
+                    border-radius: 5px;
+                    margin-top: 15px;
+                    cursor: pointer;
+                ">OK</button>
+            `;
+            
+            document.body.appendChild(tip);
+            
+            // Remove automaticamente após 5 segundos
+            setTimeout(() => {
+                if (tip.parentElement) {
+                    tip.remove();
+                }
+            }, 5000);
+        }
+
+        // Adiciona animação de fadeOut
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Inicia o sistema de aviso quando a página carrega
+        document.addEventListener('DOMContentLoaded', checkPreviousWarning);
+    </script>
 
     <script src="benchmark.js"></script>
-
 </body>
 </html>
