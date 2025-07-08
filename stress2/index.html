@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1200, initial-scale=1.0">
+    <title>Estresse de GPU com WebGL 2.0</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- DIÁLOGO DE AVISO -->
+    <div class="warning-overlay" id="warningOverlay">
+        <div class="warning-dialog">
+            <div class="warning-title">⚠️ AVISO IMPORTANTE ⚠️</div>
+
+            <div class="warning-content">
+                <strong>Os modos de estresse avançados podem causar:</strong>
+            </div>
+
+            <ul class="warning-list">
+                <li>🔥 <strong>Sobrecarga da GPU aumentando sua temperatura</strong></li>
+                <li>🖥️ <strong>Travamento do sistema</strong> - Especialmente no modo INSANE</li>
+                <li>⚡ <strong>Alto consumo de energia em portáteis</strong></li>
+                <li>🎮 <strong>Driver de vídeo parando de funcionar</strong></li>
+                <li>💻 <strong>Lentidão geral do sistema (seja ele Linux ou Windows)</strong></li>
+            </ul>
+
+            <div class="warning-content">
+                <strong>Recomendações de segurança:</strong><br>
+                • Comece sempre no modo <span style="color: #00ff00;">🟢 Normal</span><br>
+                • Monitore a temperatura da GPU<br>
+                • Feche outros programas antes de testar<br>
+                • Use os modos extremos com cautela e por pouco tempo<br>
+            </div>
+
+            <div class="checkbox-container">
+                <input type="checkbox" id="dontShowAgain">
+                <label for="dontShowAgain">Não mostrar este aviso novamente</label>
+            </div>
+
+            <div class="warning-buttons">
+                <button class="btn-safe" onclick="startSafeMode()">
+                    🛡️ Modo Seguro (Normal)
+                </button>
+                <button class="btn-proceed" onclick="proceedWithWarning()">
+                    🔥 Entendo os Riscos (Heavy)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <div class="main-content" id="mainContent">
+        <h1>🔥 Estresse de GPU com WebGL 2.0 🔥</h1>
+        <div class="subtitle">Estresse Extremo para GPU • Instancing • Compute-like Effects</div>
+
+        <div id="metrics">
+            <div class="fps-value">FPS: <span id="fpsValue">0</span></div>
+            <div>Frame Time: <span id="frameTime">0</span>ms</div>
+            <div>Frames: <span id="frameCount">0</span></div>
+            <div>Vértices: <span id="vertexCount">0</span></div>
+            <div>Triângulos: <span id="triangleCount">0</span></div>
+            <div>Instâncias: <span id="instanceCount">1</span></div>
+            <div>Draw Calls: <span id="drawCalls">0</span></div>
+            <div>GPU Load: <span id="gpuLoad">0</span>%</div>
+        </div>
+
+        <div class="benchmark-info">
+            <div><strong>WebGL 2.0 Features:</strong></div>
+            <div>• Instanced Rendering</div>
+            <div>• 3D Textures</div>
+            <div>• Multiple Render Targets</div>
+            <div>• Transform Feedback</div>
+            <div>• Advanced GLSL ES 3.00</div>
+            <div>• Uniform Buffer Objects</div>
+            <div><br><strong>Stress Modes:</strong></div>
+            <div>🟢 Normal: 1 cubo, basic shaders</div>
+            <div>🟡 Heavy: 64x subdivisões</div>
+            <div>🔴 Extreme: 1000+ instâncias</div>
+            <div>💀 INSANE: Compute-like effects</div>
+        </div>
+
+        <canvas id="glCanvas" width="1200" height="800"></canvas>
+
+        <div class="controls">
+            <label>
+                Velocidade X: <input type="range" id="speedX" min="0" max="10" value="2" step="0.1">
+            </label>
+            <label>
+                Velocidade Y: <input type="range" id="speedY" min="0" max="10" value="1.5" step="0.1">
+            </label>
+            <label>
+                <input type="checkbox" id="wireframe"> Wireframe
+            </label>
+            <label>
+                Textura:
+                <select id="textureType">
+                    <option value="0">Cores Sólidas</option>
+                    <option value="1">Xadrez Procedural</option>
+                    <option value="2">Ondas Complexas</option>
+                    <option value="3">Círculos Fractais</option>
+                    <option value="4">Mármore 3D</option>
+                    <option value="5">Madeira Orgânica</option>
+                    <option value="6">Fogo Realista</option>
+                    <option value="7">Plasma Energético</option>
+                    <option value="8">Voronoi Noise</option>
+                    <option value="9">Turbulência 4D</option>
+                </select>
+            </label>
+            <label>
+                Instâncias: <input type="range" id="instances" min="1" max="2000" value="1" step="1">
+            </label>
+            <label>
+                Modo Stress:
+                <select id="benchmarkMode">
+                    <option value="0">🟢 Normal</option>
+                    <option value="1">🟡 Heavy</option>
+                    <option value="2">🔴 Extreme</option>
+                    <option value="3">💀 INSANE</option>
+                </select>
+            </label>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+
+    <script src="stress.js"></script>
+
+</body>
+</html>
