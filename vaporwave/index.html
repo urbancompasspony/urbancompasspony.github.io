@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cenário Vaporwave 3D</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="glCanvas"></canvas>
+
+    <div class="controls">
+        <h3>🌴 Vaporwave Scene</h3>
+
+        <div class="control-group">
+            <label>Intensidade da Iluminação</label>
+            <input type="range" id="lightIntensity" min="0.2" max="2.0" value="1.0" step="0.1">
+            <div class="value-display" id="lightValue">1.0</div>
+        </div>
+
+        <div class="control-group">
+            <label>Velocidade da Câmera</label>
+            <input type="range" id="cameraSpeed" min="0" max="3.0" value="1.0" step="0.1">
+            <div class="value-display" id="speedValue">1.0</div>
+        </div>
+
+        <div class="control-group">
+            <label>Altura da Câmera</label>
+            <input type="range" id="cameraHeight" min="1.0" max="8.0" value="4.0" step="0.2">
+            <div class="value-display" id="heightValue">4.0</div>
+        </div>
+
+        <div class="control-group">
+            <label>Zoom</label>
+            <input type="range" id="cameraZoom" min="5.0" max="20.0" value="12.0" step="0.5">
+            <div class="value-display" id="zoomValue">12.0</div>
+        </div>
+    </div>
+
+    <div class="info">
+        <strong>Controles:</strong><br>
+        • Mouse: Clique e arraste para rodar a cena<br>
+        • Scroll: Zoom in/out<br>
+        • Cenário Vaporwave inspirado nos anos 80
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
