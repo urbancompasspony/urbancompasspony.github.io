@@ -1,0 +1,786 @@
+        * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        }
+
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          min-height: 100vh;
+          padding: 20px;
+        }
+
+        .container {
+          max-width: 1200px;
+          margin: 0 auto;
+          background: rgba(255, 255, 255, 0.95);
+          border-radius: 20px;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+          overflow: hidden;
+        }
+
+        .header {
+          background: linear-gradient(135deg, #2c3e50, #3498db);
+          color: white;
+          padding: 30px;
+          text-align: center;
+        }
+
+        .header h1 {
+          font-size: 2.5rem;
+          margin-bottom: 10px;
+          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+          font-size: 1.1rem;
+          opacity: 0.9;
+        }
+
+        .custom-dns {
+          padding: 25px 30px;
+          background: #e8f4fd;
+          border-bottom: 1px solid #d1ecf1;
+        }
+
+        .custom-dns h3 {
+          color: #2c3e50;
+          margin-bottom: 15px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .dns-input-group {
+          display: flex;
+          gap: 15px;
+          align-items: center;
+          flex-wrap: wrap;
+        }
+
+        .dns-input {
+          flex: 1;
+          min-width: 200px;
+          padding: 12px 15px;
+          border: 2px solid #d1ecf1;
+          border-radius: 8px;
+          font-size: 1rem;
+          transition: all 0.3s ease;
+          font-family: 'Courier New', monospace;
+        }
+
+        .dns-input:focus {
+          outline: none;
+          border-color: #3498db;
+          box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .dns-input.ipv4 {
+          border-left: 4px solid #3498db;
+        }
+
+        .dns-input.ipv6 {
+          border-left: 4px solid #e74c3c;
+        }
+
+        .dns-input.invalid {
+          border-left: 4px solid #f39c12;
+        }
+
+        .dns-input::placeholder {
+          color: #6c757d;
+        }
+
+        .provider-input {
+          flex: 0 0 150px;
+          padding: 12px 15px;
+          border: 2px solid #d1ecf1;
+          border-radius: 8px;
+          font-size: 1rem;
+          transition: all 0.3s ease;
+        }
+
+        .provider-input:focus {
+          outline: none;
+          border-color: #3498db;
+          box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .btn-add {
+          padding: 12px 20px;
+          background: linear-gradient(135deg, #28a745, #20c997);
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          white-space: nowrap;
+        }
+
+        .btn-add:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .ip-type-indicator {
+          padding: 4px 8px;
+          border-radius: 12px;
+          font-size: 0.8rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          margin-left: 10px;
+        }
+
+        .ip-type-indicator.ipv4 {
+          background: #d4edda;
+          color: #155724;
+        }
+
+        .ip-type-indicator.ipv6 {
+          background: #f8d7da;
+          color: #721c24;
+        }
+
+        .custom-dns-list {
+          margin-top: 15px;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        .custom-dns-tag {
+          background: white;
+          padding: 8px 12px;
+          border-radius: 20px;
+          font-size: 0.9rem;
+          border: 2px solid #3498db;
+          color: #2c3e50;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .custom-dns-tag.ipv6 {
+          border-color: #27ae60;
+        }
+
+        .protocol-badge {
+          background: #3498db;
+          color: white;
+          padding: 2px 6px;
+          border-radius: 10px;
+          font-size: 0.7rem;
+          font-weight: 600;
+        }
+
+        .protocol-badge.ipv6 {
+          background: #2c3e50;
+        }
+
+        .remove-dns {
+          background: #e74c3c;
+          color: white;
+          border: none;
+          border-radius: 50%;
+          width: 20px;
+          height: 20px;
+          font-size: 12px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .remove-dns:hover {
+          background: #c0392b;
+        }
+
+        .controls {
+          padding: 30px;
+          background: #f8f9fa;
+          border-bottom: 1px solid #e9ecef;
+        }
+
+        .tabs-container {
+          margin-bottom: 25px;
+        }
+
+        .tabs {
+          display: flex;
+          justify-content: center;
+          gap: 5px;
+          background: #e9ecef;
+          border-radius: 12px;
+          padding: 5px;
+          margin-bottom: 20px;
+        }
+
+        .tab {
+          flex: 1;
+          max-width: 200px;
+          padding: 12px 20px;
+          background: transparent;
+          border: none;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          color: #6c757d;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        }
+
+        .tab.active {
+          background: white;
+          color: #2c3e50;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab:hover:not(.active) {
+          background: rgba(255, 255, 255, 0.7);
+          color: #495057;
+        }
+
+        .tab.disabled {
+          background: #e9ecef !important;
+          color: #6c757d !important;
+          cursor: not-allowed !important;
+          opacity: 0.6 !important;
+        }
+
+        .tab.disabled:hover {
+          background: #e9ecef !important;
+          color: #6c757d !important;
+          transform: none !important;
+          cursor: not-allowed !important;
+        }
+
+        .tab-content {
+          display: none;
+        }
+
+        .tab-content.active {
+          display: block;
+        }
+
+        .button-group {
+          display: flex;
+          gap: 15px;
+          justify-content: center;
+          flex-wrap: wrap;
+        }
+
+        .btn {
+          padding: 15px 30px;
+          border: none;
+          border-radius: 12px;
+          font-size: 1rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        .btn-primary {
+          background: linear-gradient(135deg, #4CAF50, #45a049);
+          color: white;
+        }
+
+        .btn-primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 16px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-secondary {
+          background: linear-gradient(135deg, #ff6b6b, #ee5253);
+          color: white;
+        }
+
+        .btn-secondary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 16px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn-info {
+          background: linear-gradient(135deg, #74b9ff, #0984e3);
+          color: white;
+        }
+
+        .btn-custom {
+          background: linear-gradient(135deg, #9c27b0, #8e24aa);
+          color: white;
+        }
+
+        .btn-custom:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 16px rgba(156, 39, 176, 0.3);
+        }
+
+        .btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        .progress-container {
+          padding: 20px 30px;
+          background: #f8f9fa;
+          display: none;
+        }
+
+        .progress-bar {
+          width: 100%;
+          height: 25px;
+          background: #e9ecef;
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #4CAF50, #8BC34A);
+          width: 0%;
+          transition: width 0.3s ease;
+          border-radius: 12px;
+        }
+
+        .progress-text {
+          text-align: center;
+          margin-top: 10px;
+          font-weight: 600;
+          color: #2c3e50;
+        }
+
+        .results {
+          padding: 30px;
+        }
+
+        .dns-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 20px;
+        }
+
+        .dns-card {
+          background: white;
+          border-radius: 15px;
+          padding: 20px;
+          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+          border-left: 5px solid #ddd;
+          transition: all 0.3s ease;
+        }
+
+        .dns-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .dns-card.pending {
+          border-left-color: #ff9800 !important;
+        }
+
+        .dns-card.success {
+          border-left-color: #4CAF50;
+        }
+
+        .dns-card.success.ipv6 {
+          border-left-color: #1e7e34;
+        }
+
+        .dns-card.error {
+          border-left-color: #f44336 !important;
+        }
+
+        .dns-card.custom {
+          border-left-color: #9c27b0;
+        }
+
+        .dns-card.ipv6 {
+          border-left-color: #1e7e34;
+        }
+
+        .dns-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 15px;
+        }
+
+        .dns-provider {
+          font-size: 1.2rem;
+          font-weight: 700;
+          color: #2c3e50;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .custom-badge {
+          background: #9c27b0;
+          color: white;
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-size: 0.7rem;
+        }
+
+        .dns-status {
+          padding: 5px 12px;
+          border-radius: 20px;
+          font-size: 0.85rem;
+          font-weight: 600;
+          text-transform: uppercase;
+        }
+
+        .status-success {
+          background: #d4edda;
+          color: #155724;
+        }
+
+        .status-error {
+          background: #f8d7da;
+          color: #721c24;
+        }
+
+        .status-pending {
+          background: #fff3cd;
+          color: #856404;
+        }
+
+        .dns-ip {
+          font-family: 'Courier New', monospace;
+          font-size: 1.1rem;
+          color: #666;
+          margin-bottom: 10px;
+          word-break: break-all;
+        }
+
+        .dns-ping {
+          font-size: 1rem;
+          color: #333;
+        }
+
+        .attempt-badge {
+          display: inline-block;
+          background: #17a2b8;
+          color: white;
+          padding: 2px 8px;
+          border-radius: 10px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          margin-left: 8px;
+        }
+
+        .attempt-badge.first-try {
+          background: #28a745;
+        }
+
+        .attempt-badge.second-try {
+          background: #ffc107;
+          color: #212529;
+        }
+
+        .attempt-badge.third-try {
+          background: #fd7e14;
+        }
+
+        .stats {
+          margin-top: 30px;
+          padding: 25px;
+          background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+          border-radius: 15px;
+          display: none;
+        }
+
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 20px;
+          text-align: center;
+        }
+
+        .stat-item {
+          background: white;
+          padding: 20px;
+          border-radius: 12px;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-number {
+          font-size: 2rem;
+          font-weight: 700;
+          margin-bottom: 5px;
+        }
+
+        .stat-label {
+          color: #666;
+          font-size: 0.9rem;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        .spinner {
+          border: 3px solid #f3f3f3;
+          border-top: 3px solid #3498db;
+          border-radius: 50%;
+          width: 20px;
+          height: 20px;
+          animation: spin 1s linear infinite;
+          display: inline-block;
+          margin-right: 10px;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        .loading {
+          opacity: 0.7;
+        }
+
+        .top3-details-card {
+          margin-top: 20px;
+          background: white;
+          border-radius: 15px;
+          padding: 25px;
+          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+          border-left: 5px solid #ffd700;
+        }
+
+        .top3-title {
+          color: #2c3e50;
+          margin-bottom: 25px;
+          text-align: center;
+          font-size: 1.3rem;
+        }
+
+        .rankings-container {
+          display: grid;
+          gap: 25px;
+        }
+
+        .rankings-container.dual-column {
+          grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        }
+
+        .rankings-container.single-column {
+          grid-template-columns: 1fr;
+          max-width: 600px;
+          margin: 0 auto;
+        }
+
+        .ranking-section {
+          background: #f8f9fa;
+          border-radius: 12px;
+          padding: 20px;
+          border-left: 4px solid;
+        }
+
+        .ranking-section.ipv4 {
+          border-left-color: #4CAF50;
+        }
+
+        .ranking-section.ipv6 {
+          border-left-color: #1e7e34;
+        }
+
+        .ranking-title {
+          margin-bottom: 15px;
+          font-size: 1.1rem;
+          font-weight: 700;
+          text-align: center;
+          padding: 8px 16px;
+          border-radius: 20px;
+          color: white;
+        }
+
+        .ranking-title.ipv4 {
+          background: linear-gradient(135deg, #4CAF50, #45a049);
+        }
+
+        .ranking-title.ipv6 {
+          background: linear-gradient(135deg, #1e7e34, #155724);
+        }
+
+        .ranking-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .ranking-item {
+          background: white;
+          border-radius: 10px;
+          padding: 15px;
+          border-left: 3px solid;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .ranking-item.ipv4 {
+          border-left-color: #3498db;
+        }
+
+        .ranking-item.ipv6 {
+          border-left-color: #27ae60;
+        }
+
+        .ranking-item:nth-child(1) {
+          border-left-width: 4px;
+          transform: scale(1.02);
+        }
+
+        .ranking-header {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          margin-bottom: 10px;
+        }
+
+        .medal {
+          font-size: 1.3rem;
+        }
+
+        .dns-name {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 1rem;
+        }
+
+        .ping-time {
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: #27ae60;
+          background: #d4edda;
+          padding: 4px 10px;
+          border-radius: 15px;
+        }
+
+        .ranking-details {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 6px;
+        }
+
+        .detail-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 3px 0;
+        }
+
+        .detail-label {
+          font-weight: 600;
+          color: #666;
+          min-width: 75px;
+          font-size: 0.85rem;
+        }
+
+        .detail-value {
+          font-family: 'Courier New', monospace;
+          background: #f8f9fa;
+          padding: 2px 6px;
+          border-radius: 4px;
+          border: 1px solid #dee2e6;
+          font-size: 0.8rem;
+          word-break: break-all;
+          flex: 1;
+        }
+
+        .no-results {
+          text-align: center;
+          padding: 20px;
+          color: #666;
+          font-style: italic;
+        }
+
+        .cache-info {
+          background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+          border: 2px solid #2196f3;
+          border-radius: 12px;
+          padding: 15px;
+          margin-bottom: 20px;
+          box-shadow: 0 4px 8px rgba(33, 150, 243, 0.2);
+        }
+
+        .cache-content {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .cache-icon {
+          font-size: 1.2rem;
+        }
+
+        .cache-text {
+          flex: 1;
+          color: #1565c0;
+          font-weight: 500;
+          min-width: 200px;
+        }
+
+        .cache-refresh {
+          background: linear-gradient(135deg, #4caf50, #45a049);
+          color: white;
+          border: none;
+          border-radius: 8px;
+          padding: 8px 16px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          white-space: nowrap;
+        }
+
+        .cache-refresh:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+        }
+
+        @media (max-width: 768px) {
+          .header h1 {
+            font-size: 2rem;
+          }
+
+          .button-group {
+            flex-direction: column;
+            align-items: center;
+          }
+
+          .btn {
+            width: 100%;
+            max-width: 300px;
+          }
+
+          .dns-input-group {
+            flex-direction: column;
+          }
+
+          .dns-input, .provider-input {
+            width: 100%;
+          }
+
+          .rankings-container.dual-column {
+            grid-template-columns: 1fr;
+            gap: 20px;
+          }
+
+          .ranking-header {
+            flex-direction: column;
+            align-items: start;
+            gap: 8px;
+          }
+
+          .ranking-details {
+            grid-template-columns: 1fr;
+          }
+        }
