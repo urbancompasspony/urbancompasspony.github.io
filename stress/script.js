@@ -374,6 +374,7 @@
         let wireframe = false;
         let textureType = 0;
         let benchmarkMode = false;
+        let scale = 1.0;
 
         // Variáveis para FPS
         let fps = 0;
@@ -435,6 +436,11 @@
             document.getElementById('benchmark').addEventListener('change', (e) => {
                 benchmarkMode = e.target.checked;
                 buffers = initBuffers(gl);
+            });
+
+            document.getElementById('scale').addEventListener('input', (e) => {
+                scale = parseFloat(e.target.value);
+                document.getElementById('scaleValue').textContent = scale.toFixed(1);
             });
 
             // Iniciar o loop de renderização
@@ -611,6 +617,7 @@
 
             const modelViewMatrix = mat4.create();
             mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, -6.0]);
+            mat4.scale(modelViewMatrix, modelViewMatrix, [scale, scale, scale]);
             mat4.rotate(modelViewMatrix, modelViewMatrix, rotationX, [1, 0, 0]);
             mat4.rotate(modelViewMatrix, modelViewMatrix, rotationY, [0, 1, 0]);
 
@@ -740,6 +747,28 @@
                     out[14] = a[14];
                     out[15] = a[15];
                 }
+            },
+            scale: function(out, a, v) {
+                // Copiar matriz original primeiro
+                if (out !== a) {
+                    for (let i = 0; i < 16; i++) {
+                        out[i] = a[i];
+                    }
+                }
+
+                const x = v[0], y = v[1], z = v[2];
+                out[0] = a[0] * x;
+                out[1] = a[1] * x;
+                out[2] = a[2] * x;
+                out[3] = a[3] * x;
+                out[4] = a[4] * y;
+                out[5] = a[5] * y;
+                out[6] = a[6] * y;
+                out[7] = a[7] * y;
+                out[8] = a[8] * z;
+                out[9] = a[9] * z;
+                out[10] = a[10] * z;
+                out[11] = a[11] * z;
             }
         };
 

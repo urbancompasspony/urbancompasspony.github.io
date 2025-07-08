@@ -1,35 +1,35 @@
         body {
-          margin: 0;
-          padding: 20px;
-          background: #1a1a1a;
-          color: white;
-          font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+            font-family: Arial, sans-serif;
         }
 
         canvas {
-          display: block;
-          margin: 20px auto;
-          border: 2px solid #333;
-          background: #000;
+            display: block;
+            margin: 20px auto;
+            border: 2px solid #333;
+            background: #000;
         }
 
         .controls {
-          text-align: center;
-          margin-top: 20px;
+            text-align: center;
+            margin-top: 20px;
         }
 
         .controls label {
-          display: inline-block;
-          margin: 0 10px;
+            display: inline-block;
+            margin: 0 10px;
         }
 
         .controls input {
-          margin: 0 5px;
+            margin: 0 5px;
         }
 
         h1 {
-          text-align: center;
-          color: #4CAF50;
+            text-align: center;
+            color: #4CAF50;
         }
 
         #fpsCounter {
