@@ -36,6 +36,8 @@
         let isTestRunning = false;
         let testResults = [];
         let currentTestType = 'all'; // Armazenar o tipo de teste atual
+        let testHistory = [];
+        const MAX_HISTORY = 3;
 
         // Sistema de cache para resultados por tipo de teste
         let testCache = {
@@ -44,6 +46,239 @@
             'custom': { results: [], completed: false },
             'all': { results: [], completed: false }
         };
+
+        // Funções para localStorage (ADICIONE ESTAS FUNÇÕES)
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem('dnsTestHistory', JSON.stringify(testHistory));
+                localStorage.setItem('dnsTestCache', JSON.stringify(testCache));
+            } catch (error) {
+                console.warn('Erro ao salvar no localStorage:', error);
+            }
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                // Carregar histórico
+                const savedHistory = localStorage.getItem('dnsTestHistory');
+                if (savedHistory) {
+                    testHistory = JSON.parse(savedHistory);
+                    // Converter strings de data de volta para objetos Date
+                    testHistory.forEach(test => {
+                        test.timestamp = new Date(test.timestamp);
+                    });
+                }
+
+                // Carregar cache
+                const savedCache = localStorage.getItem('dnsTestCache');
+                if (savedCache) {
+                    testCache = JSON.parse(savedCache);
+                }
+            } catch (error) {
+                console.warn('Erro ao carregar do localStorage:', error);
+                testHistory = [];
+                testCache = {
+                    'ipv4': { results: [], completed: false },
+                    'ipv6': { results: [], completed: false },
+                    'custom': { results: [], completed: false },
+                    'all': { results: [], completed: false }
+                };
+            }
+        }
+
+        function clearLocalStorage() {
+            try {
+                localStorage.removeItem('dnsTestHistory');
+                localStorage.removeItem('dnsTestCache');
+            } catch (error) {
+                console.warn('Erro ao limpar localStorage:', error);
+            }
+        }
+
+        // Função para salvar teste no histórico
+        function saveTestToHistory(testType, results) {
+            const timestamp = new Date();
+            const historyEntry = {
+                id: Date.now(),
+                testType,
+                timestamp,
+                results: results.filter(r => r.success).map(r => ({
+                    provider: r.server.provider,
+                    ip: r.server.ip,
+                    protocol: r.server.protocol,
+                    time: r.time,
+                    custom: r.server.custom || false
+                })).sort((a, b) => a.time - b.time)
+            };
+
+            // Adicionar ao início do array
+            testHistory.unshift(historyEntry);
+
+            // Manter apenas os últimos 3 testes
+            if (testHistory.length > MAX_HISTORY) {
+                testHistory = testHistory.slice(0, MAX_HISTORY);
+            }
+
+            // Atualizar visualização do histórico
+            saveToLocalStorage();
+            updateHistoryDisplay();
+        }
+
+        // Função para limpar todo o histórico e cache
+        function clearAllData() {
+            if (confirm('Tem certeza que deseja limpar todo o histórico e cache de testes?')) {
+                testHistory = [];
+                testCache = {
+                    'ipv4': { results: [], completed: false },
+                    'ipv6': { results: [], completed: false },
+                    'custom': { results: [], completed: false },
+                    'all': { results: [], completed: false }
+                };
+
+                clearLocalStorage();
+                updateHistoryDisplay();
+                loadCachedResults(currentTestType);
+
+                alert('Histórico e cache limpos com sucesso!');
+            }
+        }
+
+        // Função para atualizar visualização do histórico
+        function updateHistoryDisplay() {
+            const historyContainer = document.getElementById('historyContainer');
+
+            if (testHistory.length === 0) {
+                historyContainer.innerHTML = `
+                <div class="history-empty">
+                <p>📊 Nenhum teste realizado ainda</p>
+                <p>Execute um teste para ver o histórico aqui</p>
+                </div>
+                `;
+                return;
+            }
+
+            // Obter todos os provedores únicos de todos os testes
+            const allProviders = [...new Set(
+                testHistory.flatMap(test => test.results.map(r => `${r.provider}|${r.ip}|${r.protocol}`))
+            )];
+
+            // Processar dados dos provedores
+            const providersWithData = allProviders.map(providerKey => {
+                const [provider, ip, protocol] = providerKey.split('|');
+
+                // Obter todas as latências deste provedor em todos os testes
+                const latencies = testHistory.map(test => {
+                    const result = test.results.find(r =>
+                    r.provider === provider && r.ip === ip && r.protocol === protocol
+                    );
+                    return result ? result.time : null;
+                });
+
+                // Calcular média apenas dos valores válidos
+                const validLatencies = latencies.filter(time => time !== null);
+                const avgLatency = validLatencies.length > 0
+                ? Math.round(validLatencies.reduce((sum, time) => sum + time, 0) / validLatencies.length)
+                : 999999; // Valor alto para provedores sem resultados
+
+                return {
+                    key: providerKey,
+                    provider,
+                    ip,
+                    protocol,
+                    latencies,
+                    avgLatency,
+                    hasValidData: validLatencies.length > 0
+                };
+            });
+
+            // Ordenar por latência média (menor primeiro)
+            const sortedProviders = providersWithData.sort((a, b) => a.avgLatency - b.avgLatency);
+
+            // Criar cabeçalho da tabela
+            const testTitles = {
+                'all': 'Todos',
+                'ipv4': 'IPv4',
+                'ipv6': 'IPv6',
+                'custom': 'Custom'
+            };
+
+            // Determinar se deve mostrar coluna de média
+            const showAverageColumn = testHistory.length >= 2;
+
+            let tableHTML = `
+            <div class="history-header">
+            <h3>📈 Histórico dos Últimos Testes</h3>
+            <p>Comparação visual das latências (últimos ${testHistory.length} testes) - Ordenado por ${showAverageColumn ? 'menor latência média' : 'menor latência'}</p>
+            <button class="btn-clear-history" onclick="clearAllData()">
+            🗑️ Limpar Histórico
+            </button>
+            </div>
+            <div class="history-table-container">
+            <table class="history-table">
+            <thead>
+            <tr>
+            <th>Provedor</th>
+            <th>Endereço</th>
+            <th>Protocolo</th>
+            `;
+
+            // Adicionar colunas para cada teste
+            testHistory.forEach((test, index) => {
+                const timeStr = test.timestamp.toLocaleString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                tableHTML += `<th class="test-column">${testTitles[test.testType]}<br><small>${timeStr}</small></th>`;
+            });
+
+            // Adicionar coluna de média se há 2+ testes
+            if (showAverageColumn) {
+                tableHTML += `<th class="average-column">📊 Média<br><small>Latência</small></th>`;
+            }
+
+            tableHTML += `</tr></thead><tbody>`;
+
+            // Adicionar linhas para cada provedor (ordenado por média)
+            sortedProviders.forEach(providerData => {
+                const { provider, ip, protocol, latencies, avgLatency, hasValidData } = providerData;
+
+                tableHTML += `
+                <tr>
+                <td class="provider-name">${provider}</td>
+                <td class="provider-ip">${ip}</td>
+                <td class="provider-protocol">
+                <span class="protocol-badge ${protocol}">${protocol.toUpperCase()}</span>
+                </td>
+                `;
+
+                // Adicionar célula para cada teste
+                latencies.forEach(latency => {
+                    if (latency !== null) {
+                        tableHTML += `<td class="latency-cell">${latency}ms</td>`;
+                    } else {
+                        tableHTML += `<td class="latency-cell empty">-</td>`;
+                    }
+                });
+
+                // Adicionar coluna de média se há 2+ testes
+                if (showAverageColumn) {
+                    if (hasValidData) {
+                        tableHTML += `<td class="average-cell">${avgLatency}ms</td>`;
+                    } else {
+                        tableHTML += `<td class="average-cell empty">-</td>`;
+                    }
+                }
+
+                tableHTML += `</tr>`;
+            });
+
+            tableHTML += `</tbody></table></div>`;
+
+            historyContainer.innerHTML = tableHTML;
+        }
 
         // Função original mantida
         function isValidIp(ip) {
@@ -252,6 +487,7 @@
                 completed: true,
                 timestamp: Date.now()
             };
+            saveToLocalStorage();
         }
 
         // Função para carregar resultados do cache
@@ -949,6 +1185,9 @@
                 // Salvar resultados no cache
                 saveCacheResults(testType, testResults);
 
+                // Salvar no histórico (APENAS se o teste foi concluído)
+                saveTestToHistory(testType, testResults);
+
                 updateStats();
             }
 
@@ -1007,21 +1246,26 @@
 
         // Event listeners para adicionar DNS com Enter
         document.addEventListener('DOMContentLoaded', function() {
+            // Carregar dados salvos do localStorage
+            loadFromLocalStorage();
+
             // Desabilitar todos os botões "Parar" inicialmente
             document.querySelectorAll('.btn-secondary').forEach(btn => btn.disabled = true);
-            document.getElementById('customTestBtn').disabled = true; // Inicialmente desabilitado
+            document.getElementById('customTestBtn').disabled = true;
 
             // Carregar resultados do cache para a aba ativa inicial (IPv4)
             loadCachedResults('ipv4');
 
-            // Adicionar DNS com Enter no campo IP
+            // Inicializar histórico
+            updateHistoryDisplay();
+
+            // Event listeners existentes...
             document.getElementById('customDnsIp').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     addCustomDns();
                 }
             });
 
-            // Adicionar DNS com Enter no campo Provider
             document.getElementById('customDnsProvider').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     addCustomDns();
