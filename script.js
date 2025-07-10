@@ -57,6 +57,14 @@
     status: 'online'
 },
 {
+    name: 'fingerprint',
+    title: 'Impressão Digital do Usuário',
+    description: 'Tudo que os sites coletam e sabem sobre sua vida Online e você nem imagina!',
+    icon: '🆔',
+    category: 'tools',
+    status: 'online'
+},
+{
     name: 'domain-webui',
     title: 'WebUI Active Directory (Exemplo)',
     description: 'Interface web unificada que substitui o RSAT no gerenciamento do Active Directory e Domain Controller.',
