@@ -10,7 +10,7 @@
 
         async function loadAllInformation() {
             try {
-                // Criar barras de progresso para cada card
+                // Lista de containers com timing mais realista
                 const containers = [
                     { id: 'ip-info', type: 'circular', critical: true },
                     { id: 'basic-info', type: 'circular' },
@@ -43,49 +43,55 @@
                     progressManager.createProgressBar(container.id, container.type, container.critical);
                 });
 
-                // Simular progresso para cada container
+                // Simular progresso com timing mais rápido
                 containers.forEach((container, index) => {
                     setTimeout(() => {
-                        progressManager.simulateProgress(container.id, 1500 + (index * 100));
-                    }, index * 50);
+                        progressManager.simulateProgress(container.id, 800 + (index * 50)); // Reduzido de 1500 para 800
+                    }, index * 30); // Reduzido de 50 para 30
                 });
 
-                // Executar testes
-                await Promise.all([
+                // Executar testes básicos primeiro (necessários para fingerprint)
+                const basicPromises = [
+                    loadBasicInfo(),
+                    loadScreenInfo(),
+                    loadBrowserInfo(),
+                    loadHardwareInfo(),
+                    detectArchitecture()
+                ];
+
+                await Promise.all(basicPromises);
+
+                // Iniciar fingerprint assim que dados básicos estiverem prontos
+                calculateFingerprint();
+
+                // Executar testes mais complexos em paralelo
+                const complexPromises = [
                     loadIPInfo(),
-                                  loadBasicInfo(),
-                                  loadScreenInfo(),
-                                  loadBrowserInfo(),
-                                  loadHardwareInfo(),
-                                  loadPluginsInfo(),
-                                  loadSecurityInfo(),
-                                  loadFontsInfo(),
-                                  loadCanvasInfo(),
-                                  loadWebGLInfo(),
-                                  loadSensorsInfo(),
-                                  loadNetworkInfo(),
-                                  detectArchitecture(),
-                                  getGPUDetails(),
-                                  detectIPv6(),
-                                  getAudioFingerprint(),
-                                  detectPrivateMode(),
-                                  comprehensiveWebRTCTest(),
-                                  detectExtensions(),
-                                  detectAdBlocker(),
-                                  testDNSLeak(),
-                                  detectProxyVPN()
-                ]);
+                    loadPluginsInfo(),
+                    loadSecurityInfo(),
+                    loadFontsInfo(),
+                    loadCanvasInfo(),
+                    loadWebGLInfo(),
+                    loadSensorsInfo(),
+                    loadNetworkInfo(),
+                    getGPUDetails(),
+                    detectIPv6(),
+                    getAudioFingerprint(),
+                    detectPrivateMode(),
+                    detectExtensions(),
+                    detectAdBlocker(),
+                    comprehensiveWebRTCTest(),
+                    testDNSLeak(),
+                    detectProxyVPN()
+                ];
 
-                // Aguardar um pouco para garantir que todos os dados foram coletados
-                setTimeout(() => {
-                    // Calcular fingerprint e privacy score com progresso
-                    calculateFingerprint();
-
-                    // Aguardar o fingerprint terminar antes de calcular o privacy score
+                // Executar em background
+                Promise.all(complexPromises).then(() => {
+                    // Calcular privacy score quando todos os dados estiverem prontos
                     setTimeout(() => {
                         calculatePrivacyScore();
-                    }, 1000);
-                }, 500);
+                    }, 500);
+                });
 
             } catch (error) {
                 console.error('Erro ao carregar informações:', error);
@@ -154,16 +160,13 @@
                 const container = document.getElementById(containerId);
                 if (!container) return;
 
-                // Pequena animação de conclusão
-                setTimeout(() => {
-                    container.innerHTML = finalContent;
-                }, 300);
+                // Remover delay - aplicar conteúdo imediatamente
+                container.innerHTML = finalContent;
             }
 
-            simulateProgress(containerId, duration = 2000, steps = null) {
+            simulateProgress(containerId, duration = 1000, steps = null) { // Reduzido de 2000 para 1000
                 if (!steps) {
-                    // Progresso simulado suave
-                    const stepCount = 20;
+                    const stepCount = 10; // Reduzido de 20 para 10
                     const stepDuration = duration / stepCount;
                     let currentStep = 0;
 
@@ -177,7 +180,6 @@
                         }
                     }, stepDuration);
                 } else {
-                    // Progresso baseado em etapas específicas
                     let currentStep = 0;
                     const stepDuration = duration / steps.length;
 
@@ -209,14 +211,14 @@
                     dohSupport: false
                 };
 
-                const testDomains = ['google.com', 'cloudflare.com', 'github.com', 'example.com'];
+                const testDomains = ['google.com', 'cloudflare.com'];  // Reduzido de 4 para 2 domínios
                 const dnsResolvers = [
                     { name: 'Cloudflare', server: 'https://cloudflare-dns.com/dns-query' },
-                    { name: 'Google', server: 'https://dns.google/resolve' },
-                    { name: 'Quad9', server: 'https://dns.quad9.net:5053/dns-query' }
+                    { name: 'Google', server: 'https://dns.google/resolve' }
+                    // Removido Quad9 para acelerar
                 ];
 
-                const totalSteps = (dnsResolvers.length * testDomains.length) + 3; // +3 para testes extras
+                const totalSteps = (dnsResolvers.length * testDomains.length) + 3;
                 let currentStep = 0;
 
                 // Função para atualizar progresso
@@ -225,75 +227,79 @@
                     progressManager.updateProgress('dns-leak-info', currentStep, totalSteps);
                 };
 
-                updateProgress(1); // Iniciar
+                updateProgress(1);
+
+                // Executar testes em paralelo para acelerar
+                const promises = [];
 
                 for (const resolver of dnsResolvers) {
-                    try {
-                        for (const domain of testDomains) {
-                            updateProgress(currentStep + 1);
-
-                            const startTime = performance.now();
-                            const response = await fetch(
-                                `${resolver.server}?name=${domain}&type=A`,
-                                { headers: { 'Accept': 'application/dns-json' } }
-                            );
-                            const endTime = performance.now();
-                            const responseTime = endTime - startTime;
-
-                            if (response.ok) {
-                                const data = await response.json();
-                                dnsResults.resolvers.push({
-                                    resolver: resolver.name,
-                                    domain: domain,
-                                    responseTime: responseTime.toFixed(2),
-                                                          answers: data.Answer ? data.Answer.length : 0,
-                                                          status: data.Status
-                                });
-
-                                if (data.AD) {
-                                    dnsResults.dnssecSupport = true;
+                    for (const domain of testDomains) {
+                        promises.push(
+                            fetch(`${resolver.server}?name=${domain}&type=A`, {
+                                headers: { 'Accept': 'application/dns-json' },
+                                signal: AbortSignal.timeout(2000) // Timeout de 2s
+                            })
+                            .then(response => {
+                                updateProgress(currentStep + 1);
+                                if (response.ok) {
+                                    return response.json().then(data => ({
+                                        resolver: resolver.name,
+                                        domain: domain,
+                                        answers: data.Answer ? data.Answer.length : 0,
+                                        status: data.Status
+                                    }));
                                 }
-                            }
-                        }
-                    } catch (e) {
-                        dnsResults.leaks.push(`Falha ao resolver via ${resolver.name}`);
+                                return null;
+                            })
+                            .catch(() => {
+                                dnsResults.leaks.push(`Falha ao resolver via ${resolver.name}`);
+                                return null;
+                            })
+                        );
                     }
                 }
 
-                // Teste de consistência geográfica
+                // Aguardar todos os testes em paralelo
+                const results = await Promise.allSettled(promises);
+                dnsResults.resolvers = results
+                .filter(r => r.status === 'fulfilled' && r.value)
+                .map(r => r.value);
+
+                // Teste de consistência geográfica (simplificado)
                 updateProgress(currentStep + 1);
                 try {
-                    if (detectedInfo.ip && detectedInfo.ip.country) {
-                        const userCountry = detectedInfo.ip.country;
-                        const geoTestResponse = await fetch('https://ipapi.co/json/');
-                        const geoData = await geoTestResponse.json();
+                    const geoTestResponse = await fetch('https://ipapi.co/json/', {
+                        signal: AbortSignal.timeout(2000)
+                    });
+                    const geoData = await geoTestResponse.json();
 
-                        if (geoData.country_code !== userCountry) {
-                            dnsResults.leaks.push('Possível vazamento: DNS resolve para país diferente');
-                            dnsResults.isVPNSafe = false;
+                    if (detectedInfo.ip && detectedInfo.ip.country &&
+                        geoData.country_code !== detectedInfo.ip.country) {
+                        dnsResults.leaks.push('Possível vazamento: DNS resolve para país diferente');
+                    dnsResults.isVPNSafe = false;
                         }
-                    }
                 } catch (e) {
                     dnsResults.leaks.push('Não foi possível verificar consistência geográfica');
                 }
 
-                // Teste DNS-over-HTTPS
+                // Teste DNS-over-HTTPS (simplificado)
                 updateProgress(currentStep + 1);
                 try {
                     const dohTest = await fetch('https://cloudflare-dns.com/dns-query?name=example.com&type=A', {
-                        headers: { 'Accept': 'application/dns-json' }
+                        headers: { 'Accept': 'application/dns-json' },
+                        signal: AbortSignal.timeout(2000)
                     });
                     dnsResults.dohSupport = dohTest.ok;
                 } catch (e) {
                     dnsResults.dohSupport = false;
                 }
 
-                // Finalizar progresso
                 updateProgress(totalSteps);
 
-                // Calcular estatísticas e mostrar resultado
-                const avgResponseTime = dnsResults.resolvers.reduce((sum, r) =>
-                sum + parseFloat(r.responseTime), 0) / dnsResults.resolvers.length;
+                // Calcular estatísticas
+                const avgResponseTime = dnsResults.resolvers.length > 0
+                ? dnsResults.resolvers.reduce((sum, r) => sum + (r.responseTime || 0), 0) / dnsResults.resolvers.length
+                : 0;
                 const uniqueResolvers = [...new Set(dnsResults.resolvers.map(r => r.resolver))];
 
                 const finalContent = `
@@ -310,10 +316,6 @@
                 <span class="info-value">${uniqueResolvers.join(', ')}</span>
                 </div>
                 <div class="info-item">
-                <span class="info-label">Tempo Médio:</span>
-                <span class="info-value">${avgResponseTime.toFixed(2)}ms</span>
-                </div>
-                <div class="info-item">
                 <span class="info-label">DNSSEC:</span>
                 <span class="info-value">${dnsResults.dnssecSupport ? 'Suportado' : 'Não suportado'}</span>
                 </div>
@@ -328,10 +330,9 @@
                     </div>` : ''}
                     `;
 
-                    setTimeout(() => {
-                        progressManager.completeProgress('dns-leak-info', finalContent);
-                        detectedInfo.dnsLeak = dnsResults;
-                    }, 300);
+                    // Mostrar resultado imediatamente
+                    progressManager.completeProgress('dns-leak-info', finalContent);
+                    detectedInfo.dnsLeak = dnsResults;
 
             } catch (error) {
                 const errorContent = `
@@ -340,7 +341,6 @@
                 <span class="info-value">Erro: ${error.message}</span>
                 </div>
                 `;
-
                 progressManager.completeProgress('dns-leak-info', errorContent);
             }
         }
@@ -3078,83 +3078,146 @@
 
             progressManager.createProgressBar('fingerprint-info', 'circular', true);
 
-            // Progresso real baseado na coleta de dados
             let currentStep = 0;
-            const totalSteps = 12;
+            const totalSteps = 100;
 
             const updateProgress = (step, text) => {
-                currentStep = step;
-                progressManager.updateProgress('fingerprint-info', currentStep, totalSteps, text);
+                progressManager.updateProgress('fingerprint-info', step, totalSteps, text);
             };
 
-            updateProgress(1, 'Iniciando...');
+            updateProgress(10, 'Aguardando dados...');
 
-            setTimeout(() => {
-                updateProgress(2, 'User Agent');
+            // Função para verificar se dados essenciais estão prontos
+            const checkDataReady = () => {
+                const essentialData = [
+                    'basic', 'screen', 'browser', 'hardware',
+                    'canvas', 'webgl', 'fonts', 'plugins'
+                ];
 
-                // Simular coleta de dados com pequenos delays
-                setTimeout(() => {
-                    updateProgress(4, 'Idiomas');
+                let readyCount = 0;
+                essentialData.forEach(key => {
+                    if (detectedInfo[key]) readyCount++;
+                });
 
-                    setTimeout(() => {
-                        updateProgress(6, 'Tela');
+                    return readyCount;
+            };
+
+            // Monitorar progresso dos dados
+            const monitorDataCollection = () => {
+                const interval = setInterval(() => {
+                    const readyCount = checkDataReady();
+                    const progressPercent = Math.min((readyCount / 8) * 80, 80); // Máximo 80% até dados prontos
+
+                    updateProgress(10 + progressPercent, `Coletando dados (${readyCount}/8)...`);
+
+                    // Quando a maioria dos dados estiver pronta, prosseguir
+                    if (readyCount >= 6) {
+                        clearInterval(interval);
+
+                        updateProgress(90, 'Calculando hash...');
 
                         setTimeout(() => {
-                            updateProgress(8, 'Plugins');
+                            // Fazer o cálculo real com dados disponíveis
+                            const fingerprintData = {
+                                userAgent: navigator.userAgent,
+                                language: navigator.language,
+                                languages: navigator.languages,
+                                platform: navigator.platform,
+                                screen: `${screen.width}x${screen.height}x${screen.colorDepth}`,
+                                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                                   plugins: detectedInfo.plugins ? detectedInfo.plugins.map(p => p.name).join(',') : 'loading',
+                                   fonts: detectedInfo.fonts ? detectedInfo.fonts.join(',') : 'loading',
+                                   canvas: detectedInfo.canvas ? detectedInfo.canvas.hash : 'loading',
+                                   webgl: detectedInfo.webgl ? detectedInfo.webgl.renderer : 'loading',
+                                   hardware: `${navigator.hardwareConcurrency}-${navigator.deviceMemory}`,
+                                   connection: navigator.connection ? navigator.connection.effectiveType : 'unknown'
+                            };
 
-                            setTimeout(() => {
-                                updateProgress(10, 'Canvas/WebGL');
+                            const fingerprintString = JSON.stringify(fingerprintData);
+                            browserFingerprint = hashCode(fingerprintString);
 
-                                setTimeout(() => {
-                                    updateProgress(12, 'Finalizando');
+                            updateProgress(100, 'Finalizando...');
 
-                                    // Fazer o cálculo real
-                                    const fingerprintData = {
-                                        userAgent: navigator.userAgent,
-                                        language: navigator.language,
-                                        languages: navigator.languages,
-                                        platform: navigator.platform,
-                                        screen: `${screen.width}x${screen.height}x${screen.colorDepth}`,
-                                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                                           plugins: detectedInfo.plugins ? detectedInfo.plugins.map(p => p.name).join(',') : '',
-                                           fonts: detectedInfo.fonts ? detectedInfo.fonts.join(',') : '',
-                                           canvas: detectedInfo.canvas ? detectedInfo.canvas.hash : '',
-                                           webgl: detectedInfo.webgl ? detectedInfo.webgl.renderer : '',
-                                           hardware: `${navigator.hardwareConcurrency}-${navigator.deviceMemory}`,
-                                           connection: navigator.connection ? navigator.connection.effectiveType : ''
-                                    };
+                            const finalContent = `
+                            <div class="info-item">
+                            <span class="info-label">Fingerprint Hash:</span>
+                            <span class="info-value">${browserFingerprint}</span>
+                            </div>
+                            <div class="info-item">
+                            <span class="info-label">Unicidade:</span>
+                            <span class="info-value">${calculateUniqueness()}%</span>
+                            </div>
+                            <div class="info-item">
+                            <span class="info-label">Entropia:</span>
+                            <span class="info-value">${calculateEntropy(fingerprintString).toFixed(2)} bits</span>
+                            </div>
+                            <div class="info-item">
+                            <span class="info-label">Dados Coletados:</span>
+                            <span class="info-value">${readyCount}/8 módulos</span>
+                            </div>
+                            <div class="fingerprint-hash">
+                            Fingerprint: ${fingerprintString.length > 200 ? fingerprintString.substring(0, 200) + '...' : fingerprintString}
+                            </div>
+                            `;
 
-                                    const fingerprintString = JSON.stringify(fingerprintData);
-                                    browserFingerprint = hashCode(fingerprintString);
+                            // Mostrar resultado imediatamente
+                            progressManager.completeProgress('fingerprint-info', finalContent);
 
-                                    const finalContent = `
-                                    <div class="info-item">
-                                    <span class="info-label">Fingerprint Hash:</span>
-                                    <span class="info-value">${browserFingerprint}</span>
-                                    </div>
-                                    <div class="info-item">
-                                    <span class="info-label">Unicidade:</span>
-                                    <span class="info-value">${calculateUniqueness()}%</span>
-                                    </div>
-                                    <div class="info-item">
-                                    <span class="info-label">Entropia:</span>
-                                    <span class="info-value">${calculateEntropy(fingerprintString).toFixed(2)} bits</span>
-                                    </div>
-                                    <div class="fingerprint-hash">
-                                    Fingerprint completo: ${fingerprintString}
-                                    </div>
-                                    `;
-
-                                    setTimeout(() => {
-                                        progressManager.completeProgress('fingerprint-info', finalContent);
-                                    }, 200);
-
-                                }, 300);
-                            }, 300);
                         }, 300);
-                    }, 300);
-                }, 300);
-            }, 100);
+                    }
+                }, 200); // Verificar a cada 200ms
+
+                // Timeout de segurança - forçar conclusão após 10 segundos
+                setTimeout(() => {
+                    clearInterval(interval);
+
+                    // Se chegou ao timeout, calcular com dados disponíveis
+                    const readyCount = checkDataReady();
+                    updateProgress(100, 'Finalizando (timeout)...');
+
+                    const fingerprintData = {
+                        userAgent: navigator.userAgent,
+                        language: navigator.language,
+                        languages: navigator.languages,
+                        platform: navigator.platform,
+                        screen: `${screen.width}x${screen.height}x${screen.colorDepth}`,
+                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                           plugins: detectedInfo.plugins ? detectedInfo.plugins.map(p => p.name).join(',') : 'timeout',
+                           fonts: detectedInfo.fonts ? detectedInfo.fonts.join(',') : 'timeout',
+                           canvas: detectedInfo.canvas ? detectedInfo.canvas.hash : 'timeout',
+                           webgl: detectedInfo.webgl ? detectedInfo.webgl.renderer : 'timeout',
+                           hardware: `${navigator.hardwareConcurrency}-${navigator.deviceMemory}`,
+                           connection: navigator.connection ? navigator.connection.effectiveType : 'unknown'
+                    };
+
+                    const fingerprintString = JSON.stringify(fingerprintData);
+                    browserFingerprint = hashCode(fingerprintString);
+
+                    const finalContent = `
+                    <div class="info-item">
+                    <span class="info-label">Fingerprint Hash:</span>
+                    <span class="info-value">${browserFingerprint}</span>
+                    </div>
+                    <div class="info-item">
+                    <span class="info-label">Unicidade:</span>
+                    <span class="info-value">${calculateUniqueness()}%</span>
+                    </div>
+                    <div class="info-item">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value">Calculado com ${readyCount}/8 módulos</span>
+                    </div>
+                    <div class="fingerprint-hash">
+                    Fingerprint: ${fingerprintString.length > 200 ? fingerprintString.substring(0, 200) + '...' : fingerprintString}
+                    </div>
+                    `;
+
+                    progressManager.completeProgress('fingerprint-info', finalContent);
+
+                }, 10000); // 10 segundos timeout
+            };
+
+            // Iniciar monitoramento
+            monitorDataCollection();
         }
 
         // Calcular unicidade do fingerprint
@@ -3196,7 +3259,7 @@
             progressManager.createProgressBar('privacy-score', 'circular', true);
 
             let currentStep = 0;
-            const totalSteps = 10;
+            const totalSteps = 5; // Reduzido de 10 para 5
 
             const updateProgress = (step, text) => {
                 currentStep = step;
@@ -3206,128 +3269,124 @@
             updateProgress(1, 'Iniciando análise...');
 
             setTimeout(() => {
-                updateProgress(2, 'Canvas/WebGL');
+                updateProgress(2, 'Analisando vulnerabilidades...');
+
                 let score = 100;
                 let risks = [];
 
-                setTimeout(() => {
-                    updateProgress(4, 'Fontes/Plugins');
+                // Verificar todos os riscos de uma vez
+                if (detectedInfo.canvas) {
+                    score -= 15;
+                    risks.push('Canvas Fingerprinting detectado');
+                }
 
-                    // Verificar riscos
-                    if (detectedInfo.canvas) {
-                        score -= 15;
-                        risks.push('Canvas Fingerprinting detectado');
+                if (detectedInfo.webgl) {
+                    score -= 10;
+                    risks.push('WebGL Fingerprinting detectado');
+                }
+
+                setTimeout(() => {
+                    updateProgress(3, 'Verificando configurações...');
+
+                    if (detectedInfo.fonts && detectedInfo.fonts.length > 20) {
+                        score -= 10;
+                        risks.push('Muitas fontes detectadas');
                     }
 
-                    if (detectedInfo.webgl) {
-                        score -= 10;
-                        risks.push('WebGL Fingerprinting detectado');
+                    if (detectedInfo.plugins && detectedInfo.plugins.length > 0) {
+                        score -= 8;
+                        risks.push('Plugins detectados');
+                    }
+
+                    if (!navigator.doNotTrack) {
+                        score -= 5;
+                        risks.push('Do Not Track desabilitado');
+                    }
+
+                    if (navigator.cookieEnabled) {
+                        score -= 5;
+                        risks.push('Cookies habilitados');
                     }
 
                     setTimeout(() => {
-                        updateProgress(6, 'Configurações');
+                        updateProgress(4, 'Verificando vazamentos...');
 
-                        if (detectedInfo.fonts && detectedInfo.fonts.length > 20) {
-                            score -= 10;
-                            risks.push('Muitas fontes detectadas');
+                        if (location.protocol !== 'https:') {
+                            score -= 15;
+                            risks.push('Conexão não segura (HTTP)');
                         }
 
-                        if (detectedInfo.plugins && detectedInfo.plugins.length > 0) {
-                            score -= 8;
-                            risks.push('Plugins detectados');
+                        if (detectedInfo.ip) {
+                            score -= 12;
+                            risks.push('IP público exposto');
+                        }
+
+                        if (detectedInfo.preciseLocation) {
+                            score -= 20;
+                            risks.push('Localização precisa exposta');
+                        }
+
+                        if (detectedInfo.webrtcComprehensive && detectedInfo.webrtcComprehensive.leaks.length > 0) {
+                            score -= 15;
+                            risks.push('Vazamentos WebRTC detectados');
+                        }
+
+                        if (detectedInfo.dnsLeak && detectedInfo.dnsLeak.leaks.length > 0) {
+                            score -= 10;
+                            risks.push('Vazamentos DNS detectados');
                         }
 
                         setTimeout(() => {
-                            updateProgress(8, 'Vazamentos');
+                            updateProgress(5, 'Calculando score final...');
 
-                            if (!navigator.doNotTrack) {
-                                score -= 5;
-                                risks.push('Do Not Track desabilitado');
+                            score = Math.max(score, 0);
+                            privacyScore = score;
+
+                            let riskLevel = 'risk-high';
+                            let riskText = 'Alto Risco';
+                            let riskIcon = '🔴';
+
+                            if (score > 70) {
+                                riskLevel = 'risk-low';
+                                riskText = 'Baixo Risco';
+                                riskIcon = '🟢';
+                            } else if (score > 40) {
+                                riskLevel = 'risk-medium';
+                                riskText = 'Médio Risco';
+                                riskIcon = '🟡';
                             }
 
-                            if (navigator.cookieEnabled) {
-                                score -= 5;
-                                risks.push('Cookies habilitados');
-                            }
+                            const finalContent = `
+                            <div class="privacy-score">${score}/100</div>
+                            <div class="risk-indicator ${riskLevel}">
+                            ${riskIcon} ${riskText}
+                            </div>
+                            <div style="margin-top: 20px;">
+                            <strong>Vulnerabilidades encontradas (${risks.length}):</strong>
+                            <ul style="margin-top: 10px; padding-left: 20px; max-height: 150px; overflow-y: auto;">
+                            ${risks.map(risk => `<li>${risk}</li>`).join('')}
+                            </ul>
+                            </div>
+                            <div style="margin-top: 20px; font-size: 0.9em; color: #666;">
+                            <strong>Dicas para melhorar sua privacidade:</strong>
+                            <ul style="margin-top: 10px; padding-left: 20px;">
+                            <li>Use extensões anti-tracking (uBlock Origin, Privacy Badger)</li>
+                            <li>Desabilite JavaScript para sites não confiáveis</li>
+                            <li>Use VPN para mascarar seu IP</li>
+                            <li>Configure seu navegador para bloquear fingerprinting</li>
+                            <li>Desabilite plugins desnecessários</li>
+                            ${score < 50 ? '<li><strong style="color: #ff6600;">Considere usar Tor Browser para máxima privacidade</strong></li>' : ''}
+                            </ul>
+                            </div>
+                            `;
 
-                            if (location.protocol !== 'https:') {
-                                score -= 15;
-                                risks.push('Conexão não segura (HTTP)');
-                            }
+                            // Mostrar resultado imediatamente
+                            progressManager.completeProgress('privacy-score', finalContent);
 
-                            if (detectedInfo.ip) {
-                                score -= 12;
-                                risks.push('IP público exposto');
-                            }
-
-                            if (detectedInfo.preciseLocation) {
-                                score -= 20;
-                                risks.push('Localização precisa exposta');
-                            }
-
-                            if (detectedInfo.webrtcComprehensive && detectedInfo.webrtcComprehensive.leaks.length > 0) {
-                                score -= 15;
-                                risks.push('Vazamentos WebRTC detectados');
-                            }
-
-                            if (detectedInfo.dnsLeak && detectedInfo.dnsLeak.leaks.length > 0) {
-                                score -= 10;
-                                risks.push('Vazamentos DNS detectados');
-                            }
-
-                            setTimeout(() => {
-                                updateProgress(10, 'Finalizando');
-
-                                score = Math.max(score, 0);
-                                privacyScore = score;
-
-                                let riskLevel = 'risk-high';
-                                let riskText = 'Alto Risco';
-                                let riskIcon = '🔴';
-
-                                if (score > 70) {
-                                    riskLevel = 'risk-low';
-                                    riskText = 'Baixo Risco';
-                                    riskIcon = '🟢';
-                                } else if (score > 40) {
-                                    riskLevel = 'risk-medium';
-                                    riskText = 'Médio Risco';
-                                    riskIcon = '🟡';
-                                }
-
-                                const finalContent = `
-                                <div class="privacy-score">${score}/100</div>
-                                <div class="risk-indicator ${riskLevel}">
-                                ${riskIcon} ${riskText}
-                                </div>
-                                <div style="margin-top: 20px;">
-                                <strong>Vulnerabilidades encontradas (${risks.length}):</strong>
-                                <ul style="margin-top: 10px; padding-left: 20px; max-height: 150px; overflow-y: auto;">
-                                ${risks.map(risk => `<li>${risk}</li>`).join('')}
-                                </ul>
-                                </div>
-                                <div style="margin-top: 20px; font-size: 0.9em; color: #666;">
-                                <strong>Dicas para melhorar sua privacidade:</strong>
-                                <ul style="margin-top: 10px; padding-left: 20px;">
-                                <li>Use extensões anti-tracking (uBlock Origin, Privacy Badger)</li>
-                                <li>Desabilite JavaScript para sites não confiáveis</li>
-                                <li>Use VPN para mascarar seu IP</li>
-                                <li>Configure seu navegador para bloquear fingerprinting</li>
-                                <li>Desabilite plugins desnecessários</li>
-                                ${score < 50 ? '<li><strong style="color: #ff6600;">Considere usar Tor Browser para máxima privacidade</strong></li>' : ''}
-                                </ul>
-                                </div>
-                                `;
-
-                                setTimeout(() => {
-                                    progressManager.completeProgress('privacy-score', finalContent);
-                                }, 200);
-
-                            }, 400);
-                        }, 400);
-                    }, 400);
-                }, 400);
-            }, 100);
+                        }, 250); // 250ms
+                    }, 250);
+                }, 250);
+            }, 250);
         }
 
         // Função para atualizar todas as informações
