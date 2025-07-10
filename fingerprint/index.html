@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 SYSTEM INTRUSION ANALYZER</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 SYSTEM INTRUSION ANALYZER</h1>
+            <p>[ ANALYZING BROWSER VULNERABILITIES AND DATA EXPOSURE ]</p>
+            <div class="warning">
+                ⚠️ WARNING: CRITICAL INFORMATION EXPOSURE DETECTED
+            </div>
+        </div>
+
+        <button class="refresh-btn" onclick="refreshAllInfo()">🔄 REINITIALIZE SCAN</button>
+
+        <div class="grid">
+            <!-- IP e Localização -->
+            <div class="card critical">
+                <h3>🌐 IP e Localização</h3>
+                <div class="card-content" id="ip-info">
+                    <div class="loading">Carregando informações de IP...</div>
+                </div>
+            </div>
+
+            <!-- Browser Fingerprint -->
+            <div class="card critical">
+                <h3>🔒 Browser Fingerprint</h3>
+                <div class="card-content" id="fingerprint-info">
+                    <div class="loading">Calculando fingerprint...</div>
+                </div>
+            </div>
+
+            <!-- Informações Básicas -->
+            <div class="card">
+                <h3>💻 Informações Básicas</h3>
+                <div class="card-content" id="basic-info">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+
+            <!-- Tela e Display -->
+            <div class="card">
+                <h3>📱 Tela e Display</h3>
+                <div class="card-content" id="screen-info">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+
+            <!-- Navegador e Versão -->
+            <div class="card">
+                <h3>🌍 Navegador Detalhado</h3>
+                <div class="card-content" id="browser-info">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+
+            <!-- Recursos Hardware -->
+            <div class="card">
+                <h3>⚡ Hardware</h3>
+                <div class="card-content" id="hardware-info">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+
+            <!-- Plugins e Extensões -->
+            <div class="card">
+                <h3>🔌 Plugins e Extensões</h3>
+                <div class="card-content" id="plugins-info">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+
+            <!-- Configurações de Segurança -->
+            <div class="card warning-level">
+                <h3>🔐 Configurações de Segurança</h3>
+                <div class="card-content" id="security-info">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+
+            <!-- Fontes do Sistema -->
+            <div class="card">
+                <h3>🔤 Fontes Detectadas</h3>
+                <div class="card-content" id="fonts-info">
+                    <div class="loading">Detectando fontes...</div>
+                </div>
+            </div>
+
+            <!-- Canvas Fingerprinting -->
+            <div class="card critical">
+                <h3>🎨 Canvas Fingerprinting</h3>
+                <div class="card-content" id="canvas-info">
+                    <div class="canvas-container">
+                        <canvas id="fingerprint-canvas" width="200" height="50"></canvas>
+                    </div>
+                    <div class="loading">Gerando canvas fingerprint...</div>
+                </div>
+            </div>
+
+            <!-- WebGL Information -->
+            <div class="card">
+                <h3>🎮 WebGL Information</h3>
+                <div class="card-content" id="webgl-info">
+                    <div class="loading">Carregando informações WebGL...</div>
+                </div>
+            </div>
+
+            <!-- Sensores e Permissões -->
+            <div class="card">
+                <h3>📡 Sensores e Permissões</h3>
+                <div class="card-content" id="sensors-info">
+                    <div class="loading">Verificando sensores...</div>
+                </div>
+            </div>
+
+            <!-- Connections e Network -->
+            <div class="card full-width">
+                <h3>🌐 Informações de Rede</h3>
+                <div class="card-content" id="network-info">
+                    <div class="loading">Carregando informações de rede...</div>
+                </div>
+            </div>
+
+            <!-- Privacy Score -->
+            <div class="card full-width critical">
+                <h3>🛡️ Pontuação de Privacidade</h3>
+                <div class="card-content" id="privacy-score">
+                    <div class="loading">Calculando pontuação de privacidade...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
