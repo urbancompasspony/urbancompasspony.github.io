@@ -201,23 +201,24 @@
             try {
                 const dnsResults = {
                     resolvers: [],
-                    leaks: [],
+                    realLeaks: [], // Apenas vazamentos DNS reais
+                    testErrors: [], // Erros de teste separados
                     isVPNSafe: true,
                     dnssecSupport: false,
-                    dohSupport: false
+                    dohSupport: false,
+                    geographicConsistency: 'unknown'
                 };
 
-                const testDomains = ['google.com', 'cloudflare.com'];  // Reduzido de 4 para 2 domínios
+                const testDomains = ['example.com', 'google.com']; // Domains confiáveis
                 const dnsResolvers = [
                     { name: 'Cloudflare', server: 'https://cloudflare-dns.com/dns-query' },
-                    { name: 'Google', server: 'https://dns.google/resolve' }
-                    // Removido Quad9 para acelerar
+                    { name: 'Google', server: 'https://dns.google/resolve' },
+                    { name: 'Quad9', server: 'https://dns.quad9.net:5053/dns-query' }
                 ];
 
-                const totalSteps = (dnsResolvers.length * testDomains.length) + 3;
+                const totalSteps = 6;
                 let currentStep = 0;
 
-                // Função para atualizar progresso
                 const updateProgress = (step) => {
                     currentStep = step;
                     progressManager.updateProgress('dns-leak-info', currentStep, totalSteps);
@@ -225,61 +226,80 @@
 
                 updateProgress(1);
 
-                // Executar testes em paralelo para acelerar
-                const promises = [];
-
-                for (const resolver of dnsResolvers) {
-                    for (const domain of testDomains) {
-                        promises.push(
-                            fetch(`${resolver.server}?name=${domain}&type=A`, {
+                // Teste 1: Resolução DNS básica (paralelo para velocidade)
+                const resolverPromises = dnsResolvers.map(async (resolver) => {
+                    try {
+                        const testPromises = testDomains.map(async (domain) => {
+                            const response = await fetch(`${resolver.server}?name=${domain}&type=A`, {
                                 headers: { 'Accept': 'application/dns-json' },
-                                signal: AbortSignal.timeout(2000) // Timeout de 2s
-                            })
-                            .then(response => {
-                                updateProgress(currentStep + 1);
-                                if (response.ok) {
-                                    return response.json().then(data => ({
-                                        resolver: resolver.name,
-                                        domain: domain,
-                                        answers: data.Answer ? data.Answer.length : 0,
-                                        status: data.Status
-                                    }));
-                                }
-                                return null;
-                            })
-                            .catch(() => {
-                                dnsResults.leaks.push(`Falha ao resolver via ${resolver.name}`);
-                                return null;
-                            })
-                        );
-                    }
-                }
+                                signal: AbortSignal.timeout(3000)
+                            });
 
-                // Aguardar todos os testes em paralelo
-                const results = await Promise.allSettled(promises);
-                dnsResults.resolvers = results
-                .filter(r => r.status === 'fulfilled' && r.value)
-                .map(r => r.value);
+                            if (response.ok) {
+                                const data = await response.json();
+                                return {
+                                    resolver: resolver.name,
+                                    domain: domain,
+                                    success: true,
+                                    answers: data.Answer ? data.Answer.length : 0,
+                                    status: data.Status,
+                                    server: data.Server || 'unknown'
+                                };
+                            }
+                            return null;
+                        });
 
-                // Teste de consistência geográfica (simplificado)
-                updateProgress(currentStep + 1);
-                try {
-                    const geoTestResponse = await fetch('https://ipapi.co/json/', {
-                        signal: AbortSignal.timeout(2000)
-                    });
-                    const geoData = await geoTestResponse.json();
+                        const results = await Promise.allSettled(testPromises);
+                        const successfulResults = results
+                        .filter(r => r.status === 'fulfilled' && r.value)
+                        .map(r => r.value);
 
-                    if (detectedInfo.ip && detectedInfo.ip.country &&
-                        geoData.country_code !== detectedInfo.ip.country) {
-                        dnsResults.leaks.push('Possível vazamento: DNS resolve para país diferente');
-                    dnsResults.isVPNSafe = false;
+                        if (successfulResults.length > 0) {
+                            dnsResults.resolvers.push({
+                                name: resolver.name,
+                                server: resolver.server,
+                                responses: successfulResults
+                            });
                         }
+
+                    } catch (error) {
+                        dnsResults.testErrors.push(`Erro ao testar ${resolver.name}: ${error.message}`);
+                    }
+                });
+
+                await Promise.allSettled(resolverPromises);
+                updateProgress(2);
+
+                // Teste 2: DNSSEC (domains que sabidamente têm DNSSEC)
+                try {
+                    const dnssecDomains = ['cloudflare.com', 'google.com'];
+
+                    for (const domain of dnssecDomains) {
+                        try {
+                            const response = await fetch(`https://cloudflare-dns.com/dns-query?name=${domain}&type=A&do=1`, {
+                                headers: { 'Accept': 'application/dns-json' },
+                                signal: AbortSignal.timeout(2000)
+                            });
+
+                            if (response.ok) {
+                                const data = await response.json();
+                                // Verificar flag AD (Authenticated Data)
+                                if (data.AD === true) {
+                                    dnsResults.dnssecSupport = true;
+                                    break;
+                                }
+                            }
+                        } catch (e) {
+                            // Continuar testando outros domains
+                        }
+                    }
                 } catch (e) {
-                    dnsResults.leaks.push('Não foi possível verificar consistência geográfica');
+                    dnsResults.testErrors.push('Erro no teste DNSSEC');
                 }
 
-                // Teste DNS-over-HTTPS (simplificado)
-                updateProgress(currentStep + 1);
+                updateProgress(3);
+
+                // Teste 3: DNS-over-HTTPS
                 try {
                     const dohTest = await fetch('https://cloudflare-dns.com/dns-query?name=example.com&type=A', {
                         headers: { 'Accept': 'application/dns-json' },
@@ -290,54 +310,167 @@
                     dnsResults.dohSupport = false;
                 }
 
-                updateProgress(totalSteps);
+                updateProgress(4);
 
-                // Calcular estatísticas
-                const avgResponseTime = dnsResults.resolvers.length > 0
-                ? dnsResults.resolvers.reduce((sum, r) => sum + (r.responseTime || 0), 0) / dnsResults.resolvers.length
-                : 0;
-                const uniqueResolvers = [...new Set(dnsResults.resolvers.map(r => r.resolver))];
+                // Teste 4: Consistência entre resolvers (detectar manipulação DNS)
+                if (dnsResults.resolvers.length >= 2) {
+                    const responses = {};
+
+                    // Agrupar respostas por domain
+                    dnsResults.resolvers.forEach(resolver => {
+                        resolver.responses.forEach(response => {
+                            if (!responses[response.domain]) {
+                                responses[response.domain] = [];
+                            }
+                            responses[response.domain].push({
+                                resolver: resolver.name,
+                                answers: response.answers,
+                                status: response.status
+                            });
+                        });
+                    });
+
+                    // Verificar inconsistências
+                    for (const [domain, resolverResponses] of Object.entries(responses)) {
+                        if (resolverResponses.length >= 2) {
+                            const answerCounts = resolverResponses.map(r => r.answers);
+                            const statusCodes = resolverResponses.map(r => r.status);
+
+                            // Se respostas muito diferentes entre resolvers
+                            if (Math.max(...answerCounts) - Math.min(...answerCounts) > 2) {
+                                dnsResults.realLeaks.push(`Inconsistência DNS para ${domain}: diferentes resolvers retornaram respostas muito diferentes`);
+                                dnsResults.isVPNSafe = false;
+                            }
+
+                            // Se status codes diferentes (possível bloqueio/manipulação)
+                            if (new Set(statusCodes).size > 1) {
+                                dnsResults.realLeaks.push(`Possível manipulação DNS para ${domain}: status codes diferentes entre resolvers`);
+                                dnsResults.isVPNSafe = false;
+                            }
+                        }
+                    }
+                }
+
+                updateProgress(5);
+
+                // Teste 5: Verificação geográfica MELHORADA (múltiplas APIs)
+                try {
+                    const geoAPIs = [
+                        'https://ipapi.co/json/',
+                        'https://ipinfo.io/json'
+                    ];
+
+                    const geoPromises = geoAPIs.map(async (api) => {
+                        try {
+                            const response = await fetch(api, {
+                                signal: AbortSignal.timeout(2000)
+                            });
+                            if (response.ok) {
+                                const data = await response.json();
+                                return {
+                                    country: data.country || data.country_code || data.countryCode,
+                                    source: api
+                                };
+                            }
+                        } catch (e) {
+                            return null;
+                        }
+                    });
+
+                    const geoResults = await Promise.allSettled(geoPromises);
+                    const validGeoResults = geoResults
+                    .filter(r => r.status === 'fulfilled' && r.value)
+                    .map(r => r.value);
+
+                    if (validGeoResults.length >= 2) {
+                        const countries = validGeoResults.map(r => r.country);
+                        const uniqueCountries = new Set(countries);
+
+                        if (uniqueCountries.size > 1) {
+                            // Múltiplas APIs discordam = possível problema
+                            dnsResults.realLeaks.push(`Inconsistência geográfica: APIs reportam países diferentes (${Array.from(uniqueCountries).join(', ')})`);
+                            dnsResults.isVPNSafe = false;
+                            dnsResults.geographicConsistency = 'inconsistent';
+                        } else {
+                            dnsResults.geographicConsistency = 'consistent';
+                        }
+                    } else if (validGeoResults.length === 1) {
+                        dnsResults.geographicConsistency = 'limited_data';
+                    } else {
+                        dnsResults.testErrors.push('Não foi possível verificar consistência geográfica');
+                        dnsResults.geographicConsistency = 'test_failed';
+                    }
+
+                } catch (e) {
+                    dnsResults.testErrors.push('Erro no teste geográfico');
+                    dnsResults.geographicConsistency = 'test_failed';
+                }
+
+                updateProgress(6);
+
+                // Preparar resultado final
+                const totalIssues = dnsResults.realLeaks.length;
+                const hasTestErrors = dnsResults.testErrors.length > 0;
 
                 const finalContent = `
                 <div class="info-item">
-                <span class="info-label">DNS Vazamentos:</span>
-                <span class="info-value">${dnsResults.leaks.length > 0 ? dnsResults.leaks.length + ' detectados' : 'Nenhum detectado'}</span>
+                <span class="info-label">Vazamentos DNS:</span>
+                <span class="info-value">${totalIssues > 0 ? `${totalIssues} detectado(s)` : 'Nenhum detectado'}</span>
                 </div>
                 <div class="info-item">
                 <span class="info-label">VPN Segura:</span>
                 <span class="info-value">${dnsResults.isVPNSafe ? 'Sim' : 'Não'}</span>
                 </div>
                 <div class="info-item">
-                <span class="info-label">Resolvedores Testados:</span>
-                <span class="info-value">${uniqueResolvers.join(', ')}</span>
+                <span class="info-label">Resolvers Testados:</span>
+                <span class="info-value">${dnsResults.resolvers.map(r => r.name).join(', ') || 'Nenhum'}</span>
                 </div>
                 <div class="info-item">
                 <span class="info-label">DNSSEC:</span>
-                <span class="info-value">${dnsResults.dnssecSupport ? 'Suportado' : 'Não suportado'}</span>
+                <span class="info-value">${dnsResults.dnssecSupport ? 'Suportado' : 'Não detectado'}</span>
                 </div>
                 <div class="info-item">
                 <span class="info-label">DNS-over-HTTPS:</span>
                 <span class="info-value">${dnsResults.dohSupport ? 'Suportado' : 'Não suportado'}</span>
                 </div>
-                ${dnsResults.leaks.length > 0 ? `
+                <div class="info-item">
+                <span class="info-label">Consistência Geográfica:</span>
+                <span class="info-value">${getGeographicStatusText(dnsResults.geographicConsistency)}</span>
+                </div>
+                ${totalIssues > 0 ? `
                     <div style="margin-top: 15px; padding: 10px; background: #2d1810; border: 1px solid #ff6600; border-radius: 5px;">
-                    <strong style="color: #ff6600;">⚠️ Vazamentos Detectados:</strong><br>
-                    ${dnsResults.leaks.map(leak => `• ${leak}`).join('<br>')}
+                    <strong style="color: #ff6600;">⚠️ Vazamentos DNS Reais:</strong><br>
+                    ${dnsResults.realLeaks.map(leak => `• ${leak}`).join('<br>')}
                     </div>` : ''}
-                    `;
+                    ${hasTestErrors ? `
+                        <div style="margin-top: 15px; padding: 10px; background: #1a1a1a; border: 1px solid #666; border-radius: 5px;">
+                        <strong style="color: #feca57;">ℹ️ Erros de Teste (não são vazamentos):</strong><br>
+                        ${dnsResults.testErrors.map(error => `• ${error}`).join('<br>')}
+                        </div>` : ''}
+                        `;
 
-                    // Mostrar resultado imediatamente
-                    progressManager.completeProgress('dns-leak-info', finalContent);
-                    detectedInfo.dnsLeak = dnsResults;
+                        progressManager.completeProgress('dns-leak-info', finalContent);
+                        detectedInfo.dnsLeak = dnsResults;
 
             } catch (error) {
                 const errorContent = `
                 <div class="info-item">
                 <span class="info-label">DNS Leak Test:</span>
-                <span class="info-value">Erro: ${error.message}</span>
+                <span class="info-value">Erro crítico: ${error.message}</span>
                 </div>
                 `;
                 progressManager.completeProgress('dns-leak-info', errorContent);
+            }
+        }
+
+        // Função auxiliar para status geográfico
+        function getGeographicStatusText(status) {
+            switch (status) {
+                case 'consistent': return 'Consistente ✅';
+                case 'inconsistent': return 'Inconsistente ⚠️';
+                case 'limited_data': return 'Dados limitados';
+                case 'test_failed': return 'Teste falhou';
+                default: return 'Desconhecido';
             }
         }
 
@@ -411,7 +544,7 @@
                 const minLatency = Math.min(...latencyTests);
 
                 // Latência muito inconsistente pode indicar VPN
-                if (maxLatency - minLatency > 200 || avgLatency > 500) {
+                if (maxLatency - minLatency > 500 || avgLatency > 1000) {
                     vpnIndicators.suspiciousLatency = true;
                     detectionMethods.push('Latência inconsistente detectada');
                     vpnIndicators.anonymityScore += 20;
@@ -461,14 +594,16 @@
                     }
                 }
 
-                // Calcular nível de anonimato
+                // ✅ LÓGICA CORRIGIDA: Calcular nível de anonimato E detecção VPN
                 let anonymityLevel = 'Baixo';
-                let anonymityColor = '#ff6600';
+                let anonymityColor = '#00f000';
+                let vpnDetectionResult = 'Improvável';
 
-                if (vpnIndicators.anonymityScore < 20) {
+                // Primeiro: definir nível de anonimato baseado no score
+                if (vpnIndicators.anonymityScore < 30) {
                     anonymityLevel = 'Baixo';
                     anonymityColor = '#00f000';
-                } else if (vpnIndicators.anonymityScore < 50) {
+                } else if (vpnIndicators.anonymityScore < 60) {
                     anonymityLevel = 'Médio';
                     anonymityColor = '#feca57';
                 } else {
@@ -476,10 +611,20 @@
                     anonymityColor = '#ff6600';
                 }
 
+                // Segundo: lógica inteligente para detecção VPN
+                if (vpnIndicators.anonymityScore < 30 && webrtcLeaks === 0 && locationResults.length > 0) {
+                    // Score baixo + sem vazamentos + APIs consistentes = provavelmente não é VPN
+                    vpnDetectionResult = 'Improvável';
+                } else if (vpnIndicators.anonymityScore < 60) {
+                    vpnDetectionResult = 'Possível';
+                } else {
+                    vpnDetectionResult = 'Muito Provável';
+                }
+
                 const finalContent = `
                 <div class="info-item">
                 <span class="info-label">Proxy/VPN Detectado:</span>
-                <span class="info-value">${detectionMethods.length > 0 ? 'Possível' : 'Improvável'}</span>
+                <span class="info-value">${vpnDetectionResult}</span>
                 </div>
                 <div class="info-item">
                 <span class="info-label">Nível Anonimato:</span>
@@ -1500,14 +1645,17 @@
                 ];
 
                 let blockedNetworks = 0;
+
+                let networkTestAdded = false;
                 adNetworks.forEach(url => {
                     fetch(url, { method: 'HEAD', mode: 'no-cors' })
                     .catch(() => {
                         blockedNetworks++;
-                        if (blockedNetworks >= 2) {
+                        if (blockedNetworks >= 2 && !networkTestAdded) {
                             adBlockTests.fetchTest = true;
                             adBlockerDetected = true;
                             detectionMethods.push('Redes de anúncio bloqueadas');
+                            networkTestAdded = true; // ← PREVINE DUPLICAÇÃO
                         }
                     });
                 });
