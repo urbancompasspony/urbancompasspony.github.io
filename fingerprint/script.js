@@ -23,12 +23,10 @@
                     { id: 'canvas-info', type: 'circular', critical: true },
                     { id: 'webgl-info', type: 'circular' },
                     { id: 'sensors-info', type: 'circular' },
-                    { id: 'network-info', type: 'circular' },
                     { id: 'architecture-info', type: 'circular' },
                     { id: 'gpu-details-info', type: 'circular' },
                     { id: 'ipv6-info', type: 'circular', critical: true },
                     { id: 'audio-info', type: 'circular', critical: true },
-                    { id: 'private-mode-info', type: 'circular', critical: true },
                     { id: 'webrtc-comprehensive-info', type: 'circular', critical: true },
                     { id: 'extensions-info', type: 'circular', critical: true },
                     { id: 'adblocker-info', type: 'circular', critical: true },
@@ -73,11 +71,9 @@
                     loadCanvasInfo(),
                     loadWebGLInfo(),
                     loadSensorsInfo(),
-                    loadNetworkInfo(),
                     getGPUDetails(),
                     detectIPv6(),
                     getAudioFingerprint(),
-                    detectPrivateMode(),
                     detectExtensions(),
                     detectAdBlocker(),
                     comprehensiveWebRTCTest(),
@@ -1141,167 +1137,176 @@
                 }
             }
 
-        async function comprehensiveWebRTCTest() {
-            const container = document.getElementById('webrtc-comprehensive-info');
+            async function comprehensiveWebRTCTest() {
+                const container = document.getElementById('webrtc-comprehensive-info');
 
-            const steps = [
-                'Configurando STUN servers...',
-                'Testando Google STUN...',
-                'Testando Cloudflare STUN...',
-                'Coletando candidatos ICE...',
-                'Analisando vazamentos...'
-            ];
-
-            progressManager.simulateProgress('webrtc-comprehensive-info', 5000, steps);
-
-            try {
-                const webrtcInfo = {
-                    localIPs: [],
-                    publicIPs: [],
-                        stunServers: [],
-                        turnSupport: false,
-                        dtlsSupport: false,
-                        srtpSupport: false,
-                        candidateTypes: [],
-                        leaks: []
-                };
-
-                // Lista de STUN servers para testar
-                const stunServers = [
-                    'stun:stun.l.google.com:19302',
-                    'stun:stun1.l.google.com:19302',
-                    'stun:stun2.l.google.com:19302',
-                    'stun:stun.cloudflare.com:3478',
-                    'stun:stun.nextcloud.com:443'
+                const steps = [
+                    'Configurando testes paralelos...',
+                    'Testando STUN servers...',
+                    'Coletando candidatos ICE...',
+                    'Finalizando análise...'
                 ];
 
-                for (const stunServer of stunServers) {
-                    try {
-                        const pc = new RTCPeerConnection({
-                            iceServers: [{ urls: stunServer }]
-                        });
+                progressManager.simulateProgress('webrtc-comprehensive-info', 2000, steps); // Reduzido de 5000 para 2000
 
-                        const candidatesReceived = [];
+                try {
+                    const webrtcInfo = {
+                        localIPs: [],
+                        publicIPs: [],
+                            stunServers: [],
+                            turnSupport: false,
+                            dtlsSupport: false,
+                            srtpSupport: false,
+                            candidateTypes: [],
+                            leaks: []
+                    };
 
-                        pc.onicecandidate = (event) => {
-                            if (event.candidate) {
-                                const candidate = event.candidate.candidate;
-                                candidatesReceived.push(candidate);
+                    // Lista reduzida e otimizada de STUN servers
+                    const stunServers = [
+                        'stun:stun.l.google.com:19302',
+                        'stun:stun.cloudflare.com:3478'
+                        // Removido os outros para acelerar
+                    ];
 
-                                // Extrair IPs
-                                const ipMatch = candidate.match(/(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/);
-                                if (ipMatch) {
-                                    const ip = ipMatch[0];
+                    // Executar todos os testes em PARALELO
+                    const stunPromises = stunServers.map(stunServer => {
+                        return new Promise(async (resolve) => {
+                            try {
+                                const controller = new AbortController();
+                                const timeoutId = setTimeout(() => controller.abort(), 800); // Reduzido de 3000 para 800ms
 
-                                    // Classificar IP
-                                    if (ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.')) {
-                                        if (!webrtcInfo.localIPs.includes(ip)) {
-                                            webrtcInfo.localIPs.push(ip);
+                                const pc = new RTCPeerConnection({
+                                    iceServers: [{ urls: stunServer }]
+                                });
+
+                                const candidatesReceived = [];
+                                let resolved = false;
+
+                                pc.onicecandidate = (event) => {
+                                    if (event.candidate && !resolved) {
+                                        const candidate = event.candidate.candidate;
+                                        candidatesReceived.push(candidate);
+
+                                        // Extrair IPs
+                                        const ipMatch = candidate.match(/(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/);
+                                        if (ipMatch) {
+                                            const ip = ipMatch[0];
+
+                                            if (ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.')) {
+                                                if (!webrtcInfo.localIPs.includes(ip)) {
+                                                    webrtcInfo.localIPs.push(ip);
+                                                }
+                                            } else {
+                                                if (!webrtcInfo.publicIPs.includes(ip)) {
+                                                    webrtcInfo.publicIPs.push(ip);
+                                                    webrtcInfo.leaks.push(`IP público vazado: ${ip}`);
+                                                }
+                                            }
                                         }
-                                    } else {
-                                        if (!webrtcInfo.publicIPs.includes(ip)) {
-                                            webrtcInfo.publicIPs.push(ip);
-                                            webrtcInfo.leaks.push(`IP público vazado: ${ip}`);
+
+                                        // Classificar tipo de candidato
+                                        if (candidate.includes('typ host')) {
+                                            webrtcInfo.candidateTypes.push('Host');
+                                        } else if (candidate.includes('typ srflx')) {
+                                            webrtcInfo.candidateTypes.push('Server Reflexive');
+                                        } else if (candidate.includes('typ relay')) {
+                                            webrtcInfo.candidateTypes.push('Relay');
+                                        } else if (candidate.includes('typ prflx')) {
+                                            webrtcInfo.candidateTypes.push('Peer Reflexive');
                                         }
                                     }
-                                }
+                                };
 
-                                // Classificar tipo de candidato
-                                if (candidate.includes('typ host')) {
-                                    webrtcInfo.candidateTypes.push('Host');
-                                } else if (candidate.includes('typ srflx')) {
-                                    webrtcInfo.candidateTypes.push('Server Reflexive');
-                                } else if (candidate.includes('typ relay')) {
-                                    webrtcInfo.candidateTypes.push('Relay');
-                                } else if (candidate.includes('typ prflx')) {
-                                    webrtcInfo.candidateTypes.push('Peer Reflexive');
-                                }
+                                // Criar data channel para forçar ICE gathering
+                                pc.createDataChannel('test');
+                                const offer = await pc.createOffer();
+                                await pc.setLocalDescription(offer);
+
+                                // Aguardar candidatos (reduzido para 1 segundo)
+                                setTimeout(() => {
+                                    clearTimeout(timeoutId);
+                                    resolved = true;
+                                    pc.close();
+
+                                    if (candidatesReceived.length > 0) {
+                                        resolve({ success: true, server: stunServer });
+                                    } else {
+                                        resolve({ success: false, server: stunServer });
+                                    }
+                                }, 1000); // Reduzido de 3000 para 1000ms
+
+                            } catch (e) {
+                                resolve({ success: false, server: stunServer, error: e.message });
                             }
-                        };
+                        });
+                    });
 
-                        // Criar data channel para forçar ICE gathering
-                        pc.createDataChannel('test');
-                        const offer = await pc.createOffer();
-                        await pc.setLocalDescription(offer);
+                    // Aguardar TODOS os testes em paralelo
+                    const results = await Promise.all(stunPromises);
 
-                        // Aguardar candidatos
-                        await new Promise(resolve => setTimeout(resolve, 3000));
-
-                        if (candidatesReceived.length > 0) {
-                            webrtcInfo.stunServers.push(stunServer);
+                    // Processar resultados
+                    results.forEach(result => {
+                        if (result.success) {
+                            webrtcInfo.stunServers.push(result.server);
                         }
+                    });
 
-                        pc.close();
-
+                    // Testar suporte a protocolos rapidamente
+                    try {
+                        const capabilities = RTCRtpSender.getCapabilities ? RTCRtpSender.getCapabilities('video') : null;
+                        if (capabilities) {
+                            webrtcInfo.dtlsSupport = capabilities.headerExtensions?.some(ext => ext.uri.includes('urn:ietf:params:rtp-hdrext:encrypt')) || false;
+                            webrtcInfo.srtpSupport = true;
+                        }
                     } catch (e) {
-                        console.log(`STUN server ${stunServer} failed:`, e);
-                    }
-                }
-
-                // Testar suporte a protocolos
-                try {
-                    const pc = new RTCPeerConnection();
-                    const capabilities = RTCRtpSender.getCapabilities ? RTCRtpSender.getCapabilities('video') : null;
-
-                    if (capabilities) {
-                        webrtcInfo.dtlsSupport = capabilities.headerExtensions?.some(ext => ext.uri.includes('urn:ietf:params:rtp-hdrext:encrypt'));
-                        webrtcInfo.srtpSupport = true; // SRTP é padrão no WebRTC moderno
+                        webrtcInfo.srtpSupport = false;
                     }
 
-                    pc.close();
-                } catch (e) {
-                    // Falha no teste de capacidades
-                }
+                    // Remover duplicatas
+                    webrtcInfo.candidateTypes = [...new Set(webrtcInfo.candidateTypes)];
 
-                // Remover duplicatas
-                webrtcInfo.candidateTypes = [...new Set(webrtcInfo.candidateTypes)];
+                    const finalContent = `
+                    <div class="info-item">
+                    <span class="info-label">IPs Locais:</span>
+                    <span class="info-value">${webrtcInfo.localIPs.length > 0 ? webrtcInfo.localIPs.join(', ') : 'Nenhum detectado'}</span>
+                    </div>
+                    <div class="info-item">
+                    <span class="info-label">IPs Públicos:</span>
+                    <span class="info-value">${webrtcInfo.publicIPs.length > 0 ? webrtcInfo.publicIPs.join(', ') : 'Nenhum detectado'}</span>
+                    </div>
+                    <div class="info-item">
+                    <span class="info-label">STUN Servers OK:</span>
+                    <span class="info-value">${webrtcInfo.stunServers.length}/${stunServers.length}</span>
+                    </div>
+                    <div class="info-item">
+                    <span class="info-label">Tipos de Candidato:</span>
+                    <span class="info-value">${webrtcInfo.candidateTypes.join(', ') || 'Nenhum'}</span>
+                    </div>
+                    <div class="info-item">
+                    <span class="info-label">SRTP Suporte:</span>
+                    <span class="info-value">${webrtcInfo.srtpSupport ? 'Sim' : 'Não'}</span>
+                    </div>
+                    ${webrtcInfo.leaks.length > 0 ? `
+                        <div class="info-item" style="color: #ff6600;">
+                        <span class="info-label">⚠️ Vazamentos:</span>
+                        <span class="info-value">${webrtcInfo.leaks.length}</span>
+                        </div>` : ''}
+                        `;
 
-                const finalContent = `
-                <div class="info-item">
-                <span class="info-label">IPs Locais:</span>
-                <span class="info-value">${webrtcInfo.localIPs.length > 0 ? webrtcInfo.localIPs.join(', ') : 'Nenhum detectado'}</span>
-                </div>
-                <div class="info-item">
-                <span class="info-label">IPs Públicos:</span>
-                <span class="info-value">${webrtcInfo.publicIPs.length > 0 ? webrtcInfo.publicIPs.join(', ') : 'Nenhum detectado'}</span>
-                </div>
-                <div class="info-item">
-                <span class="info-label">STUN Servers OK:</span>
-                <span class="info-value">${webrtcInfo.stunServers.length}/${stunServers.length}</span>
-                </div>
-                <div class="info-item">
-                <span class="info-label">Tipos de Candidato:</span>
-                <span class="info-value">${webrtcInfo.candidateTypes.join(', ') || 'Nenhum'}</span>
-                </div>
-                <div class="info-item">
-                <span class="info-label">SRTP Suporte:</span>
-                <span class="info-value">${webrtcInfo.srtpSupport ? 'Sim' : 'Não'}</span>
-                </div>
-                ${webrtcInfo.leaks.length > 0 ? `
-                    <div class="info-item" style="color: #ff6600;">
-                    <span class="info-label">⚠️ Vazamentos:</span>
-                    <span class="info-value">${webrtcInfo.leaks.length}</span>
-                    </div>` : ''}
-                    `;
-
-                    setTimeout(() => {
+                        // Mostrar resultado imediatamente quando terminar
                         progressManager.completeProgress('webrtc-comprehensive-info', finalContent);
                         detectedInfo.webrtcComprehensive = webrtcInfo;
-                    }, 5100);
 
-            } catch (error) {
-                const errorContent = `
-                <div class="info-item">
-                <span class="info-label">WebRTC Test:</span>
-                <span class="info-value">Erro: ${error.message}</span>
-                </div>
-                `;
-
-                setTimeout(() => {
+                } catch (error) {
+                    const errorContent = `
+                    <div class="info-item">
+                    <span class="info-label">WebRTC Test:</span>
+                    <span class="info-value">Erro: ${error.message}</span>
+                    </div>
+                    `;
                     progressManager.completeProgress('webrtc-comprehensive-info', errorContent);
-                }, 5100);
+                }
             }
-        }
 
         async function detectExtensions() {
             const container = document.getElementById('extensions-info');
@@ -1878,89 +1883,6 @@
                 <div class="info-item">
                 <span class="info-label">Audio:</span>
                 <span class="info-value">Erro ao detectar</span>
-                </div>
-                `;
-            }
-        }
-
-        async function detectPrivateMode() {
-            const container = document.getElementById('private-mode-info');
-
-            let isPrivate = false;
-            let detectionMethod = 'Unknown';
-
-            try {
-                // Método 1: Teste de storage
-                if ('storage' in navigator && 'estimate' in navigator.storage) {
-                    const estimate = await navigator.storage.estimate();
-                    if (estimate.quota < 120000000) { // Menos que ~120MB indica modo privado
-                        isPrivate = true;
-                        detectionMethod = 'Storage Quota';
-                    }
-                }
-
-                // Método 2: IndexedDB test
-                if (!isPrivate) {
-                    try {
-                        const db = indexedDB.open('test', 1);
-                        db.onerror = () => {
-                            isPrivate = true;
-                            detectionMethod = 'IndexedDB Error';
-                        };
-                    } catch (e) {
-                        isPrivate = true;
-                        detectionMethod = 'IndexedDB Exception';
-                    }
-                }
-
-                // Método 3: RequestFileSystem (Chrome específico)
-                if (!isPrivate && 'webkitRequestFileSystem' in window) {
-                    window.webkitRequestFileSystem(0, 1,
-                                                   () => {},
-                                                   () => {
-                                                       isPrivate = true;
-                                                       detectionMethod = 'FileSystem API';
-                                                   }
-                    );
-                }
-
-                // Método 4: Safari specific
-                if (!isPrivate && 'safari' in window) {
-                    try {
-                        localStorage.setItem('test', '1');
-                        localStorage.removeItem('test');
-                    } catch (e) {
-                        isPrivate = true;
-                        detectionMethod = 'Safari LocalStorage';
-                    }
-                }
-
-                container.innerHTML = `
-                <div class="info-item">
-                <span class="info-label">Modo Privado:</span>
-                <span class="info-value">${isPrivate ? 'Detectado' : 'Não detectado'}</span>
-                </div>
-                <div class="info-item">
-                <span class="info-label">Método:</span>
-                <span class="info-value">${detectionMethod}</span>
-                </div>
-                <div class="info-item">
-                <span class="info-label">Storage Estimate:</span>
-                <span class="info-value">${navigator.storage ? 'Disponível' : 'Não disponível'}</span>
-                </div>
-                `;
-
-                detectedInfo.privateMode = {
-                    isPrivate,
-                    detectionMethod,
-                    storageAvailable: 'storage' in navigator
-                };
-
-            } catch (error) {
-                container.innerHTML = `
-                <div class="info-item">
-                <span class="info-label">Modo Privado:</span>
-                <span class="info-value">Erro na detecção</span>
                 </div>
                 `;
             }
@@ -2981,97 +2903,6 @@
             }, 2600);
         }
 
-        // Carregar informações de rede
-        function loadNetworkInfo() {
-            const container = document.getElementById('network-info');
-
-            let networkInfo = `
-            <div class="info-item">
-            <span class="info-label">URL Atual:</span>
-            <span class="info-value">${window.location.href}</span>
-            </div>
-            <div class="info-item">
-            <span class="info-label">Protocolo:</span>
-            <span class="info-value">${window.location.protocol}</span>
-            </div>
-            <div class="info-item">
-            <span class="info-label">Host:</span>
-            <span class="info-value">${window.location.host}</span>
-            </div>
-            <div class="info-item">
-            <span class="info-label">Porta:</span>
-            <span class="info-value">${window.location.port || (window.location.protocol === 'https:' ? '443' : '80')}</span>
-            </div>
-            <div class="info-item">
-            <span class="info-label">Referrer:</span>
-            <span class="info-value">${document.referrer || 'Direto'}</span>
-            </div>
-            `;
-
-            // Informações de conexão
-            if (navigator.connection) {
-                networkInfo += `
-                <div class="info-item">
-                <span class="info-label">Tipo de Conexão:</span>
-                <span class="info-value">${navigator.connection.effectiveType}</span>
-                </div>
-                <div class="info-item">
-                <span class="info-label">Velocidade Download:</span>
-                <span class="info-value">${navigator.connection.downlink} Mbps</span>
-                </div>
-                <div class="info-item">
-                <span class="info-label">RTT:</span>
-                <span class="info-value">${navigator.connection.rtt} ms</span>
-                </div>
-                `;
-            }
-
-            // Testar conexões WebRTC
-            testWebRTCConnections().then(connections => {
-                if (connections.length > 0) {
-                    networkInfo += `
-                    <div class="connection-list">
-                    <strong>Conexões WebRTC Detectadas:</strong>
-                    ${connections.map(conn => `
-                        <div class="connection-item">${conn}</div>
-                        `).join('')}
-                        </div>
-                        `;
-                        container.innerHTML = networkInfo;
-                }
-            });
-
-            container.innerHTML = networkInfo;
-        }
-
-        // Testar conexões WebRTC
-        async function testWebRTCConnections() {
-            return new Promise((resolve) => {
-                const connections = [];
-                const pc = new RTCPeerConnection({
-                    iceServers: [
-                        { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'stun:stun1.l.google.com:19302' }
-                    ]
-                });
-
-                pc.onicecandidate = (event) => {
-                    if (event.candidate) {
-                        connections.push(event.candidate.candidate);
-                    }
-                };
-
-                pc.createDataChannel('test');
-                pc.createOffer().then(offer => {
-                    pc.setLocalDescription(offer);
-                    setTimeout(() => {
-                        pc.close();
-                        resolve(connections);
-                    }, 2000);
-                });
-            });
-        }
-
         // Calcular fingerprint do navegador
         function calculateFingerprint() {
             const container = document.getElementById('fingerprint-info');
@@ -3258,135 +3089,133 @@
 
             progressManager.createProgressBar('privacy-score', 'circular', true);
 
+            // Progresso rápido - sem delays artificiais
             let currentStep = 0;
-            const totalSteps = 5; // Reduzido de 10 para 5
+            const totalSteps = 3;
 
             const updateProgress = (step, text) => {
-                currentStep = step;
-                progressManager.updateProgress('privacy-score', currentStep, totalSteps, text);
+                progressManager.updateProgress('privacy-score', step, totalSteps, text);
             };
 
-            updateProgress(1, 'Iniciando análise...');
+            updateProgress(1, 'Analisando dados...');
 
+            // Calcular score IMEDIATAMENTE com dados disponíveis
+            let score = 100;
+            let risks = [];
+
+            // Verificações básicas (sempre disponíveis)
+            if (detectedInfo.canvas) {
+                score -= 15;
+                risks.push('Canvas Fingerprinting detectado');
+            }
+
+            if (detectedInfo.webgl) {
+                score -= 10;
+                risks.push('WebGL Fingerprinting detectado');
+            }
+
+            if (detectedInfo.fonts && detectedInfo.fonts.length > 20) {
+                score -= 10;
+                risks.push('Muitas fontes detectadas');
+            }
+
+            if (detectedInfo.plugins && detectedInfo.plugins.length > 0) {
+                score -= 8;
+                risks.push('Plugins detectados');
+            }
+
+            if (!navigator.doNotTrack) {
+                score -= 5;
+                risks.push('Do Not Track desabilitado');
+            }
+
+            if (navigator.cookieEnabled) {
+                score -= 5;
+                risks.push('Cookies habilitados');
+            }
+
+            if (location.protocol !== 'https:') {
+                score -= 15;
+                risks.push('Conexão não segura (HTTP)');
+            }
+
+            updateProgress(2, 'Verificando vazamentos...');
+
+            // Verificações opcionais (podem não estar prontas ainda)
+            if (detectedInfo.ip) {
+                score -= 12;
+                risks.push('IP público exposto');
+            }
+
+            if (detectedInfo.preciseLocation) {
+                score -= 20;
+                risks.push('Localização precisa exposta');
+            }
+
+            // WebRTC (verificar se já terminou)
+            if (detectedInfo.webrtcComprehensive && detectedInfo.webrtcComprehensive.leaks && detectedInfo.webrtcComprehensive.leaks.length > 0) {
+                score -= 15;
+                risks.push('Vazamentos WebRTC detectados');
+            }
+
+            // DNS (verificar se já terminou)
+            if (detectedInfo.dnsLeak && detectedInfo.dnsLeak.leaks && detectedInfo.dnsLeak.leaks.length > 0) {
+                score -= 10;
+                risks.push('Vazamentos DNS detectados');
+            }
+
+            updateProgress(3, 'Finalizando...');
+
+            score = Math.max(score, 0);
+            privacyScore = score;
+
+            let riskLevel = 'risk-high';
+            let riskText = 'Alto Risco';
+            let riskIcon = '🔴';
+
+            if (score > 70) {
+                riskLevel = 'risk-low';
+                riskText = 'Baixo Risco';
+                riskIcon = '🟢';
+            } else if (score > 40) {
+                riskLevel = 'risk-medium';
+                riskText = 'Médio Risco';
+                riskIcon = '🟡';
+            }
+
+            const finalContent = `
+            <div class="privacy-score">${score}/100</div>
+            <div class="risk-indicator ${riskLevel}">
+            ${riskIcon} ${riskText}
+            </div>
+            <div style="margin-top: 20px;">
+            <strong>Vulnerabilidades encontradas (${risks.length}):</strong>
+            <ul style="margin-top: 10px; padding-left: 20px; max-height: 150px; overflow-y: auto;">
+            ${risks.map(risk => `<li>${risk}</li>`).join('')}
+            </ul>
+            </div>
+            <div style="margin-top: 20px; font-size: 0.9em; color: #666;">
+            <strong>Dicas para melhorar sua privacidade:</strong>
+            <ul style="margin-top: 10px; padding-left: 20px;">
+            <li>Use extensões anti-tracking (uBlock Origin, Privacy Badger)</li>
+            <li>Desabilite JavaScript para sites não confiáveis</li>
+            <li>Use VPN para mascarar seu IP</li>
+            <li>Configure seu navegador para bloquear fingerprinting</li>
+            <li>Desabilite plugins desnecessários</li>
+            ${score < 50 ? '<li><strong style="color: #ff6600;">Considere usar Tor Browser para máxima privacidade</strong></li>' : ''}
+            </ul>
+            </div>
+            `;
+
+            // Mostrar resultado IMEDIATAMENTE - sem setTimeout
+            progressManager.completeProgress('privacy-score', finalContent);
+
+            // Se testes opcionais terminarem depois, recalcular
             setTimeout(() => {
-                updateProgress(2, 'Analisando vulnerabilidades...');
-
-                let score = 100;
-                let risks = [];
-
-                // Verificar todos os riscos de uma vez
-                if (detectedInfo.canvas) {
-                    score -= 15;
-                    risks.push('Canvas Fingerprinting detectado');
+                if (detectedInfo.webrtcComprehensive || detectedInfo.dnsLeak) {
+                    calculatePrivacyScore(); // Recalcular se novos dados chegaram
                 }
-
-                if (detectedInfo.webgl) {
-                    score -= 10;
-                    risks.push('WebGL Fingerprinting detectado');
-                }
-
-                setTimeout(() => {
-                    updateProgress(3, 'Verificando configurações...');
-
-                    if (detectedInfo.fonts && detectedInfo.fonts.length > 20) {
-                        score -= 10;
-                        risks.push('Muitas fontes detectadas');
-                    }
-
-                    if (detectedInfo.plugins && detectedInfo.plugins.length > 0) {
-                        score -= 8;
-                        risks.push('Plugins detectados');
-                    }
-
-                    if (!navigator.doNotTrack) {
-                        score -= 5;
-                        risks.push('Do Not Track desabilitado');
-                    }
-
-                    if (navigator.cookieEnabled) {
-                        score -= 5;
-                        risks.push('Cookies habilitados');
-                    }
-
-                    setTimeout(() => {
-                        updateProgress(4, 'Verificando vazamentos...');
-
-                        if (location.protocol !== 'https:') {
-                            score -= 15;
-                            risks.push('Conexão não segura (HTTP)');
-                        }
-
-                        if (detectedInfo.ip) {
-                            score -= 12;
-                            risks.push('IP público exposto');
-                        }
-
-                        if (detectedInfo.preciseLocation) {
-                            score -= 20;
-                            risks.push('Localização precisa exposta');
-                        }
-
-                        if (detectedInfo.webrtcComprehensive && detectedInfo.webrtcComprehensive.leaks.length > 0) {
-                            score -= 15;
-                            risks.push('Vazamentos WebRTC detectados');
-                        }
-
-                        if (detectedInfo.dnsLeak && detectedInfo.dnsLeak.leaks.length > 0) {
-                            score -= 10;
-                            risks.push('Vazamentos DNS detectados');
-                        }
-
-                        setTimeout(() => {
-                            updateProgress(5, 'Calculando score final...');
-
-                            score = Math.max(score, 0);
-                            privacyScore = score;
-
-                            let riskLevel = 'risk-high';
-                            let riskText = 'Alto Risco';
-                            let riskIcon = '🔴';
-
-                            if (score > 70) {
-                                riskLevel = 'risk-low';
-                                riskText = 'Baixo Risco';
-                                riskIcon = '🟢';
-                            } else if (score > 40) {
-                                riskLevel = 'risk-medium';
-                                riskText = 'Médio Risco';
-                                riskIcon = '🟡';
-                            }
-
-                            const finalContent = `
-                            <div class="privacy-score">${score}/100</div>
-                            <div class="risk-indicator ${riskLevel}">
-                            ${riskIcon} ${riskText}
-                            </div>
-                            <div style="margin-top: 20px;">
-                            <strong>Vulnerabilidades encontradas (${risks.length}):</strong>
-                            <ul style="margin-top: 10px; padding-left: 20px; max-height: 150px; overflow-y: auto;">
-                            ${risks.map(risk => `<li>${risk}</li>`).join('')}
-                            </ul>
-                            </div>
-                            <div style="margin-top: 20px; font-size: 0.9em; color: #666;">
-                            <strong>Dicas para melhorar sua privacidade:</strong>
-                            <ul style="margin-top: 10px; padding-left: 20px;">
-                            <li>Use extensões anti-tracking (uBlock Origin, Privacy Badger)</li>
-                            <li>Desabilite JavaScript para sites não confiáveis</li>
-                            <li>Use VPN para mascarar seu IP</li>
-                            <li>Configure seu navegador para bloquear fingerprinting</li>
-                            <li>Desabilite plugins desnecessários</li>
-                            ${score < 50 ? '<li><strong style="color: #ff6600;">Considere usar Tor Browser para máxima privacidade</strong></li>' : ''}
-                            </ul>
-                            </div>
-                            `;
-
-                            // Mostrar resultado imediatamente
-                            progressManager.completeProgress('privacy-score', finalContent);
-
-                        }, 250); // 250ms
-                    }, 250);
-                }, 250);
-            }, 250);
+            }, 3000);
         }
 
         // Função para atualizar todas as informações

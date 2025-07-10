@@ -1,52 +1,31 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔍 SYSTEM INTRUSION ANALYZER</title>
-    <link rel="stylesheet" href="style.css">
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>🔍 ANALISADOR DE VULNERABILIDADES DO SISTEMA</title>
+   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🔍 SYSTEM INTRUSION ANALYZER</h1>
-            <p>[ ANALYZING BROWSER VULNERABILITIES AND DATA EXPOSURE ]</p>
-            <div class="warning">
-                ⚠️ WARNING: CRITICAL INFORMATION EXPOSURE DETECTED
-            </div>
-        </div>
+   <div class="container">
+       <div class="header">
+           <h1>🔍 ANALISADOR DE VULNERABILIDADES DO SISTEMA</h1>
+           <p>[ ANALISANDO VULNERABILIDADES DO NAVEGADOR E EXPOSIÇÃO DE DADOS ]</p>
+           <div class="warning">
+               ⚠️ AVISO: EXPOSIÇÃO CRÍTICA DE INFORMAÇÕES ABAIXO!
+           </div>
+       </div>
 
-        <button class="refresh-btn" onclick="refreshAllInfo()">🔄 REINITIALIZE SCAN</button>
+        <button class="refresh-btn" onclick="refreshAllInfo()">🔄 ESCANEAR NOVAMENTE</button>
 
         <div class="grid">
-            <!-- IP e Localização -->
-            <div class="card critical">
-                <h3>🌐 IP e Localização</h3>
-                <div class="card-content" id="ip-info">
-                    <div class="loading">Carregando informações de IP...</div>
-                </div>
-            </div>
 
-            <!-- Browser Fingerprint -->
-            <div class="card critical">
-                <h3>🔒 Browser Fingerprint</h3>
-                <div class="card-content" id="fingerprint-info">
-                    <div class="loading">Calculando fingerprint...</div>
-                </div>
-            </div>
+            <!-- === INFORMAÇÕES BÁSICAS === -->
 
             <!-- Informações Básicas -->
             <div class="card">
                 <h3>💻 Informações Básicas</h3>
                 <div class="card-content" id="basic-info">
-                    <div class="loading">Carregando...</div>
-                </div>
-            </div>
-
-            <!-- Tela e Display -->
-            <div class="card">
-                <h3>📱 Tela e Display</h3>
-                <div class="card-content" id="screen-info">
                     <div class="loading">Carregando...</div>
                 </div>
             </div>
@@ -59,11 +38,45 @@
                 </div>
             </div>
 
+            <!-- Tela e Display -->
+            <div class="card">
+                <h3>📱 Tela e Display</h3>
+                <div class="card-content" id="screen-info">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+
             <!-- Recursos Hardware -->
             <div class="card">
                 <h3>⚡ Hardware</h3>
                 <div class="card-content" id="hardware-info">
                     <div class="loading">Carregando...</div>
+                </div>
+            </div>
+
+            <!-- Arquitetura do Sistema -->
+            <div class="card">
+                <h3>🏗️ Arquitetura do Sistema</h3>
+                <div class="card-content" id="architecture-info">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+
+            <!-- === CONFIGURAÇÕES E PERMISSÕES === -->
+
+            <!-- Configurações de Segurança -->
+            <div class="card warning-level">
+                <h3>🔐 Configurações de Segurança</h3>
+                <div class="card-content" id="security-info">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+
+            <!-- Sensores e Permissões -->
+            <div class="card">
+                <h3>📡 Sensores e Permissões</h3>
+                <div class="card-content" id="sensors-info">
+                    <div class="loading">Verificando sensores...</div>
                 </div>
             </div>
 
@@ -75,21 +88,41 @@
                 </div>
             </div>
 
-            <!-- Configurações de Segurança -->
+            <!-- === REDE E CONECTIVIDADE === -->
+
+            <!-- IP e Localização -->
+            <div class="card critical">
+                <h3>🌐 IP e Localização</h3>
+                <div class="card-content" id="ip-info">
+                    <div class="loading">Carregando informações de IP...</div>
+                </div>
+            </div>
+
+            <!-- IPv6 Information -->
             <div class="card warning-level">
-                <h3>🔐 Configurações de Segurança</h3>
-                <div class="card-content" id="security-info">
+                <h3>🌐 Informações IPv6</h3>
+                <div class="card-content" id="ipv6-info">
                     <div class="loading">Carregando...</div>
                 </div>
             </div>
 
-            <!-- Fontes do Sistema -->
-            <div class="card">
-                <h3>🔤 Fontes Detectadas</h3>
-                <div class="card-content" id="fonts-info">
-                    <div class="loading">Detectando fontes...</div>
+            <!-- WebRTC Comprehensive -->
+            <div class="card critical">
+                <h3>🌐 Análise WebRTC Completa</h3>
+                <div class="card-content" id="webrtc-comprehensive-info">
+                    <div class="loading">Carregando...</div>
                 </div>
             </div>
+
+            <!-- DNS Leak Test -->
+            <div class="card critical">
+                <h3>🌐 Teste de Vazamento DNS</h3>
+                <div class="card-content" id="dns-leak-info">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+
+            <!-- === DETECÇÃO DE FINGERPRINTING === -->
 
             <!-- Canvas Fingerprinting -->
             <div class="card critical">
@@ -104,25 +137,9 @@
 
             <!-- WebGL Information -->
             <div class="card">
-                <h3>🎮 WebGL Information</h3>
+                <h3>🎮 Informações WebGL</h3>
                 <div class="card-content" id="webgl-info">
                     <div class="loading">Carregando informações WebGL...</div>
-                </div>
-            </div>
-
-            <!-- Sensores e Permissões -->
-            <div class="card">
-                <h3>📡 Sensores e Permissões</h3>
-                <div class="card-content" id="sensors-info">
-                    <div class="loading">Verificando sensores...</div>
-                </div>
-            </div>
-
-            <!-- Arquitetura do Sistema -->
-            <div class="card">
-                <h3>🏗️ Arquitetura do Sistema</h3>
-                <div class="card-content" id="architecture-info">
-                    <div class="loading">Carregando...</div>
                 </div>
             </div>
 
@@ -130,14 +147,6 @@
             <div class="card">
                 <h3>🎮 GPU Detalhada</h3>
                 <div class="card-content" id="gpu-details-info">
-                    <div class="loading">Carregando...</div>
-                </div>
-            </div>
-
-            <!-- IPv6 Information -->
-            <div class="card warning-level">
-                <h3>🌐 IPv6 Information</h3>
-                <div class="card-content" id="ipv6-info">
                     <div class="loading">Carregando...</div>
                 </div>
             </div>
@@ -150,21 +159,23 @@
                 </div>
             </div>
 
-            <!-- Private Mode Detection -->
-            <div class="card warning-level">
-                <h3>🕵️ Detecção Modo Privado</h3>
-                <div class="card-content" id="private-mode-info">
-                    <div class="loading">Carregando...</div>
+            <!-- Fontes do Sistema -->
+            <div class="card">
+                <h3>🔤 Fontes Detectadas</h3>
+                <div class="card-content" id="fonts-info">
+                    <div class="loading">Detectando fontes...</div>
                 </div>
             </div>
 
-            <!-- WebRTC Comprehensive -->
+            <!-- Browser Fingerprint -->
             <div class="card critical">
-                <h3>🌐 WebRTC Comprehensive</h3>
-                <div class="card-content" id="webrtc-comprehensive-info">
-                    <div class="loading">Carregando...</div>
+                <h3>🔒 Impressão Digital</h3>
+                <div class="card-content" id="fingerprint-info">
+                    <div class="loading">Calculando fingerprint...</div>
                 </div>
             </div>
+
+            <!-- === DETECÇÃO AVANÇADA === -->
 
             <!-- Extensions Detection -->
             <div class="card warning-level">
@@ -176,16 +187,8 @@
 
             <!-- Ad Blocker Detection -->
             <div class="card warning-level">
-                <h3>🚫 Detecção Ad Blocker</h3>
+                <h3>🚫 Detecção de Ad Blocker</h3>
                 <div class="card-content" id="adblocker-info">
-                    <div class="loading">Carregando...</div>
-                </div>
-            </div>
-
-            <!-- DNS Leak Test -->
-            <div class="card critical">
-                <h3>🌐 Teste de Vazamento DNS</h3>
-                <div class="card-content" id="dns-leak-info">
                     <div class="loading">Carregando...</div>
                 </div>
             </div>
@@ -206,23 +209,15 @@
                 </div>
             </div>
 
-                        <!-- Connections e Network -->
-            <div class="card full-width">
-                <h3>🌐 Informações de Rede</h3>
-                <div class="card-content" id="network-info">
-                    <div class="loading">Carregando informações de rede...</div>
-                </div>
+            <div>
+                <!-- PDF Report Button -->
+                <button class="refresh-btn" onclick="generatePDFReport()">📋 GERAR RELATÓRIO PDF</button>
             </div>
 
 
             <div>
-            <!-- PDF Report Button -->
-            <button class="refresh-btn" onclick="generatePDFReport()">📋 GERAR RELATÓRIO PDF</button>
-            </div>
-            <div></div>
-            <div>
-            <!-- Export button -->
-            <button class="refresh-btn" onclick="exportResults()">📊 EXPORTAR RESULTADOS</button>
+                <!-- Export button -->
+                <button class="refresh-btn" onclick="exportResults()">📊 EXPORTAR RESULTADOS</button>
             </div>
 
         </div>
