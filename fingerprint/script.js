@@ -23,7 +23,12 @@
                                   loadCanvasInfo(),
                                   loadWebGLInfo(),
                                   loadSensorsInfo(),
-                                  loadNetworkInfo()
+                                  loadNetworkInfo(),
+                                  detectArchitecture(),
+                                  getGPUDetails(),
+                                  detectIPv6(),
+                                  getAudioFingerprint(),
+                                  detectPrivateMode()
                 ]);
 
                 // Pequena pausa para garantir que tudo carregou
@@ -36,6 +41,488 @@
                 console.error('Erro ao carregar informações:', error);
             }
         }
+
+        function detectArchitecture() {
+            const container = document.getElementById('architecture-info');
+
+            // Detectar através de múltiplas fontes
+            const platform = navigator.platform.toLowerCase();
+            const userAgent = navigator.userAgent.toLowerCase();
+            const maxTouchPoints = navigator.maxTouchPoints;
+
+            let architecture = 'Unknown';
+            let bits = 'Unknown';
+            let deviceType = 'Unknown';
+
+            // Detectar arquitetura
+            if (platform.includes('win') && (platform.includes('wow64') || platform.includes('x64') || userAgent.includes('x64'))) {
+                architecture = 'x64';
+                bits = '64-bit';
+            } else if (platform.includes('win')) {
+                architecture = 'x86';
+                bits = '32-bit';
+            } else if (platform.includes('arm') || userAgent.includes('arm')) {
+                architecture = 'ARM';
+                bits = userAgent.includes('arm64') ? '64-bit' : '32-bit';
+            } else if (platform.includes('x86_64') || platform.includes('amd64')) {
+                architecture = 'x64';
+                bits = '64-bit';
+            } else if (platform.includes('i386') || platform.includes('i686')) {
+                architecture = 'x86';
+                bits = '32-bit';
+            }
+
+            // Detectar tipo de dispositivo
+            if (maxTouchPoints > 0) {
+                deviceType = 'Touch Device';
+            } else if (userAgent.includes('mobile')) {
+                deviceType = 'Mobile';
+            } else if (userAgent.includes('tablet')) {
+                deviceType = 'Tablet';
+            } else {
+                deviceType = 'Desktop';
+            }
+
+            container.innerHTML = `
+            <div class="info-item">
+            <span class="info-label">Arquitetura:</span>
+            <span class="info-value">${architecture}</span>
+            </div>
+            <div class="info-item">
+            <span class="info-label">Bits:</span>
+            <span class="info-value">${bits}</span>
+            </div>
+            <div class="info-item">
+            <span class="info-label">Tipo Device:</span>
+            <span class="info-value">${deviceType}</span>
+            </div>
+            <div class="info-item">
+            <span class="info-label">Max Touch Points:</span>
+            <span class="info-value">${maxTouchPoints}</span>
+            </div>
+            `;
+
+            detectedInfo.architecture = {
+                architecture,
+                bits,
+                deviceType,
+                maxTouchPoints,
+                platform: navigator.platform
+            };
+        }
+
+        function getGPUDetails() {
+            const container = document.getElementById('gpu-details-info');
+
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+
+                if (!gl) {
+                    container.innerHTML = `
+                    <div class="info-item">
+                    <span class="info-label">GPU:</span>
+                    <span class="info-value">WebGL não suportado</span>
+                    </div>
+                    `;
+                    return;
+                }
+
+                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                const extensions = gl.getSupportedExtensions();
+
+                // Informações detalhadas da GPU
+                const gpuInfo = {
+                    vendor: gl.getParameter(gl.VENDOR),
+                    renderer: gl.getParameter(gl.RENDERER),
+                    version: gl.getParameter(gl.VERSION),
+                    glslVersion: gl.getParameter(gl.SHADING_LANGUAGE_VERSION),
+                    unmaskedVendor: debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : 'Não disponível',
+                    unmaskedRenderer: debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'Não disponível',
+                    maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE),
+                    maxVertexAttribs: gl.getParameter(gl.MAX_VERTEX_ATTRIBS),
+                    maxViewportDims: gl.getParameter(gl.MAX_VIEWPORT_DIMS),
+                    aliasedPointSizeRange: gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE),
+                    aliasedLineWidthRange: gl.getParameter(gl.ALIASED_LINE_WIDTH_RANGE),
+                    maxFragmentUniforms: gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS),
+                    maxVertexUniforms: gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS),
+                    extensionsCount: extensions.length
+                };
+
+                container.innerHTML = `
+                <div class="info-item">
+                <span class="info-label">GPU Vendor:</span>
+                <span class="info-value">${gpuInfo.unmaskedVendor}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">GPU Renderer:</span>
+                <span class="info-value">${gpuInfo.unmaskedRenderer}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Max Texture Size:</span>
+                <span class="info-value">${gpuInfo.maxTextureSize}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Max Vertex Attribs:</span>
+                <span class="info-value">${gpuInfo.maxVertexAttribs}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Max Viewport:</span>
+                <span class="info-value">${gpuInfo.maxViewportDims[0]}x${gpuInfo.maxViewportDims[1]}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">WebGL Extensions:</span>
+                <span class="info-value">${gpuInfo.extensionsCount}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Point Size Range:</span>
+                <span class="info-value">${gpuInfo.aliasedPointSizeRange[0]} - ${gpuInfo.aliasedPointSizeRange[1]}</span>
+                </div>
+                `;
+
+                detectedInfo.gpuDetails = gpuInfo;
+
+            } catch (error) {
+                container.innerHTML = `
+                <div class="info-item">
+                <span class="info-label">GPU:</span>
+                <span class="info-value">Erro ao detectar</span>
+                </div>
+                `;
+            }
+        }
+
+        async function detectIPv6() {
+            const container = document.getElementById('ipv6-info');
+
+            try {
+                let ipv6Info = {
+                    hasIPv6: false,
+                    ipv6Address: null,
+                    ipv4Address: null,
+                    dualStack: false,
+                    connectivityTest: 'Testando...'
+                };
+
+                // Pegar IPv4 existente
+                if (detectedInfo.ip && detectedInfo.ip.ip) {
+                    ipv6Info.ipv4Address = detectedInfo.ip.ip;
+                }
+
+                // Teste 1: Tentar conectar a serviços IPv6-only
+                try {
+                    const ipv6Tests = [
+                        'https://v6.ipv6-test.com/api/myip.php',
+                        'https://ipv6.google.com',
+                        'https://ipv6.facebook.com'
+                    ];
+
+                    for (const testUrl of ipv6Tests) {
+                        try {
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+                            const response = await fetch(testUrl, {
+                                signal: controller.signal,
+                                mode: 'no-cors' // Evitar CORS issues
+                            });
+
+                            clearTimeout(timeoutId);
+
+                            // Se chegou aqui, conseguiu conectar via IPv6
+                            ipv6Info.hasIPv6 = true;
+                            ipv6Info.connectivityTest = 'IPv6 conectividade detectada';
+                            break;
+
+                        } catch (e) {
+                            if (e.name === 'AbortError') {
+                                ipv6Info.connectivityTest = 'Timeout - provável ausência de IPv6';
+                            }
+                            continue;
+                        }
+                    }
+                } catch (e) {
+                    ipv6Info.connectivityTest = 'Teste de conectividade falhou';
+                }
+
+                // Teste 2: Verificar através de DNS
+                if (!ipv6Info.hasIPv6) {
+                    try {
+                        // Tentar resolver AAAA record (IPv6) via API
+                        const dnsResponse = await fetch('https://cloudflare-dns.com/dns-query?name=google.com&type=AAAA', {
+                            headers: { 'Accept': 'application/dns-json' }
+                        });
+
+                        if (dnsResponse.ok) {
+                            const dnsData = await dnsResponse.json();
+                            if (dnsData.Answer && dnsData.Answer.length > 0) {
+                                ipv6Info.connectivityTest = 'DNS suporta IPv6, mas conectividade local indisponível';
+                            }
+                        }
+                    } catch (e) {
+                        // DNS test failed
+                    }
+                }
+
+                // Teste 3: Verificar suporte do navegador/sistema
+                const hasIPv6BrowserSupport = typeof window.RTCPeerConnection !== 'undefined';
+
+                // Teste 4: WebRTC ICE para detectar endereços IPv6 locais
+                if (hasIPv6BrowserSupport) {
+                    try {
+                        const pc = new RTCPeerConnection({
+                            iceServers: [
+                                { urls: 'stun:stun.l.google.com:19302' }
+                            ]
+                        });
+
+                        const localIPv6Addresses = [];
+
+                        pc.onicecandidate = (event) => {
+                            if (event.candidate) {
+                                const candidate = event.candidate.candidate;
+                                // Procurar por endereços IPv6 (contém :)
+                                const ipMatch = candidate.match(/(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}/);
+                                if (ipMatch) {
+                                    localIPv6Addresses.push(ipMatch[0]);
+                                    ipv6Info.hasIPv6 = true;
+                                    ipv6Info.ipv6Address = ipMatch[0];
+                                }
+                            }
+                        };
+
+                        pc.createDataChannel('test');
+                        await pc.createOffer().then(offer => pc.setLocalDescription(offer));
+
+                        // Aguardar um pouco para coletar candidatos
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        pc.close();
+
+                    } catch (e) {
+                        console.log('WebRTC test failed:', e);
+                    }
+                }
+
+                // Determinar dual stack
+                ipv6Info.dualStack = ipv6Info.hasIPv6 && ipv6Info.ipv4Address;
+
+                // Se não tem IPv6 real, corrigir os valores
+                if (!ipv6Info.hasIPv6) {
+                    ipv6Info.ipv6Address = null;
+                    ipv6Info.dualStack = false;
+                }
+
+                container.innerHTML = `
+                <div class="info-item">
+                <span class="info-label">IPv6 Disponível:</span>
+                <span class="info-value">${ipv6Info.hasIPv6 ? 'Sim' : 'Não'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Endereço IPv6:</span>
+                <span class="info-value">${ipv6Info.ipv6Address || 'Não detectado'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Endereço IPv4:</span>
+                <span class="info-value">${ipv6Info.ipv4Address || 'Não detectado'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Dual Stack:</span>
+                <span class="info-value">${ipv6Info.dualStack ? 'Sim' : 'Não'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Teste Conectividade:</span>
+                <span class="info-value">${ipv6Info.connectivityTest}</span>
+                </div>
+                `;
+
+                detectedInfo.ipv6 = ipv6Info;
+
+            } catch (error) {
+                container.innerHTML = `
+                <div class="info-item">
+                <span class="info-label">IPv6:</span>
+                <span class="info-value">Erro na detecção: ${error.message}</span>
+                </div>
+                `;
+            }
+        }
+
+        function getAudioFingerprint() {
+            const container = document.getElementById('audio-info');
+
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+
+                if (!AudioContext) {
+                    container.innerHTML = `
+                    <div class="info-item">
+                    <span class="info-label">Audio:</span>
+                    <span class="info-value">AudioContext não suportado</span>
+                    </div>
+                    `;
+                    return;
+                }
+
+                const audioCtx = new AudioContext();
+
+                // Criar oscillator para fingerprinting
+                const oscillator = audioCtx.createOscillator();
+                const analyser = audioCtx.createAnalyser();
+                const gainNode = audioCtx.createGain();
+                const scriptProcessor = audioCtx.createScriptProcessor(4096, 1, 1);
+
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(10000, audioCtx.currentTime);
+
+                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+
+                oscillator.connect(analyser);
+                analyser.connect(scriptProcessor);
+                scriptProcessor.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                oscillator.start(0);
+
+                const audioData = new Float32Array(analyser.frequencyBinCount);
+                analyser.getFloatFrequencyData(audioData);
+
+                // Gerar hash do audio data
+                const audioHash = hashCode(audioData.toString());
+
+                const audioInfo = {
+                    sampleRate: audioCtx.sampleRate,
+                    state: audioCtx.state,
+                    maxChannelCount: audioCtx.destination.maxChannelCount,
+                    numberOfInputs: audioCtx.destination.numberOfInputs,
+                    numberOfOutputs: audioCtx.destination.numberOfOutputs,
+                    baseLatency: audioCtx.baseLatency || 'Não disponível',
+                    outputLatency: audioCtx.outputLatency || 'Não disponível',
+                    audioHash: audioHash
+                };
+
+                container.innerHTML = `
+                <div class="info-item">
+                <span class="info-label">Sample Rate:</span>
+                <span class="info-value">${audioInfo.sampleRate} Hz</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Estado:</span>
+                <span class="info-value">${audioInfo.state}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Max Channels:</span>
+                <span class="info-value">${audioInfo.maxChannelCount}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Base Latency:</span>
+                <span class="info-value">${audioInfo.baseLatency}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Audio Hash:</span>
+                <span class="info-value">${audioInfo.audioHash}</span>
+                </div>
+                `;
+
+                // Cleanup
+                oscillator.stop(audioCtx.currentTime + 0.1);
+                audioCtx.close();
+
+                detectedInfo.audio = audioInfo;
+
+            } catch (error) {
+                container.innerHTML = `
+                <div class="info-item">
+                <span class="info-label">Audio:</span>
+                <span class="info-value">Erro ao detectar</span>
+                </div>
+                `;
+            }
+        }
+
+        async function detectPrivateMode() {
+            const container = document.getElementById('private-mode-info');
+
+            let isPrivate = false;
+            let detectionMethod = 'Unknown';
+
+            try {
+                // Método 1: Teste de storage
+                if ('storage' in navigator && 'estimate' in navigator.storage) {
+                    const estimate = await navigator.storage.estimate();
+                    if (estimate.quota < 120000000) { // Menos que ~120MB indica modo privado
+                        isPrivate = true;
+                        detectionMethod = 'Storage Quota';
+                    }
+                }
+
+                // Método 2: IndexedDB test
+                if (!isPrivate) {
+                    try {
+                        const db = indexedDB.open('test', 1);
+                        db.onerror = () => {
+                            isPrivate = true;
+                            detectionMethod = 'IndexedDB Error';
+                        };
+                    } catch (e) {
+                        isPrivate = true;
+                        detectionMethod = 'IndexedDB Exception';
+                    }
+                }
+
+                // Método 3: RequestFileSystem (Chrome específico)
+                if (!isPrivate && 'webkitRequestFileSystem' in window) {
+                    window.webkitRequestFileSystem(0, 1,
+                                                   () => {},
+                                                   () => {
+                                                       isPrivate = true;
+                                                       detectionMethod = 'FileSystem API';
+                                                   }
+                    );
+                }
+
+                // Método 4: Safari specific
+                if (!isPrivate && 'safari' in window) {
+                    try {
+                        localStorage.setItem('test', '1');
+                        localStorage.removeItem('test');
+                    } catch (e) {
+                        isPrivate = true;
+                        detectionMethod = 'Safari LocalStorage';
+                    }
+                }
+
+                container.innerHTML = `
+                <div class="info-item">
+                <span class="info-label">Modo Privado:</span>
+                <span class="info-value">${isPrivate ? 'Detectado' : 'Não detectado'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Método:</span>
+                <span class="info-value">${detectionMethod}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Storage Estimate:</span>
+                <span class="info-value">${navigator.storage ? 'Disponível' : 'Não disponível'}</span>
+                </div>
+                `;
+
+                detectedInfo.privateMode = {
+                    isPrivate,
+                    detectionMethod,
+                    storageAvailable: 'storage' in navigator
+                };
+
+            } catch (error) {
+                container.innerHTML = `
+                <div class="info-item">
+                <span class="info-label">Modo Privado:</span>
+                <span class="info-value">Erro na detecção</span>
+                </div>
+                `;
+            }
+        }
+
+
 
         // ===== FUNÇÕES DE LOCALIZAÇÃO E MAPA =====
 
