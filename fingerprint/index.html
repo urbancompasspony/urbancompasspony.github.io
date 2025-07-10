@@ -158,6 +158,30 @@
                 </div>
             </div>
 
+            <!-- WebRTC Comprehensive -->
+            <div class="card critical">
+                <h3>🌐 WebRTC Comprehensive</h3>
+                <div class="card-content" id="webrtc-comprehensive-info">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+
+            <!-- Extensions Detection -->
+            <div class="card warning-level">
+                <h3>🧩 Detecção de Extensões</h3>
+                <div class="card-content" id="extensions-info">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+
+            <!-- Ad Blocker Detection -->
+            <div class="card warning-level">
+                <h3>🚫 Detecção Ad Blocker</h3>
+                <div class="card-content" id="adblocker-info">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+
             <!-- Connections e Network -->
             <div class="card full-width">
                 <h3>🌐 Informações de Rede</h3>
@@ -172,6 +196,30 @@
                 <div class="card-content" id="privacy-score">
                     <div class="loading">Calculando pontuação de privacidade...</div>
                 </div>
+            </div>
+
+            <!-- DNS Leak Test -->
+            <div class="card critical">
+                <h3>🌐 Teste de Vazamento DNS</h3>
+                <div class="card-content" id="dns-leak-info">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+
+            <!-- Proxy/VPN Detection -->
+            <div class="card warning-level">
+                <h3>🔒 Detecção Proxy/VPN</h3>
+                <div class="card-content" id="proxy-vpn-info">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+            <div>
+            <!-- PDF Report Button -->
+            <button class="refresh-btn" onclick="generatePDFReport()">📋 GERAR RELATÓRIO PDF</button>
+
+            <!-- Export button -->
+            <button class="refresh-btn" onclick="exportResults()">📊 EXPORTAR RESULTADOS</button>
+
             </div>
         </div>
     </div>

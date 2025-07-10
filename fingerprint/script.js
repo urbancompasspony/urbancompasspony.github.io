@@ -28,7 +28,12 @@
                                   getGPUDetails(),
                                   detectIPv6(),
                                   getAudioFingerprint(),
-                                  detectPrivateMode()
+                                  detectPrivateMode(),
+                                  comprehensiveWebRTCTest(),
+                                  detectExtensions(),
+                                  detectAdBlocker(),
+                                  testDNSLeak(),
+                                  detectProxyVPN()
                 ]);
 
                 // Pequena pausa para garantir que tudo carregou
@@ -40,6 +45,627 @@
             } catch (error) {
                 console.error('Erro ao carregar informações:', error);
             }
+        }
+
+        async function testDNSLeak() {
+            const container = document.getElementById('dns-leak-info');
+
+            try {
+                const dnsResults = {
+                    resolvers: [],
+                    leaks: [],
+                    isVPNSafe: true,
+                    dnssecSupport: false,
+                    dohSupport: false
+                };
+
+                // Lista de domínios para testar resolução
+                const testDomains = [
+                    'google.com',
+                    'cloudflare.com',
+                    'github.com',
+                    'example.com'
+                ];
+
+                // Testar múltiplos resolvedores DNS
+                const dnsResolvers = [
+                    { name: 'Cloudflare', server: 'https://cloudflare-dns.com/dns-query' },
+                    { name: 'Google', server: 'https://dns.google/resolve' },
+                    { name: 'Quad9', server: 'https://dns.quad9.net:5053/dns-query' }
+                ];
+
+                for (const resolver of dnsResolvers) {
+                    try {
+                        for (const domain of testDomains) {
+                            const startTime = performance.now();
+
+                            // Fazer consulta DNS-over-HTTPS
+                            const response = await fetch(
+                                `${resolver.server}?name=${domain}&type=A`,
+                                {
+                                    headers: { 'Accept': 'application/dns-json' },
+                                    timeout: 3000
+                                }
+                            );
+
+                            const endTime = performance.now();
+                            const responseTime = endTime - startTime;
+
+                            if (response.ok) {
+                                const data = await response.json();
+
+                                dnsResults.resolvers.push({
+                                    resolver: resolver.name,
+                                    domain: domain,
+                                    responseTime: responseTime.toFixed(2),
+                                                          answers: data.Answer ? data.Answer.length : 0,
+                                                          status: data.Status
+                                });
+
+                                // Verificar DNSSEC
+                                if (data.AD) {
+                                    dnsResults.dnssecSupport = true;
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        dnsResults.leaks.push(`Falha ao resolver via ${resolver.name}`);
+                    }
+                }
+
+                // Teste de consistência geográfica
+                const locationTests = [];
+                try {
+                    // Comparar localização do IP com resolução DNS
+                    if (detectedInfo.ip && detectedInfo.ip.country) {
+                        const userCountry = detectedInfo.ip.country;
+
+                        // Testar se DNS resolve para servidores locais ou remotos
+                        const geoTestResponse = await fetch('https://ipapi.co/json/');
+                        const geoData = await geoTestResponse.json();
+
+                        if (geoData.country_code !== userCountry) {
+                            dnsResults.leaks.push('Possível vazamento: DNS resolve para país diferente');
+                            dnsResults.isVPNSafe = false;
+                        }
+                    }
+                } catch (e) {
+                    dnsResults.leaks.push('Não foi possível verificar consistência geográfica');
+                }
+
+                // Teste de DNS-over-HTTPS support
+                try {
+                    const dohTest = await fetch('https://cloudflare-dns.com/dns-query?name=example.com&type=A', {
+                        headers: { 'Accept': 'application/dns-json' }
+                    });
+                    dnsResults.dohSupport = dohTest.ok;
+                } catch (e) {
+                    dnsResults.dohSupport = false;
+                }
+
+                // Calcular estatísticas
+                const avgResponseTime = dnsResults.resolvers.reduce((sum, r) =>
+                sum + parseFloat(r.responseTime), 0) / dnsResults.resolvers.length;
+
+                const uniqueResolvers = [...new Set(dnsResults.resolvers.map(r => r.resolver))];
+
+                container.innerHTML = `
+                <div class="info-item">
+                <span class="info-label">DNS Vazamentos:</span>
+                <span class="info-value">${dnsResults.leaks.length > 0 ? dnsResults.leaks.length + ' detectados' : 'Nenhum detectado'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">VPN Segura:</span>
+                <span class="info-value">${dnsResults.isVPNSafe ? 'Sim' : 'Não'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Resolvedores Testados:</span>
+                <span class="info-value">${uniqueResolvers.join(', ')}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Tempo Médio:</span>
+                <span class="info-value">${avgResponseTime.toFixed(2)}ms</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">DNSSEC:</span>
+                <span class="info-value">${dnsResults.dnssecSupport ? 'Suportado' : 'Não suportado'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">DNS-over-HTTPS:</span>
+                <span class="info-value">${dnsResults.dohSupport ? 'Suportado' : 'Não suportado'}</span>
+                </div>
+                ${dnsResults.leaks.length > 0 ? `
+                    <div style="margin-top: 15px; padding: 10px; background: #2d1810; border: 1px solid #ff6600; border-radius: 5px;">
+                    <strong style="color: #ff6600;">⚠️ Vazamentos Detectados:</strong><br>
+                    ${dnsResults.leaks.map(leak => `• ${leak}`).join('<br>')}
+                    </div>` : ''}
+                    `;
+
+                    detectedInfo.dnsLeak = dnsResults;
+
+            } catch (error) {
+                container.innerHTML = `
+                <div class="info-item">
+                <span class="info-label">DNS Leak Test:</span>
+                <span class="info-value">Erro: ${error.message}</span>
+                </div>
+                `;
+            }
+        }
+
+        async function detectProxyVPN() {
+            const container = document.getElementById('proxy-vpn-info');
+
+            try {
+                const vpnIndicators = {
+                    suspiciousISP: false,
+                    datacenterIP: false,
+                    multipleCountries: false,
+                    suspiciousLatency: false,
+                    knownVPNRanges: false,
+                    anonymityScore: 0
+                };
+
+                const detectionMethods = [];
+
+                // Verificar ISP suspeito (datacenters comuns)
+                if (detectedInfo.ip && detectedInfo.ip.org) {
+                    const suspiciousISPs = [
+                        'digitalocean', 'amazon', 'google cloud', 'microsoft azure',
+                        'vultr', 'linode', 'ovh', 'hetzner', 'cloudflare',
+                        'expressvpn', 'nordvpn', 'surfshark', 'cyberghost',
+                        'privateinternetaccess', 'ipvanish', 'tunnelbear'
+                    ];
+
+                    const isp = detectedInfo.ip.org.toLowerCase();
+                    if (suspiciousISPs.some(suspicious => isp.includes(suspicious))) {
+                        vpnIndicators.suspiciousISP = true;
+                        detectionMethods.push('ISP suspeito de datacenter/VPN');
+                        vpnIndicators.anonymityScore += 40;
+                    }
+                }
+
+                // Testar latência inconsistente
+                const latencyTests = [];
+                const testServers = [
+                    'https://www.google.com/favicon.ico',
+                    'https://www.github.com/favicon.ico',
+                    'https://www.stackoverflow.com/favicon.ico'
+                ];
+
+                for (const server of testServers) {
+                    try {
+                        const startTime = performance.now();
+                        await fetch(server, {
+                            method: 'HEAD',
+                            mode: 'no-cors',
+                            cache: 'no-cache'
+                        });
+                        const endTime = performance.now();
+                        latencyTests.push(endTime - startTime);
+                    } catch (e) {
+                        latencyTests.push(999); // Timeout/erro
+                    }
+                }
+
+                const avgLatency = latencyTests.reduce((a, b) => a + b, 0) / latencyTests.length;
+                const maxLatency = Math.max(...latencyTests);
+                const minLatency = Math.min(...latencyTests);
+
+                // Latência muito inconsistente pode indicar VPN
+                if (maxLatency - minLatency > 200 || avgLatency > 500) {
+                    vpnIndicators.suspiciousLatency = true;
+                    detectionMethods.push('Latência inconsistente detectada');
+                    vpnIndicators.anonymityScore += 20;
+                }
+
+                // Verificar múltiplas APIs para inconsistências
+                const ipAPIs = [
+                    'https://ipapi.co/json/',
+                    'https://ipinfo.io/json',
+                    'http://ip-api.com/json/'
+                ];
+
+                const locationResults = [];
+                for (const api of ipAPIs) {
+                    try {
+                        const response = await fetch(api);
+                        const data = await response.json();
+                        locationResults.push({
+                            country: data.country || data.country_code || data.countryCode,
+                            city: data.city,
+                            region: data.region || data.regionName
+                        });
+                    } catch (e) {
+                        // API falhou
+                    }
+                }
+
+                // Verificar se todas as APIs retornam a mesma localização
+                if (locationResults.length > 1) {
+                    const countries = [...new Set(locationResults.map(r => r.country))];
+                    const cities = [...new Set(locationResults.map(r => r.city))];
+
+                    if (countries.length > 1 || cities.length > 2) {
+                        vpnIndicators.multipleCountries = true;
+                        detectionMethods.push('Inconsistência de localização entre APIs');
+                        vpnIndicators.anonymityScore += 30;
+                    }
+                }
+
+                // Verificar ranges de IP conhecidos de VPN (teste básico)
+                if (detectedInfo.ip && detectedInfo.ip.ip) {
+                    const ip = detectedInfo.ip.ip;
+                    const ipParts = ip.split('.').map(Number);
+
+                    // Alguns ranges comuns de VPN/Proxy (exemplo básico)
+                    const suspiciousRanges = [
+                        [10, 0, 0, 0, 8],      // RFC 1918
+                        [172, 16, 0, 0, 12],   // RFC 1918
+                        [192, 168, 0, 0, 16],  // RFC 1918 (menos suspeito)
+                        [169, 254, 0, 0, 16],  // Link-local
+                        [203, 0, 113, 0, 24]   // TEST-NET-3
+                    ];
+
+                    // Este é um teste muito básico - em produção seria necessário
+                    // uma base de dados mais completa de ranges de VPN
+                }
+
+                // Teste de WebRTC para vazamentos
+                let webrtcLeaks = 0;
+                if (detectedInfo.webrtcComprehensive) {
+                    if (detectedInfo.webrtcComprehensive.publicIPs.length > 0) {
+                        webrtcLeaks = detectedInfo.webrtcComprehensive.publicIPs.length;
+                        detectionMethods.push(`${webrtcLeaks} vazamento(s) de IP via WebRTC`);
+                        vpnIndicators.anonymityScore += webrtcLeaks * 15;
+                    }
+                }
+
+                // Calcular nível de anonimato
+                let anonymityLevel = 'Baixo';
+                let anonymityColor = '#ff6600';
+
+                if (vpnIndicators.anonymityScore < 20) {
+                    anonymityLevel = 'Baixo';
+                    anonymityColor = '#00f000';
+                } else if (vpnIndicators.anonymityScore < 50) {
+                    anonymityLevel = 'Médio';
+                    anonymityColor = '#feca57';
+                } else {
+                    anonymityLevel = 'Alto';
+                    anonymityColor = '#ff6600';
+                }
+
+                container.innerHTML = `
+                <div class="info-item">
+                <span class="info-label">Proxy/VPN Detectado:</span>
+                <span class="info-value">${detectionMethods.length > 0 ? 'Possível' : 'Improvável'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Nível Anonimato:</span>
+                <span class="info-value" style="color: ${anonymityColor}">${anonymityLevel}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Score Anonimato:</span>
+                <span class="info-value">${vpnIndicators.anonymityScore}/100</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Latência Média:</span>
+                <span class="info-value">${avgLatency.toFixed(0)}ms</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">WebRTC Leaks:</span>
+                <span class="info-value">${webrtcLeaks}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">APIs Consistentes:</span>
+                <span class="info-value">${locationResults.length > 0 ? 'Sim' : 'Erro nos testes'}</span>
+                </div>
+                ${detectionMethods.length > 0 ? `
+                    <div style="margin-top: 15px; padding: 10px; background: #2d1810; border: 1px solid #ff6600; border-radius: 5px;">
+                    <strong style="color: #ff6600;">🔍 Indicadores Detectados:</strong><br>
+                    ${detectionMethods.map(method => `• ${method}`).join('<br>')}
+                    </div>` : ''}
+                    `;
+
+                    detectedInfo.proxyVPN = {
+                        indicators: vpnIndicators,
+                        detectionMethods,
+                        anonymityScore: vpnIndicators.anonymityScore,
+                        latencyTests: {
+                            average: avgLatency,
+                            max: maxLatency,
+                            min: minLatency
+                        }
+                    };
+
+            } catch (error) {
+                container.innerHTML = `
+                <div class="info-item">
+                <span class="info-label">Proxy/VPN Detection:</span>
+                <span class="info-value">Erro: ${error.message}</span>
+                </div>
+                `;
+            }
+        }
+
+        function generatePDFReport() {
+            try {
+                // Criar modal para opções do relatório
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.9);
+                z-index: 10000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                `;
+
+                const modalContent = document.createElement('div');
+                modalContent.style.cssText = `
+                background: #111;
+                border: 2px solid #576879;
+                border-radius: 8px;
+                padding: 40px;
+                max-width: 600px;
+                width: 90%;
+                color: #fff;
+                max-height: 80vh;
+                overflow-y: auto;
+                `;
+
+                modalContent.innerHTML = `
+                <h3 style="margin-bottom: 25px; color: #00f000; text-align: center;">📋 GERAR RELATÓRIO PDF</h3>
+
+                <div style="margin-bottom: 20px;">
+                <h4 style="color: #feca57; margin-bottom: 10px;">Opções do Relatório:</h4>
+                <label style="display: block; margin: 8px 0;">
+                <input type="checkbox" id="include-summary" checked> Resumo Executivo
+                </label>
+                <label style="display: block; margin: 8px 0;">
+                <input type="checkbox" id="include-technical" checked> Detalhes Técnicos
+                </label>
+                <label style="display: block; margin: 8px 0;">
+                <input type="checkbox" id="include-privacy" checked> Análise de Privacidade
+                </label>
+                <label style="display: block; margin: 8px 0;">
+                <input type="checkbox" id="include-recommendations" checked> Recomendações
+                </label>
+                <label style="display: block; margin: 8px 0;">
+                <input type="checkbox" id="include-sensitive-pdf"> Incluir Dados Sensíveis
+                </label>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                <h4 style="color: #feca57; margin-bottom: 10px;">Formato:</h4>
+                <label style="display: block; margin: 8px 0;">
+                <input type="radio" name="format" value="professional" checked> Profissional (detalhado)
+                </label>
+                <label style="display: block; margin: 8px 0;">
+                <input type="radio" name="format" value="executive"> Executivo (resumido)
+                </label>
+                <label style="display: block; margin: 8px 0;">
+                <input type="radio" name="format" value="technical"> Técnico (completo)
+                </label>
+                </div>
+
+                <div style="text-align: center; margin-top: 30px;">
+                <button id="generate-pdf" style="background: #00f000; color: #000; border: none; padding: 15px 30px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-right: 10px;">
+                📄 Gerar PDF
+                </button>
+                <button id="close-pdf-modal" style="background: #ff6600; color: white; border: none; padding: 15px 30px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                Cancelar
+                </button>
+                </div>
+                `;
+
+                modal.appendChild(modalContent);
+                document.body.appendChild(modal);
+
+                document.getElementById('generate-pdf').onclick = () => {
+                    const options = {
+                        includeSummary: document.getElementById('include-summary').checked,
+                        includeTechnical: document.getElementById('include-technical').checked,
+                        includePrivacy: document.getElementById('include-privacy').checked,
+                        includeRecommendations: document.getElementById('include-recommendations').checked,
+                        includeSensitive: document.getElementById('include-sensitive-pdf').checked,
+                        format: document.querySelector('input[name="format"]:checked').value
+                    };
+
+                    createPDFContent(options);
+                    document.body.removeChild(modal);
+                };
+
+                document.getElementById('close-pdf-modal').onclick = () => {
+                    document.body.removeChild(modal);
+                };
+
+            } catch (error) {
+                alert('Erro ao abrir opções de PDF: ' + error.message);
+            }
+        }
+
+        function createPDFContent(options) {
+            // Criar HTML formatado para conversão em PDF
+            const reportHTML = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <meta charset="UTF-8">
+            <title>Browser Fingerprint Report</title>
+            <style>
+            body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+            .header { text-align: center; border-bottom: 3px solid #576879; padding-bottom: 20px; margin-bottom: 30px; }
+            .section { margin-bottom: 30px; page-break-inside: avoid; }
+            .section h2 { color: #576879; border-bottom: 1px solid #ccc; padding-bottom: 8px; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+            .info-card { border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
+            .score { font-size: 2em; font-weight: bold; text-align: center; margin: 20px 0; }
+            .risk-high { color: #e74c3c; }
+            .risk-medium { color: #f39c12; }
+            .risk-low { color: #27ae60; }
+            .fingerprint { font-family: monospace; background: #f5f5f5; padding: 10px; border-radius: 3px; word-break: break-all; }
+            .recommendations { background: #f8f9fa; padding: 20px; border-left: 4px solid #576879; }
+            .timestamp { color: #666; font-size: 0.9em; }
+            ul { line-height: 1.6; }
+            table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            </style>
+            </head>
+            <body>
+            <div class="header">
+            <h1>🔍 BROWSER FINGERPRINT REPORT</h1>
+            <p class="timestamp">Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
+            <p>Sistema de Análise de Vulnerabilidades e Privacidade</p>
+            </div>
+
+            ${options.includeSummary ? generateSummarySection() : ''}
+            ${options.includePrivacy ? generatePrivacySection() : ''}
+            ${options.includeTechnical ? generateTechnicalSection(options.includeSensitive) : ''}
+            ${options.includeRecommendations ? generateRecommendationsSection() : ''}
+
+            <div class="section">
+            <h2>📋 Informações do Relatório</h2>
+            <p><strong>Fingerprint Hash:</strong> <span class="fingerprint">${browserFingerprint}</span></p>
+            <p><strong>URL de Origem:</strong> ${window.location.href}</p>
+            <p><strong>User Agent:</strong> ${navigator.userAgent}</p>
+            </div>
+            </body>
+            </html>
+            `;
+
+            // Criar iframe oculto para renderizar o PDF
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'absolute';
+            iframe.style.left = '-9999px';
+            iframe.style.width = '800px';
+            iframe.style.height = '600px';
+            document.body.appendChild(iframe);
+
+            iframe.contentDocument.open();
+            iframe.contentDocument.write(reportHTML);
+            iframe.contentDocument.close();
+
+            // Aguardar o carregamento e imprimir
+            setTimeout(() => {
+                iframe.contentWindow.print();
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                }, 1000);
+            }, 1000);
+        }
+
+        function generateSummarySection() {
+            const riskLevel = privacyScore > 70 ? 'Baixo' : privacyScore > 40 ? 'Médio' : 'Alto';
+            const riskClass = privacyScore > 70 ? 'risk-low' : privacyScore > 40 ? 'risk-medium' : 'risk-high';
+
+            return `
+            <div class="section">
+            <h2>📊 Resumo Executivo</h2>
+            <div class="score ${riskClass}">${privacyScore}/100 - Risco ${riskLevel}</div>
+            <div class="info-grid">
+            <div class="info-card">
+            <h3>Identificação Única</h3>
+            <p>Seu navegador possui um fingerprint único que pode ser usado para rastreamento.</p>
+            <p><strong>Hash:</strong> ${browserFingerprint}</p>
+            </div>
+            <div class="info-card">
+            <h3>Status de Privacidade</h3>
+            <p>Nível de exposição: <span class="${riskClass}">${riskLevel}</span></p>
+            <p>Vulnerabilidades encontradas: ${calculateVulnerabilities()}</p>
+            </div>
+            </div>
+            </div>
+            `;
+        }
+
+        function generatePrivacySection() {
+            return `
+            <div class="section">
+            <h2>🛡️ Análise de Privacidade</h2>
+            <table>
+            <tr><th>Aspecto</th><th>Status</th><th>Impacto</th></tr>
+            <tr><td>Canvas Fingerprinting</td><td>${detectedInfo.canvas ? 'Detectado' : 'Não detectado'}</td><td>${detectedInfo.canvas ? 'Alto' : 'Baixo'}</td></tr>
+            <tr><td>WebGL Fingerprinting</td><td>${detectedInfo.webgl ? 'Detectado' : 'Não detectado'}</td><td>${detectedInfo.webgl ? 'Alto' : 'Baixo'}</td></tr>
+            <tr><td>Geolocalização</td><td>${detectedInfo.preciseLocation ? 'Exposta' : 'Protegida'}</td><td>${detectedInfo.preciseLocation ? 'Crítico' : 'Baixo'}</td></tr>
+            <tr><td>Do Not Track</td><td>${navigator.doNotTrack ? 'Ativo' : 'Inativo'}</td><td>${navigator.doNotTrack ? 'Baixo' : 'Médio'}</td></tr>
+            </table>
+            </div>
+            `;
+        }
+
+        function generateTechnicalSection(includeSensitive) {
+            let content = `
+            <div class="section">
+            <h2>⚙️ Detalhes Técnicos</h2>
+            <h3>Informações do Sistema</h3>
+            <ul>
+            <li><strong>Plataforma:</strong> ${navigator.platform}</li>
+            <li><strong>Arquitetura:</strong> ${detectedInfo.architecture?.architecture || 'N/A'}</li>
+            <li><strong>Cores CPU:</strong> ${navigator.hardwareConcurrency}</li>
+            <li><strong>Memória:</strong> ${navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'N/A'}</li>
+            <li><strong>Tela:</strong> ${screen.width}x${screen.height}</li>
+            <li><strong>Timezone:</strong> ${Intl.DateTimeFormat().resolvedOptions().timeZone}</li>
+            </ul>
+            `;
+
+            if (includeSensitive) {
+                content += `
+                <h3>Informações de Rede (Sensíveis)</h3>
+                <ul>
+                <li><strong>IP Público:</strong> ${detectedInfo.ip?.ip || 'N/A'}</li>
+                <li><strong>ISP:</strong> ${detectedInfo.ip?.org || 'N/A'}</li>
+                <li><strong>Localização:</strong> ${detectedInfo.ip?.city || 'N/A'}, ${detectedInfo.ip?.region || 'N/A'}</li>
+                </ul>
+                `;
+            }
+
+            content += `</div>`;
+            return content;
+        }
+
+        function generateRecommendationsSection() {
+            return `
+            <div class="section">
+            <h2>💡 Recomendações de Segurança</h2>
+            <div class="recommendations">
+            <h3>Medidas Recomendadas:</h3>
+            <ul>
+            <li><strong>Use extensões anti-tracking:</strong> uBlock Origin, Privacy Badger</li>
+            <li><strong>Configure seu navegador:</strong> Desabilite JavaScript para sites não confiáveis</li>
+            <li><strong>Use VPN:</strong> Para mascarar seu IP e localização</li>
+            <li><strong>Modo privado:</strong> Use para navegação sensível</li>
+            <li><strong>Limpe dados:</strong> Cookies, cache e histórico regularmente</li>
+            <li><strong>Atualize regularmente:</strong> Mantenha navegador e sistema atualizados</li>
+            </ul>
+
+            <h3>Configurações Avançadas:</h3>
+            <ul>
+            <li>Desabilite WebRTC se não precisar de videochamadas</li>
+            <li>Use diferentes navegadores para diferentes atividades</li>
+            <li>Configure DNS privado (Cloudflare 1.1.1.1, Quad9)</li>
+            <li>Considere usar Tor Browser para máxima privacidade</li>
+            </ul>
+            </div>
+            </div>
+            `;
+        }
+
+        function calculateVulnerabilities() {
+            let count = 0;
+            if (detectedInfo.canvas) count++;
+            if (detectedInfo.webgl) count++;
+            if (detectedInfo.preciseLocation) count++;
+            if (!navigator.doNotTrack) count++;
+            if (navigator.cookieEnabled) count++;
+            if (detectedInfo.webrtcComprehensive?.leaks?.length > 0) count++;
+            return count;
         }
 
         function detectArchitecture() {
@@ -346,6 +972,624 @@
                 `;
             }
         }
+
+        async function comprehensiveWebRTCTest() {
+            const container = document.getElementById('webrtc-comprehensive-info');
+
+            try {
+                const webrtcInfo = {
+                    localIPs: [],
+                    publicIPs: [],
+                        stunServers: [],
+                        turnSupport: false,
+                        dtlsSupport: false,
+                        srtpSupport: false,
+                        candidateTypes: [],
+                        leaks: []
+                };
+
+                // Lista de STUN servers para testar
+                const stunServers = [
+                    'stun:stun.l.google.com:19302',
+                    'stun:stun1.l.google.com:19302',
+                    'stun:stun2.l.google.com:19302',
+                    'stun:stun.cloudflare.com:3478',
+                    'stun:stun.nextcloud.com:443'
+                ];
+
+                for (const stunServer of stunServers) {
+                    try {
+                        const pc = new RTCPeerConnection({
+                            iceServers: [{ urls: stunServer }]
+                        });
+
+                        const candidatesReceived = [];
+
+                        pc.onicecandidate = (event) => {
+                            if (event.candidate) {
+                                const candidate = event.candidate.candidate;
+                                candidatesReceived.push(candidate);
+
+                                // Extrair IPs
+                                const ipMatch = candidate.match(/(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/);
+                                if (ipMatch) {
+                                    const ip = ipMatch[0];
+
+                                    // Classificar IP
+                                    if (ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.')) {
+                                        if (!webrtcInfo.localIPs.includes(ip)) {
+                                            webrtcInfo.localIPs.push(ip);
+                                        }
+                                    } else {
+                                        if (!webrtcInfo.publicIPs.includes(ip)) {
+                                            webrtcInfo.publicIPs.push(ip);
+                                            webrtcInfo.leaks.push(`IP público vazado: ${ip}`);
+                                        }
+                                    }
+                                }
+
+                                // Classificar tipo de candidato
+                                if (candidate.includes('typ host')) {
+                                    webrtcInfo.candidateTypes.push('Host');
+                                } else if (candidate.includes('typ srflx')) {
+                                    webrtcInfo.candidateTypes.push('Server Reflexive');
+                                } else if (candidate.includes('typ relay')) {
+                                    webrtcInfo.candidateTypes.push('Relay');
+                                } else if (candidate.includes('typ prflx')) {
+                                    webrtcInfo.candidateTypes.push('Peer Reflexive');
+                                }
+                            }
+                        };
+
+                        // Criar data channel para forçar ICE gathering
+                        pc.createDataChannel('test');
+                        const offer = await pc.createOffer();
+                        await pc.setLocalDescription(offer);
+
+                        // Aguardar candidatos
+                        await new Promise(resolve => setTimeout(resolve, 3000));
+
+                        if (candidatesReceived.length > 0) {
+                            webrtcInfo.stunServers.push(stunServer);
+                        }
+
+                        pc.close();
+
+                    } catch (e) {
+                        console.log(`STUN server ${stunServer} failed:`, e);
+                    }
+                }
+
+                // Testar suporte a protocolos
+                try {
+                    const pc = new RTCPeerConnection();
+                    const capabilities = RTCRtpSender.getCapabilities ? RTCRtpSender.getCapabilities('video') : null;
+
+                    if (capabilities) {
+                        webrtcInfo.dtlsSupport = capabilities.headerExtensions?.some(ext => ext.uri.includes('urn:ietf:params:rtp-hdrext:encrypt'));
+                        webrtcInfo.srtpSupport = true; // SRTP é padrão no WebRTC moderno
+                    }
+
+                    pc.close();
+                } catch (e) {
+                    // Falha no teste de capacidades
+                }
+
+                // Remover duplicatas
+                webrtcInfo.candidateTypes = [...new Set(webrtcInfo.candidateTypes)];
+
+                container.innerHTML = `
+                <div class="info-item">
+                <span class="info-label">IPs Locais:</span>
+                <span class="info-value">${webrtcInfo.localIPs.length > 0 ? webrtcInfo.localIPs.join(', ') : 'Nenhum detectado'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">IPs Públicos:</span>
+                <span class="info-value">${webrtcInfo.publicIPs.length > 0 ? webrtcInfo.publicIPs.join(', ') : 'Nenhum detectado'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">STUN Servers OK:</span>
+                <span class="info-value">${webrtcInfo.stunServers.length}/${stunServers.length}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Tipos de Candidato:</span>
+                <span class="info-value">${webrtcInfo.candidateTypes.join(', ') || 'Nenhum'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">SRTP Suporte:</span>
+                <span class="info-value">${webrtcInfo.srtpSupport ? 'Sim' : 'Não'}</span>
+                </div>
+                ${webrtcInfo.leaks.length > 0 ? `
+                    <div class="info-item" style="color: #ff6600;">
+                    <span class="info-label">⚠️ Vazamentos:</span>
+                    <span class="info-value">${webrtcInfo.leaks.length}</span>
+                    </div>` : ''}
+                    `;
+
+                    detectedInfo.webrtcComprehensive = webrtcInfo;
+
+            } catch (error) {
+                container.innerHTML = `
+                <div class="info-item">
+                <span class="info-label">WebRTC Test:</span>
+                <span class="info-value">Erro: ${error.message}</span>
+                </div>
+                `;
+            }
+        }
+
+        async function detectExtensions() {
+            const container = document.getElementById('extensions-info');
+
+            try {
+                const detectedExtensions = [];
+                const suspiciousTimings = [];
+
+                // Lista de extensões comuns para testar
+                const extensionsToTest = [
+                    { name: 'uBlock Origin', resource: 'chrome-extension://cjpalhdlnbpafiamejdnhcphjbkeiagm/web_accessible_resources/1x1.gif' },
+                    { name: 'AdBlock', resource: 'chrome-extension://gighmmpiobklfepjocnamgkkbiglidom/web_accessible_resources/transparent.gif' },
+                    { name: 'Ghostery', resource: 'chrome-extension://mlomiejdfkolichcflejclcbmpeaniij/web_accessible_resources/click2load.css' },
+                    { name: 'Privacy Badger', resource: 'chrome-extension://pkehgijcmpdhfbdbbnkijodmdjhbjlgp/web_accessible_resources/fingerprinting.js' },
+                    { name: 'LastPass', resource: 'chrome-extension://hdokiejnpimakedhajhdlcegeplioahd/web_accessible_resources/vault.js' },
+                    { name: 'Honey', resource: 'chrome-extension://bmnlcjabgnpnenekpadlanbbkooimhnj/web_accessible_resources/honey.js' },
+                    { name: 'Grammarly', resource: 'chrome-extension://kbfnbcaeplbcioakkpcpgfkobkghlhen/web_accessible_resources/editor.css' },
+                    { name: 'MetaMask', resource: 'chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/web_accessible_resources/inpage.js' }
+                ];
+
+                // Método 1: Timing de recursos
+                for (const ext of extensionsToTest) {
+                    try {
+                        const startTime = performance.now();
+
+                        await fetch(ext.resource, {
+                            method: 'HEAD',
+                            mode: 'no-cors',
+                            cache: 'no-cache'
+                        }).catch(() => {});
+
+                        const endTime = performance.now();
+                        const loadTime = endTime - startTime;
+
+                        // Se o timing for muito rápido, pode indicar que a extensão está presente
+                        if (loadTime < 10) {
+                            detectedExtensions.push(ext.name);
+                        } else if (loadTime > 100) {
+                            suspiciousTimings.push(`${ext.name}: ${loadTime.toFixed(2)}ms`);
+                        }
+
+                    } catch (e) {
+                        // Extensão não detectada via este método
+                    }
+                }
+
+                // Método 2: Verificar modificações no DOM conhecidas
+                const domSignatures = [
+                    { name: 'uBlock Origin', selector: '[data-ublock]' },
+                    { name: 'AdBlock Plus', selector: '[data-adblock-key]' },
+                    { name: 'Ghostery', selector: '[data-ghostery]' },
+                    { name: 'Grammarly', selector: 'grammarly-extension' },
+                    { name: 'LastPass', selector: '[data-lastpass-icon-root]' }
+                ];
+
+                for (const signature of domSignatures) {
+                    if (document.querySelector(signature.selector)) {
+                        if (!detectedExtensions.includes(signature.name)) {
+                            detectedExtensions.push(signature.name);
+                        }
+                    }
+                }
+
+                // Método 3: Verificar APIs modificadas
+                const apiModifications = [];
+
+                // Verificar se XMLHttpRequest foi modificado (comum em ad blockers)
+                if (XMLHttpRequest.prototype.open.toString().length > 100) {
+                    apiModifications.push('XMLHttpRequest modificado');
+                }
+
+                // Verificar se fetch foi modificado
+                if (window.fetch.toString().includes('[native code]') === false) {
+                    apiModifications.push('Fetch API modificado');
+                }
+
+                // Verificar Content Security Policy modifications
+                const cspMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+                if (cspMeta && cspMeta.content.includes('extension:')) {
+                    apiModifications.push('CSP modificado por extensão');
+                }
+
+                // Método 4: Verificar window properties adicionadas
+                const knownExtensionProperties = [
+                    'grammarly', 'lastpass', 'metamask', 'ethereum',
+                    '__uBlock', '__AdBlock', '__ghostery'
+                ];
+
+                const foundProperties = knownExtensionProperties.filter(prop =>
+                window.hasOwnProperty(prop) || window[prop] !== undefined
+                );
+
+                container.innerHTML = `
+                <div class="info-item">
+                <span class="info-label">Extensões Detectadas:</span>
+                <span class="info-value">${detectedExtensions.length > 0 ? detectedExtensions.join(', ') : 'Nenhuma detectada'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">APIs Modificadas:</span>
+                <span class="info-value">${apiModifications.length > 0 ? apiModifications.join(', ') : 'Nenhuma'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Window Properties:</span>
+                <span class="info-value">${foundProperties.length > 0 ? foundProperties.join(', ') : 'Nenhuma'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Timings Suspeitos:</span>
+                <span class="info-value">${suspiciousTimings.length}</span>
+                </div>
+                ${suspiciousTimings.length > 0 ? `
+                    <div style="margin-top: 10px; font-size: 0.8em; color: #666;">
+                    ${suspiciousTimings.slice(0, 3).join('<br>')}
+                    </div>` : ''}
+                    `;
+
+                    detectedInfo.extensions = {
+                        detected: detectedExtensions,
+                        apiModifications,
+                        windowProperties: foundProperties,
+                        suspiciousTimings
+                    };
+
+            } catch (error) {
+                container.innerHTML = `
+                <div class="info-item">
+                <span class="info-label">Extensões:</span>
+                <span class="info-value">Erro na detecção</span>
+                </div>
+                `;
+            }
+        }
+
+        function detectAdBlocker() {
+            const container = document.getElementById('adblocker-info');
+
+            try {
+                const adBlockTests = {
+                    basicTest: false,
+                    baitElement: false,
+                    fetchTest: false,
+                    cssTest: false,
+                    scriptTest: false
+                };
+
+                let adBlockerDetected = false;
+                let detectionMethods = [];
+
+                // Teste 1: Elemento "isca" comum
+                const baitElement = document.createElement('div');
+                baitElement.className = 'ad ads advertisement banner-ad popup-ad';
+                baitElement.style.position = 'absolute';
+                baitElement.style.left = '-9999px';
+                baitElement.style.width = '1px';
+                baitElement.style.height = '1px';
+                document.body.appendChild(baitElement);
+
+                setTimeout(() => {
+                    const rect = baitElement.getBoundingClientRect();
+                    if (rect.height === 0 || rect.width === 0 ||
+                        window.getComputedStyle(baitElement).display === 'none' ||
+                        window.getComputedStyle(baitElement).visibility === 'hidden') {
+                        adBlockTests.baitElement = true;
+                    adBlockerDetected = true;
+                    detectionMethods.push('Elemento isca bloqueado');
+                        }
+                        document.body.removeChild(baitElement);
+                }, 100);
+
+                // Teste 2: Tentar carregar scripts de ad networks conhecidos
+                const adNetworks = [
+                    'https://googleads.g.doubleclick.net/pagead/ads',
+                    'https://googlesyndication.com/pagead/show_ads.js',
+                    'https://amazon-adsystem.com/aax2/amzn_ads.js'
+                ];
+
+                let blockedNetworks = 0;
+                adNetworks.forEach(url => {
+                    fetch(url, { method: 'HEAD', mode: 'no-cors' })
+                    .catch(() => {
+                        blockedNetworks++;
+                        if (blockedNetworks >= 2) {
+                            adBlockTests.fetchTest = true;
+                            adBlockerDetected = true;
+                            detectionMethods.push('Redes de anúncio bloqueadas');
+                        }
+                    });
+                });
+
+                // Teste 3: CSS classes comuns de ad blockers
+                const testCSS = document.createElement('style');
+                testCSS.textContent = `
+                .ad-test-element {
+                    display: block !important;
+                    width: 100px !important;
+                    height: 100px !important;
+                }
+                `;
+                document.head.appendChild(testCSS);
+
+                const cssTestElement = document.createElement('div');
+                cssTestElement.className = 'ad-test-element adsbox';
+                cssTestElement.style.position = 'absolute';
+                cssTestElement.style.left = '-9999px';
+                document.body.appendChild(cssTestElement);
+
+                setTimeout(() => {
+                    const computedStyle = window.getComputedStyle(cssTestElement);
+                    if (computedStyle.display === 'none' ||
+                        computedStyle.width === '0px' ||
+                        computedStyle.height === '0px') {
+                        adBlockTests.cssTest = true;
+                    adBlockerDetected = true;
+                    detectionMethods.push('CSS bloqueado');
+                        }
+                        document.body.removeChild(cssTestElement);
+                        document.head.removeChild(testCSS);
+                }, 100);
+
+                // Teste 4: Verificar se APIs foram modificadas
+                if (typeof window.addEventListener.toString !== 'function' ||
+                    window.addEventListener.toString().indexOf('[native code]') === -1) {
+                    adBlockTests.scriptTest = true;
+                adBlockerDetected = true;
+                detectionMethods.push('APIs modificadas');
+                    }
+
+                    // Teste 5: Verificar filtros conhecidos
+                    const filterTests = [
+                        '##.ads',
+                        '##.advertisement',
+                        '###ad-banner',
+                        '##[id*="google_ads"]'
+                    ];
+
+                    let filtersDetected = 0;
+                    filterTests.forEach(filter => {
+                        try {
+                            const testEl = document.createElement('div');
+                            testEl.id = 'google_ads_test';
+                            testEl.className = 'ads advertisement';
+                            document.body.appendChild(testEl);
+
+                            setTimeout(() => {
+                                if (window.getComputedStyle(testEl).display === 'none') {
+                                    filtersDetected++;
+                                }
+                                document.body.removeChild(testEl);
+                            }, 50);
+                        } catch (e) {}
+                    });
+
+                    if (filtersDetected > 0) {
+                        adBlockerDetected = true;
+                        detectionMethods.push('Filtros CSS detectados');
+                    }
+
+                    // Aguardar todos os testes assíncronos
+                    setTimeout(() => {
+                        container.innerHTML = `
+                        <div class="info-item">
+                        <span class="info-label">Ad Blocker:</span>
+                        <span class="info-value">${adBlockerDetected ? 'Detectado' : 'Não detectado'}</span>
+                        </div>
+                        <div class="info-item">
+                        <span class="info-label">Métodos Ativados:</span>
+                        <span class="info-value">${detectionMethods.length}</span>
+                        </div>
+                        <div class="info-item">
+                        <span class="info-label">Elemento Isca:</span>
+                        <span class="info-value">${adBlockTests.baitElement ? 'Bloqueado' : 'OK'}</span>
+                        </div>
+                        <div class="info-item">
+                        <span class="info-label">Redes de Anúncio:</span>
+                        <span class="info-value">${adBlockTests.fetchTest ? 'Bloqueadas' : 'Acessíveis'}</span>
+                        </div>
+                        <div class="info-item">
+                        <span class="info-label">CSS Filtros:</span>
+                        <span class="info-value">${adBlockTests.cssTest ? 'Ativos' : 'Inativos'}</span>
+                        </div>
+                        ${detectionMethods.length > 0 ? `
+                            <div style="margin-top: 10px; font-size: 0.8em; color: #666;">
+                            <strong>Detecções:</strong><br>
+                            ${detectionMethods.join('<br>')}
+                            </div>` : ''}
+                            `;
+
+                            detectedInfo.adBlocker = {
+                                detected: adBlockerDetected,
+                                methods: detectionMethods,
+                                tests: adBlockTests
+                            };
+                    }, 500);
+
+            } catch (error) {
+                container.innerHTML = `
+                <div class="info-item">
+                <span class="info-label">Ad Blocker:</span>
+                <span class="info-value">Erro na detecção</span>
+                </div>
+                `;
+            }
+        }
+
+        function exportResults() {
+            try {
+                // Preparar dados para export
+                const exportData = {
+                    timestamp: new Date().toISOString(),
+                    fingerprint: browserFingerprint,
+                    privacyScore: privacyScore,
+                    userAgent: navigator.userAgent,
+                    url: window.location.href,
+                    data: detectedInfo
+                };
+
+                // Criar modal de export
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                z-index: 10000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                `;
+
+                const modalContent = document.createElement('div');
+                modalContent.style.cssText = `
+                background: #111;
+                border: 2px solid #576879;
+                border-radius: 8px;
+                padding: 30px;
+                max-width: 500px;
+                width: 90%;
+                color: #fff;
+                `;
+
+                modalContent.innerHTML = `
+                <h3 style="margin-bottom: 20px; color: #00f000;">📊 Exportar Resultados</h3>
+                <div style="margin-bottom: 20px;">
+                <button id="export-json" class="export-btn">📄 JSON</button>
+                <button id="export-csv" class="export-btn">📊 CSV</button>
+                <button id="export-txt" class="export-btn">📝 TXT</button>
+                </div>
+                <div style="margin-bottom: 20px;">
+                <label>
+                <input type="checkbox" id="include-sensitive" checked>
+                Incluir dados sensíveis (IPs, localização)
+                </label>
+                </div>
+                <button id="close-modal" style="background: #ff6600; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Fechar</button>
+                `;
+
+                modal.appendChild(modalContent);
+                document.body.appendChild(modal);
+
+                // Estilo para botões de export
+                const style = document.createElement('style');
+                style.textContent = `
+                .export-btn {
+                    background: #00f000;
+                    color: #000;
+                    border: none;
+                    padding: 12px 20px;
+                    margin: 5px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    transition: all 0.3s ease;
+                }
+                .export-btn:hover {
+                    background: #00d000;
+                    transform: scale(1.05);
+                }
+                `;
+                document.head.appendChild(style);
+
+                // Event listeners
+                document.getElementById('export-json').onclick = () => exportAsJSON(exportData);
+                document.getElementById('export-csv').onclick = () => exportAsCSV(exportData);
+                document.getElementById('export-txt').onclick = () => exportAsTXT(exportData);
+                document.getElementById('close-modal').onclick = () => {
+                    document.body.removeChild(modal);
+                    document.head.removeChild(style);
+                };
+
+                // Função para limpar dados sensíveis se necessário
+                function sanitizeData(data) {
+                    const sensitive = document.getElementById('include-sensitive').checked;
+                    if (sensitive) return data;
+
+                    const sanitized = JSON.parse(JSON.stringify(data));
+                    if (sanitized.data.ip) delete sanitized.data.ip;
+                    if (sanitized.data.preciseLocation) delete sanitized.data.preciseLocation;
+                    if (sanitized.data.webrtcComprehensive) {
+                        sanitized.data.webrtcComprehensive.localIPs = [];
+                        sanitized.data.webrtcComprehensive.publicIPs = [];
+                    }
+                    return sanitized;
+                }
+
+                function exportAsJSON(data) {
+                    const sanitizedData = sanitizeData(data);
+                    const blob = new Blob([JSON.stringify(sanitizedData, null, 2)], {type: 'application/json'});
+                    downloadFile(blob, `fingerprint_${Date.now()}.json`);
+                }
+
+                function exportAsCSV(data) {
+                    const sanitizedData = sanitizeData(data);
+                    let csv = 'Campo,Valor\n';
+
+                    function flattenObject(obj, prefix = '') {
+                        for (const key in obj) {
+                            if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+                                flattenObject(obj[key], prefix + key + '.');
+                            } else {
+                                csv += `"${prefix + key}","${Array.isArray(obj[key]) ? obj[key].join(';') : obj[key]}"\n`;
+                            }
+                        }
+                    }
+
+                    flattenObject(sanitizedData);
+                    const blob = new Blob([csv], {type: 'text/csv'});
+                    downloadFile(blob, `fingerprint_${Date.now()}.csv`);
+                }
+
+                function exportAsTXT(data) {
+                    const sanitizedData = sanitizeData(data);
+                    let txt = '=== BROWSER FINGERPRINT REPORT ===\n\n';
+                    txt += `Timestamp: ${sanitizedData.timestamp}\n`;
+                    txt += `Fingerprint: ${sanitizedData.fingerprint}\n`;
+                    txt += `Privacy Score: ${sanitizedData.privacyScore}/100\n\n`;
+
+                    function objectToText(obj, indent = 0) {
+                        let result = '';
+                        for (const key in obj) {
+                            const spaces = '  '.repeat(indent);
+                            if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+                                result += `${spaces}${key}:\n`;
+                                result += objectToText(obj[key], indent + 1);
+                            } else {
+                                result += `${spaces}${key}: ${Array.isArray(obj[key]) ? obj[key].join(', ') : obj[key]}\n`;
+                            }
+                        }
+                        return result;
+                    }
+
+                    txt += objectToText(sanitizedData.data);
+                    const blob = new Blob([txt], {type: 'text/plain'});
+                    downloadFile(blob, `fingerprint_${Date.now()}.txt`);
+                }
+
+                function downloadFile(blob, filename) {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }
+
+            } catch (error) {
+                alert('Erro ao exportar: ' + error.message);
+            }
+        }
+
+
 
         function getAudioFingerprint() {
             const container = document.getElementById('audio-info');
@@ -1338,7 +2582,7 @@
             </div>
             <div class="info-item">
             <span class="info-label">Conexão:</span>
-            <span class="info-value">${navigator.connection ? navigator.connection.effectiveType : 'Não disponível'}</span>
+            <span class="info-value">${navigator.connection ? navigator.connection.effectiveType + ' (aproximado)' : 'Não disponível'}</span>
             </div>
             <div class="info-item">
             <span class="info-label">Velocidade de Conexão:</span>
