@@ -1234,224 +1234,224 @@
                 // Determinar dual stack
                 ipv6Info.dualStack = ipv6Info.hasIPv6 && ipv6Info.ipv4Address;
 
-                    // Se não tem IPv6 real, corrigir os valores
-                    if (!ipv6Info.hasIPv6) {
-                        ipv6Info.ipv6Address = null;
-                        ipv6Info.dualStack = false;
-                    }
-
-                    const finalContent = `
-                    <div class="info-item">
-                    <span class="info-label">IPv6 Disponível:</span>
-                    <span class="info-value">${ipv6Info.hasIPv6 ? 'Sim' : 'Não'}</span>
-                    </div>
-                    <div class="info-item">
-                    <span class="info-label">Endereço IPv6:</span>
-                    <span class="info-value">${ipv6Info.ipv6Address || 'Não detectado'}</span>
-                    </div>
-                    <div class="info-item">
-                    <span class="info-label">Endereço IPv4:</span>
-                    <span class="info-value">${ipv6Info.ipv4Address || 'Não detectado'}</span>
-                    </div>
-                    <div class="info-item">
-                    <span class="info-label">Dual Stack:</span>
-                    <span class="info-value">${ipv6Info.dualStack ? 'Sim' : 'Não'}</span>
-                    </div>
-                    <div class="info-item">
-                    <span class="info-label">Teste Conectividade:</span>
-                    <span class="info-value">${ipv6Info.connectivityTest}</span>
-                    </div>
-                    `;
-
-                    setTimeout(() => {
-                        progressManager.completeProgress('ipv6-info', finalContent);
-                        detectedInfo.ipv6 = ipv6Info;
-                    }, 3100);
-
-                } catch (error) {
-                    const errorContent = `
-                    <div class="info-item">
-                    <span class="info-label">IPv6:</span>
-                    <span class="info-value">Erro na detecção: ${error.message}</span>
-                    </div>
-                    `;
-
-                    setTimeout(() => {
-                        progressManager.completeProgress('ipv6-info', errorContent);
-                    }, 3100);
+                // Se não tem IPv6 real, corrigir os valores
+                if (!ipv6Info.hasIPv6) {
+                    ipv6Info.ipv6Address = null;
+                    ipv6Info.dualStack = false;
                 }
+
+                const finalContent = `
+                <div class="info-item">
+                <span class="info-label">IPv6 Disponível:</span>
+                <span class="info-value">${ipv6Info.hasIPv6 ? 'Sim' : 'Não'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Endereço IPv6:</span>
+                <span class="info-value">${ipv6Info.ipv6Address || 'Não detectado'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Endereço IPv4:</span>
+                <span class="info-value">${ipv6Info.ipv4Address || 'Não detectado'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Dual Stack:</span>
+                <span class="info-value">${ipv6Info.dualStack ? 'Sim' : 'Não'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Teste Conectividade:</span>
+                <span class="info-value">${ipv6Info.connectivityTest}</span>
+                </div>
+                `;
+
+                setTimeout(() => {
+                    progressManager.completeProgress('ipv6-info', finalContent);
+                    detectedInfo.ipv6 = ipv6Info;
+                }, 3100);
+
+            } catch (error) {
+                const errorContent = `
+                <div class="info-item">
+                <span class="info-label">IPv6:</span>
+                <span class="info-value">Erro na detecção: ${error.message}</span>
+                </div>
+                `;
+
+                setTimeout(() => {
+                    progressManager.completeProgress('ipv6-info', errorContent);
+                }, 3100);
             }
+        }
 
-            async function comprehensiveWebRTCTest() {
-                const container = document.getElementById('webrtc-comprehensive-info');
+        async function comprehensiveWebRTCTest() {
+            const container = document.getElementById('webrtc-comprehensive-info');
 
-                const steps = [
-                    'Configurando testes paralelos...',
-                    'Testando STUN servers...',
-                    'Coletando candidatos ICE...',
-                    'Finalizando análise...'
+            const steps = [
+                'Configurando testes paralelos...',
+                'Testando STUN servers...',
+                'Coletando candidatos ICE...',
+                'Finalizando análise...'
+            ];
+
+            progressManager.simulateProgress('webrtc-comprehensive-info', 2000, steps); // Reduzido de 5000 para 2000
+
+            try {
+                const webrtcInfo = {
+                    localIPs: [],
+                    publicIPs: [],
+                        stunServers: [],
+                        turnSupport: false,
+                        dtlsSupport: false,
+                        srtpSupport: false,
+                        candidateTypes: [],
+                        leaks: []
+                };
+
+                // Lista reduzida e otimizada de STUN servers
+                const stunServers = [
+                    'stun:stun.l.google.com:19302',
+                    'stun:stun.cloudflare.com:3478'
+                    // Removido os outros para acelerar
                 ];
 
-                progressManager.simulateProgress('webrtc-comprehensive-info', 2000, steps); // Reduzido de 5000 para 2000
+                // Executar todos os testes em PARALELO
+                const stunPromises = stunServers.map(stunServer => {
+                    return new Promise(async (resolve) => {
+                        try {
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => controller.abort(), 800); // Reduzido de 3000 para 800ms
 
-                try {
-                    const webrtcInfo = {
-                        localIPs: [],
-                        publicIPs: [],
-                            stunServers: [],
-                            turnSupport: false,
-                            dtlsSupport: false,
-                            srtpSupport: false,
-                            candidateTypes: [],
-                            leaks: []
-                    };
+                            const pc = new RTCPeerConnection({
+                                iceServers: [{ urls: stunServer }]
+                            });
 
-                    // Lista reduzida e otimizada de STUN servers
-                    const stunServers = [
-                        'stun:stun.l.google.com:19302',
-                        'stun:stun.cloudflare.com:3478'
-                        // Removido os outros para acelerar
-                    ];
+                            const candidatesReceived = [];
+                            let resolved = false;
 
-                    // Executar todos os testes em PARALELO
-                    const stunPromises = stunServers.map(stunServer => {
-                        return new Promise(async (resolve) => {
-                            try {
-                                const controller = new AbortController();
-                                const timeoutId = setTimeout(() => controller.abort(), 800); // Reduzido de 3000 para 800ms
+                            pc.onicecandidate = (event) => {
+                                if (event.candidate && !resolved) {
+                                    const candidate = event.candidate.candidate;
+                                    candidatesReceived.push(candidate);
 
-                                const pc = new RTCPeerConnection({
-                                    iceServers: [{ urls: stunServer }]
-                                });
+                                    // Extrair IPs
+                                    const ipMatch = candidate.match(/(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/);
+                                    if (ipMatch) {
+                                        const ip = ipMatch[0];
 
-                                const candidatesReceived = [];
-                                let resolved = false;
-
-                                pc.onicecandidate = (event) => {
-                                    if (event.candidate && !resolved) {
-                                        const candidate = event.candidate.candidate;
-                                        candidatesReceived.push(candidate);
-
-                                        // Extrair IPs
-                                        const ipMatch = candidate.match(/(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/);
-                                        if (ipMatch) {
-                                            const ip = ipMatch[0];
-
-                                            if (ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.')) {
-                                                if (!webrtcInfo.localIPs.includes(ip)) {
-                                                    webrtcInfo.localIPs.push(ip);
-                                                }
-                                            } else {
-                                                if (!webrtcInfo.publicIPs.includes(ip)) {
-                                                    webrtcInfo.publicIPs.push(ip);
-                                                    webrtcInfo.leaks.push(`IP público vazado: ${ip}`);
-                                                }
+                                        if (ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.')) {
+                                            if (!webrtcInfo.localIPs.includes(ip)) {
+                                                webrtcInfo.localIPs.push(ip);
+                                            }
+                                        } else {
+                                            if (!webrtcInfo.publicIPs.includes(ip)) {
+                                                webrtcInfo.publicIPs.push(ip);
+                                                webrtcInfo.leaks.push(`IP público vazado: ${ip}`);
                                             }
                                         }
-
-                                        // Classificar tipo de candidato
-                                        if (candidate.includes('typ host')) {
-                                            webrtcInfo.candidateTypes.push('Host');
-                                        } else if (candidate.includes('typ srflx')) {
-                                            webrtcInfo.candidateTypes.push('Server Reflexive');
-                                        } else if (candidate.includes('typ relay')) {
-                                            webrtcInfo.candidateTypes.push('Relay');
-                                        } else if (candidate.includes('typ prflx')) {
-                                            webrtcInfo.candidateTypes.push('Peer Reflexive');
-                                        }
                                     }
-                                };
 
-                                // Criar data channel para forçar ICE gathering
-                                pc.createDataChannel('test');
-                                const offer = await pc.createOffer();
-                                await pc.setLocalDescription(offer);
-
-                                // Aguardar candidatos (reduzido para 1 segundo)
-                                setTimeout(() => {
-                                    clearTimeout(timeoutId);
-                                    resolved = true;
-                                    pc.close();
-
-                                    if (candidatesReceived.length > 0) {
-                                        resolve({ success: true, server: stunServer });
-                                    } else {
-                                        resolve({ success: false, server: stunServer });
+                                    // Classificar tipo de candidato
+                                    if (candidate.includes('typ host')) {
+                                        webrtcInfo.candidateTypes.push('Host');
+                                    } else if (candidate.includes('typ srflx')) {
+                                        webrtcInfo.candidateTypes.push('Server Reflexive');
+                                    } else if (candidate.includes('typ relay')) {
+                                        webrtcInfo.candidateTypes.push('Relay');
+                                    } else if (candidate.includes('typ prflx')) {
+                                        webrtcInfo.candidateTypes.push('Peer Reflexive');
                                     }
-                                }, 1000); // Reduzido de 3000 para 1000ms
+                                }
+                            };
 
-                            } catch (e) {
-                                resolve({ success: false, server: stunServer, error: e.message });
-                            }
-                        });
-                    });
+                            // Criar data channel para forçar ICE gathering
+                            pc.createDataChannel('test');
+                            const offer = await pc.createOffer();
+                            await pc.setLocalDescription(offer);
 
-                    // Aguardar TODOS os testes em paralelo
-                    const results = await Promise.all(stunPromises);
+                            // Aguardar candidatos (reduzido para 1 segundo)
+                            setTimeout(() => {
+                                clearTimeout(timeoutId);
+                                resolved = true;
+                                pc.close();
 
-                    // Processar resultados
-                    results.forEach(result => {
-                        if (result.success) {
-                            webrtcInfo.stunServers.push(result.server);
+                                if (candidatesReceived.length > 0) {
+                                    resolve({ success: true, server: stunServer });
+                                } else {
+                                    resolve({ success: false, server: stunServer });
+                                }
+                            }, 1000); // Reduzido de 3000 para 1000ms
+
+                        } catch (e) {
+                            resolve({ success: false, server: stunServer, error: e.message });
                         }
                     });
+                });
 
-                    // Testar suporte a protocolos rapidamente
-                    try {
-                        const capabilities = RTCRtpSender.getCapabilities ? RTCRtpSender.getCapabilities('video') : null;
-                        if (capabilities) {
-                            webrtcInfo.dtlsSupport = capabilities.headerExtensions?.some(ext => ext.uri.includes('urn:ietf:params:rtp-hdrext:encrypt')) || false;
-                            webrtcInfo.srtpSupport = true;
-                        }
-                    } catch (e) {
-                        webrtcInfo.srtpSupport = false;
+                // Aguardar TODOS os testes em paralelo
+                const results = await Promise.all(stunPromises);
+
+                // Processar resultados
+                results.forEach(result => {
+                    if (result.success) {
+                        webrtcInfo.stunServers.push(result.server);
                     }
+                });
 
-                    // Remover duplicatas
-                    webrtcInfo.candidateTypes = [...new Set(webrtcInfo.candidateTypes)];
-
-                    const finalContent = `
-                    <div class="info-item">
-                    <span class="info-label">IPs Locais:</span>
-                    <span class="info-value">${webrtcInfo.localIPs.length > 0 ? webrtcInfo.localIPs.join(', ') : 'Nenhum detectado'}</span>
-                    </div>
-                    <div class="info-item">
-                    <span class="info-label">IPs Públicos:</span>
-                    <span class="info-value">${webrtcInfo.publicIPs.length > 0 ? webrtcInfo.publicIPs.join(', ') : 'Nenhum detectado'}</span>
-                    </div>
-                    <div class="info-item">
-                    <span class="info-label">STUN Servers OK:</span>
-                    <span class="info-value">${webrtcInfo.stunServers.length}/${stunServers.length}</span>
-                    </div>
-                    <div class="info-item">
-                    <span class="info-label">Tipos de Candidato:</span>
-                    <span class="info-value">${webrtcInfo.candidateTypes.join(', ') || 'Nenhum'}</span>
-                    </div>
-                    <div class="info-item">
-                    <span class="info-label">SRTP Suporte:</span>
-                    <span class="info-value">${webrtcInfo.srtpSupport ? 'Sim' : 'Não'}</span>
-                    </div>
-                    ${webrtcInfo.leaks.length > 0 ? `
-                        <div class="info-item" style="color: #ff6600;">
-                        <span class="info-label">⚠️ Vazamentos:</span>
-                        <span class="info-value">${webrtcInfo.leaks.length}</span>
-                        </div>` : ''}
-                        `;
-
-                        // Mostrar resultado imediatamente quando terminar
-                        progressManager.completeProgress('webrtc-comprehensive-info', finalContent);
-                        detectedInfo.webrtcComprehensive = webrtcInfo;
-
-                } catch (error) {
-                    const errorContent = `
-                    <div class="info-item">
-                    <span class="info-label">WebRTC Test:</span>
-                    <span class="info-value">Erro: ${error.message}</span>
-                    </div>
-                    `;
-                    progressManager.completeProgress('webrtc-comprehensive-info', errorContent);
+                // Testar suporte a protocolos rapidamente
+                try {
+                    const capabilities = RTCRtpSender.getCapabilities ? RTCRtpSender.getCapabilities('video') : null;
+                    if (capabilities) {
+                        webrtcInfo.dtlsSupport = capabilities.headerExtensions?.some(ext => ext.uri.includes('urn:ietf:params:rtp-hdrext:encrypt')) || false;
+                        webrtcInfo.srtpSupport = true;
+                    }
+                } catch (e) {
+                    webrtcInfo.srtpSupport = false;
                 }
+
+                // Remover duplicatas
+                webrtcInfo.candidateTypes = [...new Set(webrtcInfo.candidateTypes)];
+
+                const finalContent = `
+                <div class="info-item">
+                <span class="info-label">IPs Locais:</span>
+                <span class="info-value">${webrtcInfo.localIPs.length > 0 ? webrtcInfo.localIPs.join(', ') : 'Nenhum detectado'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">IPs Públicos:</span>
+                <span class="info-value">${webrtcInfo.publicIPs.length > 0 ? webrtcInfo.publicIPs.join(', ') : 'Nenhum detectado'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">STUN Servers OK:</span>
+                <span class="info-value">${webrtcInfo.stunServers.length}/${stunServers.length}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Tipos de Candidato:</span>
+                <span class="info-value">${webrtcInfo.candidateTypes.join(', ') || 'Nenhum'}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">SRTP Suporte:</span>
+                <span class="info-value">${webrtcInfo.srtpSupport ? 'Sim' : 'Não'}</span>
+                </div>
+                ${webrtcInfo.leaks.length > 0 ? `
+                    <div class="info-item" style="color: #ff6600;">
+                    <span class="info-label">⚠️ Vazamentos:</span>
+                    <span class="info-value">${webrtcInfo.leaks.length}</span>
+                    </div>` : ''}
+                    `;
+
+                    // Mostrar resultado imediatamente quando terminar
+                    progressManager.completeProgress('webrtc-comprehensive-info', finalContent);
+                    detectedInfo.webrtcComprehensive = webrtcInfo;
+
+            } catch (error) {
+                const errorContent = `
+                <div class="info-item">
+                <span class="info-label">WebRTC Test:</span>
+                <span class="info-value">Erro: ${error.message}</span>
+                </div>
+                `;
+                progressManager.completeProgress('webrtc-comprehensive-info', errorContent);
             }
+        }
 
         async function detectExtensions() {
             const container = document.getElementById('extensions-info');
@@ -2053,8 +2053,19 @@
                 // Obter endereço completo
                 const address = await getAddressFromCoords(latitude, longitude);
 
-                // Atualizar informações de localização
+                // Salvar dados de localização precisa
+                detectedInfo.preciseLocation = {
+                    latitude,
+                    longitude,
+                    accuracy: position.coords.accuracy,
+                    address: address
+                };
+
+                console.log('Localização precisa obtida:', detectedInfo.preciseLocation);
+
+                // Atualizar apenas a seção de detalhes de localização
                 const preciseLocationHTML = `
+                <div style="border-top: 1px solid #576879; margin-top: 15px; padding-top: 15px;">
                 <div class="info-item">
                 <span class="info-label">Latitude:</span>
                 <span class="info-value">${latitude.toFixed(6)}</span>
@@ -2071,6 +2082,7 @@
                 <span class="info-label">Endereço:</span>
                 <span class="info-value">${address}</span>
                 </div>
+                </div>
                 `;
 
                 if (locationContainer) {
@@ -2085,13 +2097,10 @@
                     locationBtn.remove();
                 }
 
-                // Atualizar dados globais
-                detectedInfo.preciseLocation = {
-                    latitude,
-                    longitude,
-                    accuracy: position.coords.accuracy,
-                    address: address
-                };
+                // **IMPORTANTE**: Atualizar todo o card de IP com informações completas
+                await updateLocationInfo();
+
+                console.log('Card de IP atualizado com localização precisa');
 
             } catch (error) {
                 console.error('Erro ao obter localização:', error);
@@ -2103,9 +2112,11 @@
 
                 if (locationContainer) {
                     locationContainer.innerHTML = `
+                    <div style="border-top: 1px solid #576879; margin-top: 15px; padding-top: 15px;">
                     <div class="info-item">
                     <span class="info-label">Erro:</span>
                     <span class="info-value">${getLocationErrorMessage(error.code)}</span>
+                    </div>
                     </div>
                     `;
                 }
@@ -2358,81 +2369,112 @@
             try {
                 // Tentar múltiplas APIs para obter informações de IP
                 const apis = [
-                    'https://api.ipify.org?format=json',
-                    'https://ipapi.co/json/',
-                    'https://ipinfo.io/json'
+                    { url: 'https://ipapi.co/json/', priority: 1 },
+                    { url: 'https://ipinfo.io/json', priority: 2 },
+                    { url: 'https://api.ipify.org?format=json', priority: 3 }
                 ];
 
                 let ipData = null;
+
+                // Testar APIs em ordem de prioridade
                 for (const api of apis) {
                     try {
-                        const response = await fetch(api);
-                        ipData = await response.json();
-                        break;
+                        console.log(`Testando API: ${api.url}`);
+                        const response = await fetch(api.url, {
+                            signal: AbortSignal.timeout(5000) // 5 segundos timeout
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            console.log(`Dados recebidos da API ${api.url}:`, data);
+
+                            // Normalizar dados de diferentes APIs
+                            ipData = normalizeIPData(data, api.url);
+
+                            if (ipData && ipData.ip) {
+                                console.log('IP Data normalizado:', ipData);
+                                break;
+                            }
+                        }
                     } catch (e) {
+                        console.error(`Erro na API ${api.url}:`, e);
                         continue;
                     }
                 }
 
-                if (ipData) {
-                    // Verificar permissão de localização
-                    const locationPermission = await checkLocationPermission();
-
-                    let locationButton = '';
-                    if (locationPermission !== 'granted') {
-                        locationButton = `
-                        <button id="location-btn" class="location-btn" onclick="requestLocationPermission()">
-                        📍 Descobrir Localização Precisa
-                        </button>
-                        `;
-                    }
-
-                    const finalContent = `
-                    <div class="info-item">
-                    <span class="info-label">IP Público:</span>
-                    <span class="info-value">${ipData.ip || 'Não disponível'}</span>
-                    </div>
-                    <div class="info-item">
-                    <span class="info-label">Cidade:</span>
-                    <span class="info-value">${ipData.city || 'Não disponível'}</span>
-                    </div>
-                    <div class="info-item">
-                    <span class="info-label">Região:</span>
-                    <span class="info-value">${ipData.region || 'Não disponível'}</span>
-                    </div>
-                    <div class="info-item">
-                    <span class="info-label">País:</span>
-                    <span class="info-value">${ipData.country || 'Não disponível'}</span>
-                    </div>
-                    <div class="info-item">
-                    <span class="info-label">ISP:</span>
-                    <span class="info-value">${ipData.org || ipData.isp || 'Não disponível'}</span>
-                    </div>
-                    <div class="info-item">
-                    <span class="info-label">Timezone:</span>
-                    <span class="info-value">${ipData.timezone || 'Não disponível'}</span>
-                    </div>
-                    ${locationButton}
-                    <div id="location-details"></div>
-                    <div id="map-container"></div>
-                    `;
-
-                    setTimeout(() => {
-                        progressManager.completeProgress('ip-info', finalContent);
-                        detectedInfo.ip = ipData;
-
-                        // Se já tem permissão, carregar automaticamente
-                        if (locationPermission === 'granted') {
-                            setTimeout(() => {
-                                requestLocationPermission();
-                            }, 1000);
-                        }
-                    }, 3100);
-
-                } else {
-                    throw new Error('Nenhuma API de IP disponível');
+                // Se nenhuma API funcionou, usar dados básicos
+                if (!ipData) {
+                    ipData = {
+                        ip: 'Não disponível',
+                        city: 'Não disponível',
+                        region: 'Não disponível',
+                        country: 'Não disponível',
+                        org: 'Não disponível',
+                        timezone: 'Não disponível'
+                    };
                 }
+
+                // Verificar permissão de localização
+                const locationPermission = await checkLocationPermission();
+
+                // Construir o HTML com os dados disponíveis
+                let locationButton = '';
+                if (locationPermission !== 'granted') {
+                    locationButton = `
+                    <button id="location-btn" class="location-btn" onclick="requestLocationPermission()">
+                    📍 Descobrir Localização Precisa
+                    </button>
+                    `;
+                }
+
+                const finalContent = `
+                <div class="info-item">
+                <span class="info-label">IP Público:</span>
+                <span class="info-value">${ipData.ip}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Cidade:</span>
+                <span class="info-value">${ipData.city}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Região:</span>
+                <span class="info-value">${ipData.region}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">País:</span>
+                <span class="info-value">${ipData.country}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">ISP:</span>
+                <span class="info-value">${ipData.org}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Timezone:</span>
+                <span class="info-value">${ipData.timezone}</span>
+                </div>
+                ${locationButton}
+                <div id="location-details"></div>
+                <div id="map-container"></div>
+                `;
+
+                setTimeout(() => {
+                    progressManager.completeProgress('ip-info', finalContent);
+
+                    // Salvar dados globalmente
+                    detectedInfo.ip = ipData;
+                    console.log('detectedInfo.ip atualizado:', detectedInfo.ip);
+
+                    // Se já tem permissão, carregar automaticamente
+                    if (locationPermission === 'granted') {
+                        setTimeout(() => {
+                            requestLocationPermission();
+                        }, 1000);
+                    }
+                }, 3100);
+
             } catch (error) {
+                console.error('Erro geral em loadIPInfo:', error);
+
                 const errorContent = `
                 <div class="info-item">
                 <span class="info-label">Status:</span>
@@ -2442,6 +2484,10 @@
                 <span class="info-label">IP Local:</span>
                 <span class="info-value">${getLocalIP()}</span>
                 </div>
+                <div class="info-item">
+                <span class="info-label">Erro:</span>
+                <span class="info-value">${error.message}</span>
+                </div>
                 `;
 
                 setTimeout(() => {
@@ -2450,21 +2496,121 @@
             }
         }
 
-        // Obter IP local (aproximado)
+        function normalizeIPData(data, apiUrl) {
+            console.log('Normalizando dados da API:', apiUrl, data);
+
+            const normalized = {
+                ip: data.ip || data.query || 'Não disponível',
+                city: data.city || 'Não disponível',
+                region: data.region || data.regionName || data.state || 'Não disponível',
+                country: data.country || data.country_name || data.countryCode || 'Não disponível',
+                org: data.org || data.isp || data.as || 'Não disponível',
+                timezone: data.timezone || 'Não disponível'
+            };
+
+            // Corrigir campos específicos por API
+            if (apiUrl.includes('ipapi.co')) {
+                normalized.country = data.country_name || data.country || 'Não disponível';
+                normalized.org = data.org || 'Não disponível';
+            } else if (apiUrl.includes('ipinfo.io')) {
+                normalized.country = data.country || 'Não disponível';
+                normalized.org = data.org || 'Não disponível';
+            } else if (apiUrl.includes('ip-api.com')) {
+                normalized.country = data.country || 'Não disponível';
+                normalized.region = data.regionName || 'Não disponível';
+                normalized.org = data.isp || data.as || 'Não disponível';
+            }
+
+            console.log('Dados normalizados:', normalized);
+            return normalized;
+        }
+
+        async function updateLocationInfo() {
+            const container = document.getElementById('ip-info');
+
+            if (!container || !detectedInfo.ip || !detectedInfo.preciseLocation) {
+                return;
+            }
+
+            // Construir HTML atualizado com localização precisa
+            const updatedContent = `
+            <div class="info-item">
+            <span class="info-label">IP Público:</span>
+            <span class="info-value">${detectedInfo.ip.ip}</span>
+            </div>
+            <div class="info-item">
+            <span class="info-label">Cidade:</span>
+            <span class="info-value">${detectedInfo.ip.city}</span>
+            </div>
+            <div class="info-item">
+            <span class="info-label">Região:</span>
+            <span class="info-value">${detectedInfo.ip.region}</span>
+            </div>
+            <div class="info-item">
+            <span class="info-label">País:</span>
+            <span class="info-value">${detectedInfo.ip.country}</span>
+            </div>
+            <div class="info-item">
+            <span class="info-label">ISP:</span>
+            <span class="info-value">${detectedInfo.ip.org}</span>
+            </div>
+            <div class="info-item">
+            <span class="info-label">Timezone:</span>
+            <span class="info-value">${detectedInfo.ip.timezone}</span>
+            </div>
+            <div class="info-item">
+            <span class="info-label">Latitude:</span>
+            <span class="info-value">${detectedInfo.preciseLocation.latitude.toFixed(6)}</span>
+            </div>
+            <div class="info-item">
+            <span class="info-label">Longitude:</span>
+            <span class="info-value">${detectedInfo.preciseLocation.longitude.toFixed(6)}</span>
+            </div>
+            <div class="info-item">
+            <span class="info-label">Precisão:</span>
+            <span class="info-value">${detectedInfo.preciseLocation.accuracy.toFixed(0)}m</span>
+            </div>
+            <div class="info-item">
+            <span class="info-label">Endereço:</span>
+            <span class="info-value">${detectedInfo.preciseLocation.address}</span>
+            </div>
+            <div id="location-details"></div>
+            <div id="map-container"></div>
+            `;
+
+            container.innerHTML = updatedContent;
+
+            // Recarregar o mapa
+            if (detectedInfo.preciseLocation) {
+                loadGoogleMap(detectedInfo.preciseLocation.latitude, detectedInfo.preciseLocation.longitude);
+            }
+        }
+
         function getLocalIP() {
             try {
-                const pc = new RTCPeerConnection({iceServers: []});
-                pc.onicecandidate = (ice) => {
-                    if (ice.candidate) {
-                        const localIP = ice.candidate.candidate.split(' ')[4];
-                        if (localIP.includes('192.168') || localIP.includes('10.0')) {
-                            return localIP;
+                // Tentar detectar IP local via WebRTC
+                return new Promise((resolve) => {
+                    const pc = new RTCPeerConnection({ iceServers: [] });
+
+                    pc.onicecandidate = (ice) => {
+                        if (ice.candidate) {
+                            const localIP = ice.candidate.candidate.split(' ')[4];
+                            if (localIP && (localIP.includes('192.168') || localIP.includes('10.0') || localIP.includes('172.'))) {
+                                resolve(localIP);
+                                pc.close();
+                                return;
+                            }
                         }
-                    }
-                };
-                pc.createDataChannel('');
-                pc.createOffer().then(pc.setLocalDescription.bind(pc));
-                return 'Detectando...';
+                    };
+
+                    pc.createDataChannel('');
+                    pc.createOffer().then(pc.setLocalDescription.bind(pc));
+
+                    setTimeout(() => {
+                        resolve('Não detectado');
+                        pc.close();
+                    }, 2000);
+                });
             } catch (e) {
                 return 'Não disponível';
             }
