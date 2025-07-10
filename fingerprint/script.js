@@ -8,9 +8,49 @@
             loadAllInformation();
         });
 
-        // Função principal para carregar todas as informações
         async function loadAllInformation() {
             try {
+                // Criar barras de progresso para cada card
+                const containers = [
+                    { id: 'ip-info', type: 'circular', critical: true },
+                    { id: 'basic-info', type: 'circular' },
+                    { id: 'screen-info', type: 'circular' },
+                    { id: 'browser-info', type: 'circular' },
+                    { id: 'hardware-info', type: 'circular' },
+                    { id: 'plugins-info', type: 'circular' },
+                    { id: 'security-info', type: 'circular', critical: true },
+                    { id: 'fonts-info', type: 'circular' },
+                    { id: 'canvas-info', type: 'circular', critical: true },
+                    { id: 'webgl-info', type: 'circular' },
+                    { id: 'sensors-info', type: 'circular' },
+                    { id: 'network-info', type: 'circular' },
+                    { id: 'architecture-info', type: 'circular' },
+                    { id: 'gpu-details-info', type: 'circular' },
+                    { id: 'ipv6-info', type: 'circular', critical: true },
+                    { id: 'audio-info', type: 'circular', critical: true },
+                    { id: 'private-mode-info', type: 'circular', critical: true },
+                    { id: 'webrtc-comprehensive-info', type: 'circular', critical: true },
+                    { id: 'extensions-info', type: 'circular', critical: true },
+                    { id: 'adblocker-info', type: 'circular', critical: true },
+                    { id: 'dns-leak-info', type: 'circular', critical: true },
+                    { id: 'proxy-vpn-info', type: 'circular', critical: true },
+                    { id: 'fingerprint-info', type: 'circular', critical: true },
+                    { id: 'privacy-score', type: 'circular', critical: true }
+                ];
+
+                // Inicializar barras de progresso
+                containers.forEach(container => {
+                    progressManager.createProgressBar(container.id, container.type, container.critical);
+                });
+
+                // Simular progresso para cada container
+                containers.forEach((container, index) => {
+                    setTimeout(() => {
+                        progressManager.simulateProgress(container.id, 1500 + (index * 100));
+                    }, index * 50);
+                });
+
+                // Executar testes
                 await Promise.all([
                     loadIPInfo(),
                                   loadBasicInfo(),
@@ -36,10 +76,15 @@
                                   detectProxyVPN()
                 ]);
 
-                // Pequena pausa para garantir que tudo carregou
+                // Aguardar um pouco para garantir que todos os dados foram coletados
                 setTimeout(() => {
+                    // Calcular fingerprint e privacy score com progresso
                     calculateFingerprint();
-                    calculatePrivacyScore();
+
+                    // Aguardar o fingerprint terminar antes de calcular o privacy score
+                    setTimeout(() => {
+                        calculatePrivacyScore();
+                    }, 1000);
                 }, 500);
 
             } catch (error) {
@@ -47,8 +92,113 @@
             }
         }
 
+        // Sistema de progresso
+        class ProgressManager {
+            constructor() {
+                this.progressData = {};
+            }
+
+            createProgressBar(containerId, type = 'linear', isCritical = false) {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+
+                const progressClass = isCritical ? 'critical' : '';
+
+                if (type === 'circular') {
+                    container.innerHTML = `
+                    <div class="circular-progress ${progressClass}" id="progress-${containerId}">
+                    <span class="circular-progress-text">0%</span>
+                    </div>
+                    <div style="text-align: center; color: #ccc; font-size: 0.9em; margin-top: 5px;">
+                    Analisando...
+                    </div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                    <div class="progress-container">
+                    <div class="progress-bar ${progressClass}" id="progress-${containerId}">
+                    <span class="progress-text">0%</span>
+                    </div>
+                    </div>
+                    <div style="text-align: center; color: #ccc; font-size: 0.9em; margin-top: 5px;">
+                    Carregando dados...
+                    </div>
+                    `;
+                }
+
+                this.progressData[containerId] = { current: 0, total: 100, type: type };
+            }
+
+            updateProgress(containerId, current, total = 100, text = null) {
+                const progressElement = document.getElementById(`progress-${containerId}`);
+                if (!progressElement) return;
+
+                const percentage = Math.round((current / total) * 100);
+                this.progressData[containerId].current = current;
+                this.progressData[containerId].total = total;
+
+                if (this.progressData[containerId].type === 'circular') {
+                    const degrees = (percentage / 100) * 360;
+                    progressElement.style.background = `conic-gradient(${progressElement.classList.contains('critical') ? '#ff6600' : '#00f000'} ${degrees}deg, #1a1a1a ${degrees}deg)`;
+                    progressElement.querySelector('.circular-progress-text').textContent = `${percentage}%`;
+                } else {
+                    progressElement.style.width = `${percentage}%`;
+                    const textElement = progressElement.querySelector('.progress-text');
+                    if (textElement) {
+                        textElement.textContent = text || `${percentage}%`;
+                    }
+                }
+            }
+
+            completeProgress(containerId, finalContent) {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+
+                // Pequena animação de conclusão
+                setTimeout(() => {
+                    container.innerHTML = finalContent;
+                }, 300);
+            }
+
+            simulateProgress(containerId, duration = 2000, steps = null) {
+                if (!steps) {
+                    // Progresso simulado suave
+                    const stepCount = 20;
+                    const stepDuration = duration / stepCount;
+                    let currentStep = 0;
+
+                    const interval = setInterval(() => {
+                        currentStep++;
+                        const progress = (currentStep / stepCount) * 100;
+                        this.updateProgress(containerId, progress, 100);
+
+                        if (currentStep >= stepCount) {
+                            clearInterval(interval);
+                        }
+                    }, stepDuration);
+                } else {
+                    // Progresso baseado em etapas específicas
+                    let currentStep = 0;
+                    const stepDuration = duration / steps.length;
+
+                    const interval = setInterval(() => {
+                        if (currentStep < steps.length) {
+                            this.updateProgress(containerId, currentStep + 1, steps.length, steps[currentStep]);
+                            currentStep++;
+                        } else {
+                            clearInterval(interval);
+                        }
+                    }, stepDuration);
+                }
+            }
+        }
+
+        const progressManager = new ProgressManager();
+
         async function testDNSLeak() {
             const container = document.getElementById('dns-leak-info');
+
+            progressManager.createProgressBar('dns-leak-info', 'circular', true);
 
             try {
                 const dnsResults = {
@@ -59,41 +209,39 @@
                     dohSupport: false
                 };
 
-                // Lista de domínios para testar resolução
-                const testDomains = [
-                    'google.com',
-                    'cloudflare.com',
-                    'github.com',
-                    'example.com'
-                ];
-
-                // Testar múltiplos resolvedores DNS
+                const testDomains = ['google.com', 'cloudflare.com', 'github.com', 'example.com'];
                 const dnsResolvers = [
                     { name: 'Cloudflare', server: 'https://cloudflare-dns.com/dns-query' },
                     { name: 'Google', server: 'https://dns.google/resolve' },
                     { name: 'Quad9', server: 'https://dns.quad9.net:5053/dns-query' }
                 ];
 
+                const totalSteps = (dnsResolvers.length * testDomains.length) + 3; // +3 para testes extras
+                let currentStep = 0;
+
+                // Função para atualizar progresso
+                const updateProgress = (step) => {
+                    currentStep = step;
+                    progressManager.updateProgress('dns-leak-info', currentStep, totalSteps);
+                };
+
+                updateProgress(1); // Iniciar
+
                 for (const resolver of dnsResolvers) {
                     try {
                         for (const domain of testDomains) {
-                            const startTime = performance.now();
+                            updateProgress(currentStep + 1);
 
-                            // Fazer consulta DNS-over-HTTPS
+                            const startTime = performance.now();
                             const response = await fetch(
                                 `${resolver.server}?name=${domain}&type=A`,
-                                {
-                                    headers: { 'Accept': 'application/dns-json' },
-                                    timeout: 3000
-                                }
+                                { headers: { 'Accept': 'application/dns-json' } }
                             );
-
                             const endTime = performance.now();
                             const responseTime = endTime - startTime;
 
                             if (response.ok) {
                                 const data = await response.json();
-
                                 dnsResults.resolvers.push({
                                     resolver: resolver.name,
                                     domain: domain,
@@ -102,7 +250,6 @@
                                                           status: data.Status
                                 });
 
-                                // Verificar DNSSEC
                                 if (data.AD) {
                                     dnsResults.dnssecSupport = true;
                                 }
@@ -114,13 +261,10 @@
                 }
 
                 // Teste de consistência geográfica
-                const locationTests = [];
+                updateProgress(currentStep + 1);
                 try {
-                    // Comparar localização do IP com resolução DNS
                     if (detectedInfo.ip && detectedInfo.ip.country) {
                         const userCountry = detectedInfo.ip.country;
-
-                        // Testar se DNS resolve para servidores locais ou remotos
                         const geoTestResponse = await fetch('https://ipapi.co/json/');
                         const geoData = await geoTestResponse.json();
 
@@ -133,7 +277,8 @@
                     dnsResults.leaks.push('Não foi possível verificar consistência geográfica');
                 }
 
-                // Teste de DNS-over-HTTPS support
+                // Teste DNS-over-HTTPS
+                updateProgress(currentStep + 1);
                 try {
                     const dohTest = await fetch('https://cloudflare-dns.com/dns-query?name=example.com&type=A', {
                         headers: { 'Accept': 'application/dns-json' }
@@ -143,13 +288,15 @@
                     dnsResults.dohSupport = false;
                 }
 
-                // Calcular estatísticas
+                // Finalizar progresso
+                updateProgress(totalSteps);
+
+                // Calcular estatísticas e mostrar resultado
                 const avgResponseTime = dnsResults.resolvers.reduce((sum, r) =>
                 sum + parseFloat(r.responseTime), 0) / dnsResults.resolvers.length;
-
                 const uniqueResolvers = [...new Set(dnsResults.resolvers.map(r => r.resolver))];
 
-                container.innerHTML = `
+                const finalContent = `
                 <div class="info-item">
                 <span class="info-label">DNS Vazamentos:</span>
                 <span class="info-value">${dnsResults.leaks.length > 0 ? dnsResults.leaks.length + ' detectados' : 'Nenhum detectado'}</span>
@@ -181,20 +328,35 @@
                     </div>` : ''}
                     `;
 
-                    detectedInfo.dnsLeak = dnsResults;
+                    setTimeout(() => {
+                        progressManager.completeProgress('dns-leak-info', finalContent);
+                        detectedInfo.dnsLeak = dnsResults;
+                    }, 300);
 
             } catch (error) {
-                container.innerHTML = `
+                const errorContent = `
                 <div class="info-item">
                 <span class="info-label">DNS Leak Test:</span>
                 <span class="info-value">Erro: ${error.message}</span>
                 </div>
                 `;
+
+                progressManager.completeProgress('dns-leak-info', errorContent);
             }
         }
 
         async function detectProxyVPN() {
             const container = document.getElementById('proxy-vpn-info');
+
+            const steps = [
+                'Verificando ISP...',
+                'Testando latência...',
+                'Consultando APIs...',
+                'Analisando inconsistências...',
+                'Calculando score...'
+            ];
+
+            progressManager.simulateProgress('proxy-vpn-info', 3500, steps);
 
             try {
                 const vpnIndicators = {
@@ -293,24 +455,6 @@
                     }
                 }
 
-                // Verificar ranges de IP conhecidos de VPN (teste básico)
-                if (detectedInfo.ip && detectedInfo.ip.ip) {
-                    const ip = detectedInfo.ip.ip;
-                    const ipParts = ip.split('.').map(Number);
-
-                    // Alguns ranges comuns de VPN/Proxy (exemplo básico)
-                    const suspiciousRanges = [
-                        [10, 0, 0, 0, 8],      // RFC 1918
-                        [172, 16, 0, 0, 12],   // RFC 1918
-                        [192, 168, 0, 0, 16],  // RFC 1918 (menos suspeito)
-                        [169, 254, 0, 0, 16],  // Link-local
-                        [203, 0, 113, 0, 24]   // TEST-NET-3
-                    ];
-
-                    // Este é um teste muito básico - em produção seria necessário
-                    // uma base de dados mais completa de ranges de VPN
-                }
-
                 // Teste de WebRTC para vazamentos
                 let webrtcLeaks = 0;
                 if (detectedInfo.webrtcComprehensive) {
@@ -336,7 +480,7 @@
                     anonymityColor = '#ff6600';
                 }
 
-                container.innerHTML = `
+                const finalContent = `
                 <div class="info-item">
                 <span class="info-label">Proxy/VPN Detectado:</span>
                 <span class="info-value">${detectionMethods.length > 0 ? 'Possível' : 'Improvável'}</span>
@@ -368,24 +512,31 @@
                     </div>` : ''}
                     `;
 
-                    detectedInfo.proxyVPN = {
-                        indicators: vpnIndicators,
-                        detectionMethods,
-                        anonymityScore: vpnIndicators.anonymityScore,
-                        latencyTests: {
-                            average: avgLatency,
-                            max: maxLatency,
-                            min: minLatency
-                        }
-                    };
+                    setTimeout(() => {
+                        progressManager.completeProgress('proxy-vpn-info', finalContent);
+                        detectedInfo.proxyVPN = {
+                            indicators: vpnIndicators,
+                            detectionMethods,
+                            anonymityScore: vpnIndicators.anonymityScore,
+                            latencyTests: {
+                                average: avgLatency,
+                                max: maxLatency,
+                                min: minLatency
+                            }
+                        };
+                    }, 3600);
 
             } catch (error) {
-                container.innerHTML = `
+                const errorContent = `
                 <div class="info-item">
                 <span class="info-label">Proxy/VPN Detection:</span>
                 <span class="info-value">Erro: ${error.message}</span>
                 </div>
                 `;
+
+                setTimeout(() => {
+                    progressManager.completeProgress('proxy-vpn-info', errorContent);
+                }, 3600);
             }
         }
 
@@ -821,6 +972,16 @@
         async function detectIPv6() {
             const container = document.getElementById('ipv6-info');
 
+            const steps = [
+                'Verificando IPv4 existente...',
+                'Testando conectividade IPv6...',
+                'Consultando DNS AAAA...',
+                'Verificando WebRTC IPv6...',
+                'Analisando dual stack...'
+            ];
+
+            progressManager.simulateProgress('ipv6-info', 3000, steps);
+
             try {
                 let ipv6Info = {
                     hasIPv6: false,
@@ -932,49 +1093,66 @@
                 // Determinar dual stack
                 ipv6Info.dualStack = ipv6Info.hasIPv6 && ipv6Info.ipv4Address;
 
-                // Se não tem IPv6 real, corrigir os valores
-                if (!ipv6Info.hasIPv6) {
-                    ipv6Info.ipv6Address = null;
-                    ipv6Info.dualStack = false;
+                    // Se não tem IPv6 real, corrigir os valores
+                    if (!ipv6Info.hasIPv6) {
+                        ipv6Info.ipv6Address = null;
+                        ipv6Info.dualStack = false;
+                    }
+
+                    const finalContent = `
+                    <div class="info-item">
+                    <span class="info-label">IPv6 Disponível:</span>
+                    <span class="info-value">${ipv6Info.hasIPv6 ? 'Sim' : 'Não'}</span>
+                    </div>
+                    <div class="info-item">
+                    <span class="info-label">Endereço IPv6:</span>
+                    <span class="info-value">${ipv6Info.ipv6Address || 'Não detectado'}</span>
+                    </div>
+                    <div class="info-item">
+                    <span class="info-label">Endereço IPv4:</span>
+                    <span class="info-value">${ipv6Info.ipv4Address || 'Não detectado'}</span>
+                    </div>
+                    <div class="info-item">
+                    <span class="info-label">Dual Stack:</span>
+                    <span class="info-value">${ipv6Info.dualStack ? 'Sim' : 'Não'}</span>
+                    </div>
+                    <div class="info-item">
+                    <span class="info-label">Teste Conectividade:</span>
+                    <span class="info-value">${ipv6Info.connectivityTest}</span>
+                    </div>
+                    `;
+
+                    setTimeout(() => {
+                        progressManager.completeProgress('ipv6-info', finalContent);
+                        detectedInfo.ipv6 = ipv6Info;
+                    }, 3100);
+
+                } catch (error) {
+                    const errorContent = `
+                    <div class="info-item">
+                    <span class="info-label">IPv6:</span>
+                    <span class="info-value">Erro na detecção: ${error.message}</span>
+                    </div>
+                    `;
+
+                    setTimeout(() => {
+                        progressManager.completeProgress('ipv6-info', errorContent);
+                    }, 3100);
                 }
-
-                container.innerHTML = `
-                <div class="info-item">
-                <span class="info-label">IPv6 Disponível:</span>
-                <span class="info-value">${ipv6Info.hasIPv6 ? 'Sim' : 'Não'}</span>
-                </div>
-                <div class="info-item">
-                <span class="info-label">Endereço IPv6:</span>
-                <span class="info-value">${ipv6Info.ipv6Address || 'Não detectado'}</span>
-                </div>
-                <div class="info-item">
-                <span class="info-label">Endereço IPv4:</span>
-                <span class="info-value">${ipv6Info.ipv4Address || 'Não detectado'}</span>
-                </div>
-                <div class="info-item">
-                <span class="info-label">Dual Stack:</span>
-                <span class="info-value">${ipv6Info.dualStack ? 'Sim' : 'Não'}</span>
-                </div>
-                <div class="info-item">
-                <span class="info-label">Teste Conectividade:</span>
-                <span class="info-value">${ipv6Info.connectivityTest}</span>
-                </div>
-                `;
-
-                detectedInfo.ipv6 = ipv6Info;
-
-            } catch (error) {
-                container.innerHTML = `
-                <div class="info-item">
-                <span class="info-label">IPv6:</span>
-                <span class="info-value">Erro na detecção: ${error.message}</span>
-                </div>
-                `;
             }
-        }
 
         async function comprehensiveWebRTCTest() {
             const container = document.getElementById('webrtc-comprehensive-info');
+
+            const steps = [
+                'Configurando STUN servers...',
+                'Testando Google STUN...',
+                'Testando Cloudflare STUN...',
+                'Coletando candidatos ICE...',
+                'Analisando vazamentos...'
+            ];
+
+            progressManager.simulateProgress('webrtc-comprehensive-info', 5000, steps);
 
             try {
                 const webrtcInfo = {
@@ -1078,7 +1256,7 @@
                 // Remover duplicatas
                 webrtcInfo.candidateTypes = [...new Set(webrtcInfo.candidateTypes)];
 
-                container.innerHTML = `
+                const finalContent = `
                 <div class="info-item">
                 <span class="info-label">IPs Locais:</span>
                 <span class="info-value">${webrtcInfo.localIPs.length > 0 ? webrtcInfo.localIPs.join(', ') : 'Nenhum detectado'}</span>
@@ -1106,20 +1284,37 @@
                     </div>` : ''}
                     `;
 
-                    detectedInfo.webrtcComprehensive = webrtcInfo;
+                    setTimeout(() => {
+                        progressManager.completeProgress('webrtc-comprehensive-info', finalContent);
+                        detectedInfo.webrtcComprehensive = webrtcInfo;
+                    }, 5100);
 
             } catch (error) {
-                container.innerHTML = `
+                const errorContent = `
                 <div class="info-item">
                 <span class="info-label">WebRTC Test:</span>
                 <span class="info-value">Erro: ${error.message}</span>
                 </div>
                 `;
+
+                setTimeout(() => {
+                    progressManager.completeProgress('webrtc-comprehensive-info', errorContent);
+                }, 5100);
             }
         }
 
         async function detectExtensions() {
             const container = document.getElementById('extensions-info');
+
+            const steps = [
+                'Configurando testes...',
+                'Testando timing de recursos...',
+                'Verificando DOM...',
+                'Analisando APIs...',
+                'Compilando resultados...'
+            ];
+
+            progressManager.simulateProgress('extensions-info', 2000, steps);
 
             try {
                 const detectedExtensions = [];
@@ -1209,7 +1404,7 @@
                 window.hasOwnProperty(prop) || window[prop] !== undefined
                 );
 
-                container.innerHTML = `
+                const finalContent = `
                 <div class="info-item">
                 <span class="info-label">Extensões Detectadas:</span>
                 <span class="info-value">${detectedExtensions.length > 0 ? detectedExtensions.join(', ') : 'Nenhuma detectada'}</span>
@@ -1232,20 +1427,27 @@
                     </div>` : ''}
                     `;
 
-                    detectedInfo.extensions = {
-                        detected: detectedExtensions,
-                        apiModifications,
-                        windowProperties: foundProperties,
-                        suspiciousTimings
-                    };
+                    setTimeout(() => {
+                        progressManager.completeProgress('extensions-info', finalContent);
+                        detectedInfo.extensions = {
+                            detected: detectedExtensions,
+                            apiModifications,
+                            windowProperties: foundProperties,
+                            suspiciousTimings
+                        };
+                    }, 2100);
 
             } catch (error) {
-                container.innerHTML = `
+                const errorContent = `
                 <div class="info-item">
                 <span class="info-label">Extensões:</span>
                 <span class="info-value">Erro na detecção</span>
                 </div>
                 `;
+
+                setTimeout(() => {
+                    progressManager.completeProgress('extensions-info', errorContent);
+                }, 2100);
             }
         }
 
@@ -1537,7 +1739,7 @@
                             if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
                                 flattenObject(obj[key], prefix + key + '.');
                             } else {
-                                csv += `"${prefix + key}","${Array.isArray(obj[key]) ? obj[key].join(';') : obj[key]}"\n`;
+                                csv += `"${prefix + key}","${Array.isArray(obj[key]) ? obj[key].join(';') : String(obj[key]).replace(/"/g, '""')}"\n`;
                             }
                         }
                     }
@@ -1588,8 +1790,6 @@
                 alert('Erro ao exportar: ' + error.message);
             }
         }
-
-
 
         function getAudioFingerprint() {
             const container = document.getElementById('audio-info');
@@ -1766,10 +1966,6 @@
             }
         }
 
-
-
-        // ===== FUNÇÕES DE LOCALIZAÇÃO E MAPA =====
-
         // 1. Função para solicitar permissão de localização
         async function requestLocationPermission() {
             const locationBtn = document.getElementById('location-btn');
@@ -1903,59 +2099,7 @@
             }
         }
 
-        // 4. Função para carregar mapa do Google Maps
-        function loadGoogleMap(latitude, longitude) {
-            const mapContainer = document.getElementById('map-container');
-
-            if (!mapContainer) {
-                console.error('Container do mapa não encontrado');
-                return;
-            }
-
-            // Criar iframe do Google Maps
-            const mapIframe = document.createElement('iframe');
-            mapIframe.width = '100%';
-            mapIframe.height = '200';
-            mapIframe.style.border = '2px solid #576879';
-            mapIframe.style.borderRadius = '8px';
-            mapIframe.style.marginTop = '10px';
-            mapIframe.loading = 'lazy';
-            mapIframe.referrerPolicy = 'no-referrer-when-downgrade';
-
-            // URL do Google Maps com marcador
-            const mapUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dO_TqXYSKr0p5A&q=${latitude},${longitude}&zoom=16&maptype=roadmap`;
-
-            // Fallback para OpenStreetMap se Google Maps não funcionar
-            const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${longitude-0.01},${latitude-0.01},${longitude+0.01},${latitude+0.01}&layer=mapnik&marker=${latitude},${longitude}`;
-
-            mapIframe.src = mapUrl;
-
-            // Adicionar tratamento de erro para fallback
-            mapIframe.onerror = () => {
-                mapIframe.src = osmUrl;
-            };
-
-            // Limpar container e adicionar mapa
-            mapContainer.innerHTML = '';
-            mapContainer.appendChild(mapIframe);
-
-            // Adicionar links úteis
-            const linksDiv = document.createElement('div');
-            linksDiv.style.marginTop = '10px';
-            linksDiv.style.fontSize = '0.8em';
-            linksDiv.innerHTML = `
-            <a href="https://www.google.com/maps?q=${latitude},${longitude}" target="_blank" style="color: #00f000; text-decoration: none; margin-right: 15px;">
-            🌍 Abrir no Google Maps
-            </a>
-            <a href="https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}&zoom=16" target="_blank" style="color: #00f000; text-decoration: none;">
-            🗺️ Abrir no OpenStreetMap
-            </a>
-            `;
-
-            mapContainer.appendChild(linksDiv);
-        }
-
-        // 5. Função para verificar permissão de localização
+        // 4. Função para verificar permissão de localização
         async function checkLocationPermission() {
             if (!navigator.permissions) {
                 return 'unavailable';
@@ -1969,7 +2113,7 @@
             }
         }
 
-        // 6. Função para obter mensagem de erro amigável
+        // 5. Função para obter mensagem de erro amigável
         function getLocationErrorMessage(errorCode) {
             switch (errorCode) {
                 case 1:
@@ -1983,85 +2127,7 @@
             }
         }
 
-        // ===== FUNÇÕES DE LOCALIZAÇÃO E MAPA =====
-
-        // 1. Função para solicitar permissão de localização
-        async function requestLocationPermission() {
-            const locationBtn = document.getElementById('location-btn');
-            const locationContainer = document.getElementById('location-details');
-
-            if (locationBtn) {
-                locationBtn.innerHTML = '📍 Obtendo localização...';
-                locationBtn.disabled = true;
-            }
-
-            try {
-                const position = await getCurrentPosition();
-                const { latitude, longitude } = position.coords;
-
-                // Obter endereço completo
-                const address = await getAddressFromCoords(latitude, longitude);
-
-                // Atualizar informações de localização
-                const preciseLocationHTML = `
-                <div class="info-item">
-                <span class="info-label">Latitude:</span>
-                <span class="info-value">${latitude.toFixed(6)}</span>
-                </div>
-                <div class="info-item">
-                <span class="info-label">Longitude:</span>
-                <span class="info-value">${longitude.toFixed(6)}</span>
-                </div>
-                <div class="info-item">
-                <span class="info-label">Precisão:</span>
-                <span class="info-value">${position.coords.accuracy.toFixed(0)}m</span>
-                </div>
-                <div class="info-item">
-                <span class="info-label">Endereço:</span>
-                <span class="info-value">${address}</span>
-                </div>
-                `;
-
-                if (locationContainer) {
-                    locationContainer.innerHTML = preciseLocationHTML;
-                }
-
-                // Carregar mapa
-                loadGoogleMap(latitude, longitude);
-
-                // Remover botão após sucesso
-                if (locationBtn) {
-                    locationBtn.remove();
-                }
-
-                // Atualizar dados globais
-                detectedInfo.preciseLocation = {
-                    latitude,
-                    longitude,
-                    accuracy: position.coords.accuracy,
-                    address: address
-                };
-
-            } catch (error) {
-                console.error('Erro ao obter localização:', error);
-
-                if (locationBtn) {
-                    locationBtn.innerHTML = '❌ Permissão negada';
-                    locationBtn.disabled = false;
-                }
-
-                if (locationContainer) {
-                    locationContainer.innerHTML = `
-                    <div class="info-item">
-                    <span class="info-label">Erro:</span>
-                    <span class="info-value">${getLocationErrorMessage(error.code)}</span>
-                    </div>
-                    `;
-                }
-            }
-        }
-
-        // 2. Função para obter posição atual (Promise wrapper)
+        // 6. Função para obter posição atual (Promise wrapper)
         function getCurrentPosition() {
             return new Promise((resolve, reject) => {
                 if (!navigator.geolocation) {
@@ -2081,7 +2147,7 @@
             });
         }
 
-        // 3. Função para obter endereço por geocodificação reversa
+        // 7. Função para obter endereço por geocodificação reversa
         async function getAddressFromCoords(lat, lng) {
             try {
                 // Usando API gratuita do OpenStreetMap Nominatim
@@ -2118,7 +2184,7 @@
             }
         }
 
-        // 4. Função para carregar área de mapas (apenas links)
+        // 8. Função para carregar área de mapas (apenas links)
         function loadGoogleMap(latitude, longitude) {
             const mapContainer = document.getElementById('map-container');
 
@@ -2178,7 +2244,7 @@
             });
         }
 
-        // 5. Função para verificar permissão de localização
+        // 9. Função para verificar permissão de localização
         async function checkLocationPermission() {
             if (!navigator.permissions) {
                 return 'unavailable';
@@ -2192,7 +2258,7 @@
             }
         }
 
-        // 6. Função para obter mensagem de erro amigável
+        // 10. Função para obter mensagem de erro amigável
         function getLocationErrorMessage(errorCode) {
             switch (errorCode) {
                 case 1:
@@ -2206,9 +2272,18 @@
             }
         }
 
-        // 7. Função modificada para loadIPInfo (substituir a existente)
         async function loadIPInfo() {
             const container = document.getElementById('ip-info');
+
+            const steps = [
+                'Testando API Ipify...',
+                'Testando API Ipapi...',
+                'Testando API Ipinfo...',
+                'Verificando permissões...',
+                'Preparando localização...'
+            ];
+
+            progressManager.simulateProgress('ip-info', 3000, steps);
 
             try {
                 // Tentar múltiplas APIs para obter informações de IP
@@ -2242,7 +2317,7 @@
                         `;
                     }
 
-                    container.innerHTML = `
+                    const finalContent = `
                     <div class="info-item">
                     <span class="info-label">IP Público:</span>
                     <span class="info-value">${ipData.ip || 'Não disponível'}</span>
@@ -2272,20 +2347,23 @@
                     <div id="map-container"></div>
                     `;
 
-                    detectedInfo.ip = ipData;
+                    setTimeout(() => {
+                        progressManager.completeProgress('ip-info', finalContent);
+                        detectedInfo.ip = ipData;
 
-                    // Se já tem permissão, carregar automaticamente
-                    if (locationPermission === 'granted') {
-                        setTimeout(() => {
-                            requestLocationPermission();
-                        }, 1000);
-                    }
+                        // Se já tem permissão, carregar automaticamente
+                        if (locationPermission === 'granted') {
+                            setTimeout(() => {
+                                requestLocationPermission();
+                            }, 1000);
+                        }
+                    }, 3100);
 
                 } else {
                     throw new Error('Nenhuma API de IP disponível');
                 }
             } catch (error) {
-                container.innerHTML = `
+                const errorContent = `
                 <div class="info-item">
                 <span class="info-label">Status:</span>
                 <span class="info-value">Erro ao carregar informações de IP</span>
@@ -2295,113 +2373,11 @@
                 <span class="info-value">${getLocalIP()}</span>
                 </div>
                 `;
+
+                setTimeout(() => {
+                    progressManager.completeProgress('ip-info', errorContent);
+                }, 3100);
             }
-        }
-
-        // 8. Função para criar mapa alternativo com Canvas (se APIs falharem)
-        function createCanvasMap(latitude, longitude) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 300;
-            canvas.height = 200;
-            canvas.style.border = '2px solid #576879';
-            canvas.style.borderRadius = '8px';
-            canvas.style.marginTop = '10px';
-
-            const ctx = canvas.getContext('2d');
-
-            // Fundo
-            ctx.fillStyle = '#2a2a2a';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Grid
-            ctx.strokeStyle = '#444';
-            ctx.lineWidth = 1;
-
-            // Linhas verticais
-            for (let x = 0; x <= canvas.width; x += 30) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
-                ctx.stroke();
-            }
-
-            // Linhas horizontais
-            for (let y = 0; y <= canvas.height; y += 30) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
-                ctx.stroke();
-            }
-
-            // Marcador central
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-
-            ctx.fillStyle = '#ff0000';
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI);
-            ctx.fill();
-
-            // Texto de coordenadas
-            ctx.fillStyle = '#fff';
-            ctx.font = '12px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`, centerX, centerY - 15);
-
-            return canvas;
-        }
-
-        // 8. Função para criar mapa alternativo com Canvas (se APIs falharem)
-        function createCanvasMap(latitude, longitude) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 300;
-            canvas.height = 200;
-            canvas.style.border = '2px solid #576879';
-            canvas.style.borderRadius = '8px';
-            canvas.style.marginTop = '10px';
-
-            const ctx = canvas.getContext('2d');
-
-            // Fundo
-            ctx.fillStyle = '#2a2a2a';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Grid
-            ctx.strokeStyle = '#444';
-            ctx.lineWidth = 1;
-
-            // Linhas verticais
-            for (let x = 0; x <= canvas.width; x += 30) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
-                ctx.stroke();
-            }
-
-            // Linhas horizontais
-            for (let y = 0; y <= canvas.height; y += 30) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
-                ctx.stroke();
-            }
-
-            // Marcador central
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-
-            ctx.fillStyle = '#ff0000';
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI);
-            ctx.fill();
-
-            // Texto de coordenadas
-            ctx.fillStyle = '#fff';
-            ctx.font = '12px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`, centerX, centerY - 15);
-
-            return canvas;
         }
 
         // Obter IP local (aproximado)
@@ -2892,6 +2868,17 @@
         // Carregar informações de sensores
         async function loadSensorsInfo() {
             const container = document.getElementById('sensors-info');
+
+            const steps = [
+                'Verificando geolocalização...',
+                'Testando acelerômetro...',
+                'Verificando bateria...',
+                'Enumerando dispositivos...',
+                'Verificando gamepads...'
+            ];
+
+            progressManager.simulateProgress('sensors-info', 2500, steps);
+
             let sensorInfo = '';
 
             // Verificar geolocalização
@@ -2987,7 +2974,11 @@
                 `;
             }
 
-            container.innerHTML = sensorInfo || '<div class="info-item"><span class="info-label">Status:</span><span class="info-value">Nenhum sensor detectado</span></div>';
+            const finalContent = sensorInfo || '<div class="info-item"><span class="info-label">Status:</span><span class="info-value">Nenhum sensor detectado</span></div>';
+
+            setTimeout(() => {
+                progressManager.completeProgress('sensors-info', finalContent);
+            }, 2600);
         }
 
         // Carregar informações de rede
@@ -3085,42 +3076,85 @@
         function calculateFingerprint() {
             const container = document.getElementById('fingerprint-info');
 
-            // Combinar todas as informações coletadas
-            const fingerprintData = {
-                userAgent: navigator.userAgent,
-                language: navigator.language,
-                languages: navigator.languages,
-                platform: navigator.platform,
-                screen: `${screen.width}x${screen.height}x${screen.colorDepth}`,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                plugins: detectedInfo.plugins ? detectedInfo.plugins.map(p => p.name).join(',') : '',
-                fonts: detectedInfo.fonts ? detectedInfo.fonts.join(',') : '',
-                canvas: detectedInfo.canvas ? detectedInfo.canvas.hash : '',
-                webgl: detectedInfo.webgl ? detectedInfo.webgl.renderer : '',
-                hardware: `${navigator.hardwareConcurrency}-${navigator.deviceMemory}`,
-                connection: navigator.connection ? navigator.connection.effectiveType : ''
+            progressManager.createProgressBar('fingerprint-info', 'circular', true);
+
+            // Progresso real baseado na coleta de dados
+            let currentStep = 0;
+            const totalSteps = 12;
+
+            const updateProgress = (step, text) => {
+                currentStep = step;
+                progressManager.updateProgress('fingerprint-info', currentStep, totalSteps, text);
             };
 
-            const fingerprintString = JSON.stringify(fingerprintData);
-            browserFingerprint = hashCode(fingerprintString);
+            updateProgress(1, 'Iniciando...');
 
-            container.innerHTML = `
-            <div class="info-item">
-            <span class="info-label">Fingerprint Hash:</span>
-            <span class="info-value">${browserFingerprint}</span>
-            </div>
-            <div class="info-item">
-            <span class="info-label">Unicidade:</span>
-            <span class="info-value">${calculateUniqueness()}%</span>
-            </div>
-            <div class="info-item">
-            <span class="info-label">Entropia:</span>
-            <span class="info-value">${calculateEntropy(fingerprintString).toFixed(2)} bits</span>
-            </div>
-            <div class="fingerprint-hash">
-            Fingerprint completo: ${fingerprintString}
-            </div>
-            `;
+            setTimeout(() => {
+                updateProgress(2, 'User Agent');
+
+                // Simular coleta de dados com pequenos delays
+                setTimeout(() => {
+                    updateProgress(4, 'Idiomas');
+
+                    setTimeout(() => {
+                        updateProgress(6, 'Tela');
+
+                        setTimeout(() => {
+                            updateProgress(8, 'Plugins');
+
+                            setTimeout(() => {
+                                updateProgress(10, 'Canvas/WebGL');
+
+                                setTimeout(() => {
+                                    updateProgress(12, 'Finalizando');
+
+                                    // Fazer o cálculo real
+                                    const fingerprintData = {
+                                        userAgent: navigator.userAgent,
+                                        language: navigator.language,
+                                        languages: navigator.languages,
+                                        platform: navigator.platform,
+                                        screen: `${screen.width}x${screen.height}x${screen.colorDepth}`,
+                                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                                           plugins: detectedInfo.plugins ? detectedInfo.plugins.map(p => p.name).join(',') : '',
+                                           fonts: detectedInfo.fonts ? detectedInfo.fonts.join(',') : '',
+                                           canvas: detectedInfo.canvas ? detectedInfo.canvas.hash : '',
+                                           webgl: detectedInfo.webgl ? detectedInfo.webgl.renderer : '',
+                                           hardware: `${navigator.hardwareConcurrency}-${navigator.deviceMemory}`,
+                                           connection: navigator.connection ? navigator.connection.effectiveType : ''
+                                    };
+
+                                    const fingerprintString = JSON.stringify(fingerprintData);
+                                    browserFingerprint = hashCode(fingerprintString);
+
+                                    const finalContent = `
+                                    <div class="info-item">
+                                    <span class="info-label">Fingerprint Hash:</span>
+                                    <span class="info-value">${browserFingerprint}</span>
+                                    </div>
+                                    <div class="info-item">
+                                    <span class="info-label">Unicidade:</span>
+                                    <span class="info-value">${calculateUniqueness()}%</span>
+                                    </div>
+                                    <div class="info-item">
+                                    <span class="info-label">Entropia:</span>
+                                    <span class="info-value">${calculateEntropy(fingerprintString).toFixed(2)} bits</span>
+                                    </div>
+                                    <div class="fingerprint-hash">
+                                    Fingerprint completo: ${fingerprintString}
+                                    </div>
+                                    `;
+
+                                    setTimeout(() => {
+                                        progressManager.completeProgress('fingerprint-info', finalContent);
+                                    }, 200);
+
+                                }, 300);
+                            }, 300);
+                        }, 300);
+                    }, 300);
+                }, 300);
+            }, 100);
         }
 
         // Calcular unicidade do fingerprint
@@ -3159,86 +3193,141 @@
         function calculatePrivacyScore() {
             const container = document.getElementById('privacy-score');
 
-            let score = 100;
-            let risks = [];
+            progressManager.createProgressBar('privacy-score', 'circular', true);
 
-            // Verificar riscos
-            if (detectedInfo.canvas) {
-                score -= 15;
-                risks.push('Canvas Fingerprinting detectado');
-            }
+            let currentStep = 0;
+            const totalSteps = 10;
 
-            if (detectedInfo.webgl) {
-                score -= 10;
-                risks.push('WebGL Fingerprinting detectado');
-            }
+            const updateProgress = (step, text) => {
+                currentStep = step;
+                progressManager.updateProgress('privacy-score', currentStep, totalSteps, text);
+            };
 
-            if (detectedInfo.fonts && detectedInfo.fonts.length > 20) {
-                score -= 10;
-                risks.push('Muitas fontes detectadas');
-            }
+            updateProgress(1, 'Iniciando análise...');
 
-            if (detectedInfo.plugins && detectedInfo.plugins.length > 0) {
-                score -= 8;
-                risks.push('Plugins detectados');
-            }
+            setTimeout(() => {
+                updateProgress(2, 'Canvas/WebGL');
+                let score = 100;
+                let risks = [];
 
-            if (!navigator.doNotTrack) {
-                score -= 5;
-                risks.push('Do Not Track desabilitado');
-            }
+                setTimeout(() => {
+                    updateProgress(4, 'Fontes/Plugins');
 
-            if (navigator.cookieEnabled) {
-                score -= 5;
-                risks.push('Cookies habilitados');
-            }
+                    // Verificar riscos
+                    if (detectedInfo.canvas) {
+                        score -= 15;
+                        risks.push('Canvas Fingerprinting detectado');
+                    }
 
-            if (location.protocol !== 'https:') {
-                score -= 15;
-                risks.push('Conexão não segura (HTTP)');
-            }
+                    if (detectedInfo.webgl) {
+                        score -= 10;
+                        risks.push('WebGL Fingerprinting detectado');
+                    }
 
-            if (detectedInfo.ip) {
-                score -= 12;
-                risks.push('IP público exposto');
-            }
+                    setTimeout(() => {
+                        updateProgress(6, 'Configurações');
 
-            score = Math.max(score, 0);
-            privacyScore = score;
+                        if (detectedInfo.fonts && detectedInfo.fonts.length > 20) {
+                            score -= 10;
+                            risks.push('Muitas fontes detectadas');
+                        }
 
-            let riskLevel = 'risk-high';
-            let riskText = 'Alto Risco';
+                        if (detectedInfo.plugins && detectedInfo.plugins.length > 0) {
+                            score -= 8;
+                            risks.push('Plugins detectados');
+                        }
 
-            if (score > 70) {
-                riskLevel = 'risk-low';
-                riskText = 'Baixo Risco';
-            } else if (score > 40) {
-                riskLevel = 'risk-medium';
-                riskText = 'Médio Risco';
-            }
+                        setTimeout(() => {
+                            updateProgress(8, 'Vazamentos');
 
-            container.innerHTML = `
-            <div class="privacy-score">${score}/100</div>
-            <div class="risk-indicator ${riskLevel}">
-            🛡️ ${riskText}
-            </div>
-            <div style="margin-top: 20px;">
-            <strong>Vulnerabilidades encontradas:</strong>
-            <ul style="margin-top: 10px; padding-left: 20px;">
-            ${risks.map(risk => `<li>${risk}</li>`).join('')}
-            </ul>
-            </div>
-            <div style="margin-top: 20px; font-size: 0.9em; color: #666;">
-            <strong>Dicas para melhorar sua privacidade:</strong>
-            <ul style="margin-top: 10px; padding-left: 20px;">
-            <li>Use extensões anti-tracking (uBlock Origin, Privacy Badger)</li>
-            <li>Desabilite JavaScript para sites não confiáveis</li>
-            <li>Use VPN para mascarar seu IP</li>
-            <li>Configure seu navegador para bloquear fingerprinting</li>
-            <li>Desabilite plugins desnecessários</li>
-            </ul>
-            </div>
-            `;
+                            if (!navigator.doNotTrack) {
+                                score -= 5;
+                                risks.push('Do Not Track desabilitado');
+                            }
+
+                            if (navigator.cookieEnabled) {
+                                score -= 5;
+                                risks.push('Cookies habilitados');
+                            }
+
+                            if (location.protocol !== 'https:') {
+                                score -= 15;
+                                risks.push('Conexão não segura (HTTP)');
+                            }
+
+                            if (detectedInfo.ip) {
+                                score -= 12;
+                                risks.push('IP público exposto');
+                            }
+
+                            if (detectedInfo.preciseLocation) {
+                                score -= 20;
+                                risks.push('Localização precisa exposta');
+                            }
+
+                            if (detectedInfo.webrtcComprehensive && detectedInfo.webrtcComprehensive.leaks.length > 0) {
+                                score -= 15;
+                                risks.push('Vazamentos WebRTC detectados');
+                            }
+
+                            if (detectedInfo.dnsLeak && detectedInfo.dnsLeak.leaks.length > 0) {
+                                score -= 10;
+                                risks.push('Vazamentos DNS detectados');
+                            }
+
+                            setTimeout(() => {
+                                updateProgress(10, 'Finalizando');
+
+                                score = Math.max(score, 0);
+                                privacyScore = score;
+
+                                let riskLevel = 'risk-high';
+                                let riskText = 'Alto Risco';
+                                let riskIcon = '🔴';
+
+                                if (score > 70) {
+                                    riskLevel = 'risk-low';
+                                    riskText = 'Baixo Risco';
+                                    riskIcon = '🟢';
+                                } else if (score > 40) {
+                                    riskLevel = 'risk-medium';
+                                    riskText = 'Médio Risco';
+                                    riskIcon = '🟡';
+                                }
+
+                                const finalContent = `
+                                <div class="privacy-score">${score}/100</div>
+                                <div class="risk-indicator ${riskLevel}">
+                                ${riskIcon} ${riskText}
+                                </div>
+                                <div style="margin-top: 20px;">
+                                <strong>Vulnerabilidades encontradas (${risks.length}):</strong>
+                                <ul style="margin-top: 10px; padding-left: 20px; max-height: 150px; overflow-y: auto;">
+                                ${risks.map(risk => `<li>${risk}</li>`).join('')}
+                                </ul>
+                                </div>
+                                <div style="margin-top: 20px; font-size: 0.9em; color: #666;">
+                                <strong>Dicas para melhorar sua privacidade:</strong>
+                                <ul style="margin-top: 10px; padding-left: 20px;">
+                                <li>Use extensões anti-tracking (uBlock Origin, Privacy Badger)</li>
+                                <li>Desabilite JavaScript para sites não confiáveis</li>
+                                <li>Use VPN para mascarar seu IP</li>
+                                <li>Configure seu navegador para bloquear fingerprinting</li>
+                                <li>Desabilite plugins desnecessários</li>
+                                ${score < 50 ? '<li><strong style="color: #ff6600;">Considere usar Tor Browser para máxima privacidade</strong></li>' : ''}
+                                </ul>
+                                </div>
+                                `;
+
+                                setTimeout(() => {
+                                    progressManager.completeProgress('privacy-score', finalContent);
+                                }, 200);
+
+                            }, 400);
+                        }, 400);
+                    }, 400);
+                }, 400);
+            }, 100);
         }
 
         // Função para atualizar todas as informações
@@ -3248,7 +3337,10 @@
                 'ip-info', 'basic-info', 'screen-info', 'browser-info',
                 'hardware-info', 'plugins-info', 'security-info', 'fonts-info',
                 'canvas-info', 'webgl-info', 'sensors-info', 'network-info',
-                'fingerprint-info', 'privacy-score'
+                'fingerprint-info', 'privacy-score', 'architecture-info',
+                'gpu-details-info', 'ipv6-info', 'audio-info', 'private-mode-info',
+                'webrtc-comprehensive-info', 'extensions-info', 'adblocker-info',
+                'dns-leak-info', 'proxy-vpn-info'
             ];
 
             containers.forEach(containerId => {

@@ -182,22 +182,6 @@
                 </div>
             </div>
 
-            <!-- Connections e Network -->
-            <div class="card full-width">
-                <h3>🌐 Informações de Rede</h3>
-                <div class="card-content" id="network-info">
-                    <div class="loading">Carregando informações de rede...</div>
-                </div>
-            </div>
-
-            <!-- Privacy Score -->
-            <div class="card full-width critical">
-                <h3>🛡️ Pontuação de Privacidade</h3>
-                <div class="card-content" id="privacy-score">
-                    <div class="loading">Calculando pontuação de privacidade...</div>
-                </div>
-            </div>
-
             <!-- DNS Leak Test -->
             <div class="card critical">
                 <h3>🌐 Teste de Vazamento DNS</h3>
@@ -213,14 +197,34 @@
                     <div class="loading">Carregando...</div>
                 </div>
             </div>
+
+            <!-- Privacy Score -->
+            <div class="card critical">
+                <h3>🛡️ Pontuação de Privacidade</h3>
+                <div class="card-content" id="privacy-score">
+                    <div class="loading">Calculando pontuação de privacidade...</div>
+                </div>
+            </div>
+
+                        <!-- Connections e Network -->
+            <div class="card full-width">
+                <h3>🌐 Informações de Rede</h3>
+                <div class="card-content" id="network-info">
+                    <div class="loading">Carregando informações de rede...</div>
+                </div>
+            </div>
+
+
             <div>
             <!-- PDF Report Button -->
             <button class="refresh-btn" onclick="generatePDFReport()">📋 GERAR RELATÓRIO PDF</button>
-
+            </div>
+            <div></div>
+            <div>
             <!-- Export button -->
             <button class="refresh-btn" onclick="exportResults()">📊 EXPORTAR RESULTADOS</button>
-
             </div>
+
         </div>
     </div>
 
