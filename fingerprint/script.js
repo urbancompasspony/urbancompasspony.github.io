@@ -3231,13 +3231,11 @@
             return entropy;
         }
 
-        // Calcular pontuação de privacidade
         function calculatePrivacyScore() {
             const container = document.getElementById('privacy-score');
 
             progressManager.createProgressBar('privacy-score', 'circular', true);
 
-            // Progresso rápido - sem delays artificiais
             let currentStep = 0;
             const totalSteps = 3;
 
@@ -3247,123 +3245,242 @@
 
             updateProgress(1, 'Analisando dados...');
 
-            // Calcular score IMEDIATAMENTE com dados disponíveis
+            // Começar com score alto e deduzir baseado em riscos REAIS
             let score = 100;
             let risks = [];
+            let criticalIssues = 0;
+            let mediumIssues = 0;
+            let minorIssues = 0;
 
-            // Verificações básicas (sempre disponíveis)
-            if (detectedInfo.canvas) {
-                score -= 15;
-                risks.push('Canvas Fingerprinting detectado');
-            }
+            // === RISCOS CRÍTICOS (Vazamentos reais) ===
 
-            if (detectedInfo.webgl) {
-                score -= 10;
-                risks.push('WebGL Fingerprinting detectado');
-            }
-
-            if (detectedInfo.fonts && detectedInfo.fonts.length > 20) {
-                score -= 10;
-                risks.push('Muitas fontes detectadas');
-            }
-
-            if (detectedInfo.plugins && detectedInfo.plugins.length > 0) {
-                score -= 8;
-                risks.push('Plugins detectados');
-            }
-
-            if (!navigator.doNotTrack) {
-                score -= 5;
-                risks.push('Do Not Track desabilitado');
-            }
-
-            if (navigator.cookieEnabled) {
-                score -= 5;
-                risks.push('Cookies habilitados');
-            }
-
-            if (location.protocol !== 'https:') {
-                score -= 15;
-                risks.push('Conexão não segura (HTTP)');
-            }
-
-            updateProgress(2, 'Verificando vazamentos...');
-
-            // Verificações opcionais (podem não estar prontas ainda)
-            if (detectedInfo.ip) {
-                score -= 12;
-                risks.push('IP público exposto');
-            }
-
+            // Localização precisa exposta
             if (detectedInfo.preciseLocation) {
                 score -= 20;
-                risks.push('Localização precisa exposta');
+                risks.push('🔴 Localização precisa exposta');
+                criticalIssues++;
             }
 
-            // WebRTC (verificar se já terminou)
+            // Vazamentos WebRTC reais
             if (detectedInfo.webrtcComprehensive && detectedInfo.webrtcComprehensive.leaks && detectedInfo.webrtcComprehensive.leaks.length > 0) {
                 score -= 15;
-                risks.push('Vazamentos WebRTC detectados');
+                risks.push(`🔴 ${detectedInfo.webrtcComprehensive.leaks.length} vazamento(s) WebRTC detectado(s)`);
+                criticalIssues++;
             }
 
-            // DNS (verificar se já terminou)
-            if (detectedInfo.dnsLeak && detectedInfo.dnsLeak.leaks && detectedInfo.dnsLeak.leaks.length > 0) {
-                score -= 10;
-                risks.push('Vazamentos DNS detectados');
+            // Vazamentos DNS reais
+            if (detectedInfo.dnsLeak && detectedInfo.dnsLeak.realLeaks && detectedInfo.dnsLeak.realLeaks.length > 0) {
+                score -= 12;
+                risks.push(`🔴 ${detectedInfo.dnsLeak.realLeaks.length} vazamento(s) DNS detectado(s)`);
+                criticalIssues++;
+            }
+
+            // Conexão não segura (apenas se não for localhost/teste)
+            const isLocalhost = location.hostname === 'localhost' ||
+            location.hostname === '127.0.0.1' ||
+            location.hostname.includes('192.168.') ||
+            location.protocol === 'file:';
+
+            if (location.protocol !== 'https:' && !isLocalhost) {
+                score -= 12;
+                risks.push('🔴 Conexão não segura (HTTP)');
+                criticalIssues++;
+            }
+
+            updateProgress(2, 'Verificando fingerprinting...');
+
+            // === RISCOS MÉDIOS (Fingerprinting) ===
+
+            // Canvas Fingerprinting
+            if (detectedInfo.canvas) {
+                score -= 8;
+                risks.push('🟡 Canvas Fingerprinting detectado');
+                mediumIssues++;
+            }
+
+            // WebGL Fingerprinting
+            if (detectedInfo.webgl) {
+                score -= 7;
+                risks.push('🟡 WebGL Fingerprinting detectado');
+                mediumIssues++;
+            }
+
+            // Audio Fingerprinting
+            if (detectedInfo.audio) {
+                score -= 6;
+                risks.push('🟡 Audio Fingerprinting detectado');
+                mediumIssues++;
+            }
+
+            // Muitas fontes únicas
+            if (detectedInfo.fonts && detectedInfo.fonts.length > 25) {
+                score -= 5;
+                risks.push(`🟡 Muitas fontes detectadas (${detectedInfo.fonts.length})`);
+                mediumIssues++;
+            }
+
+            // Plugins detectados
+            if (detectedInfo.plugins && detectedInfo.plugins.length > 0) {
+                score -= 4;
+                risks.push(`🟡 ${detectedInfo.plugins.length} plugin(s) detectado(s)`);
+                mediumIssues++;
+            }
+
+            // === RISCOS MENORES (Configurações padrão) ===
+
+            // IP público exposto (normal para 99% dos usuários)
+            if (detectedInfo.ip) {
+                score -= 3;
+                risks.push('🔵 IP público visível (normal)');
+                minorIssues++;
+            }
+
+            // Do Not Track desabilitado (padrão na maioria)
+            if (!navigator.doNotTrack) {
+                score -= 2;
+                risks.push('🔵 Do Not Track desabilitado');
+                minorIssues++;
+            }
+
+            // Cookies habilitados (necessário para 99% dos sites)
+            if (navigator.cookieEnabled) {
+                score -= 2;
+                risks.push('🔵 Cookies habilitados (necessário para a web)');
+                minorIssues++;
+            }
+
+            // Falta de extensões de privacidade detectada
+            if (detectedInfo.adBlocker && !detectedInfo.adBlocker.detected) {
+                score -= 3;
+                risks.push('🔵 Ad Blocker não detectado');
+                minorIssues++;
             }
 
             updateProgress(3, 'Finalizando...');
 
+            // Garantir que score não seja negativo
             score = Math.max(score, 0);
             privacyScore = score;
 
+            // Classificação mais realista
             let riskLevel = 'risk-high';
             let riskText = 'Alto Risco';
             let riskIcon = '🔴';
+            let riskDescription = '';
 
-            if (score > 70) {
+            if (score >= 85) {
                 riskLevel = 'risk-low';
                 riskText = 'Baixo Risco';
                 riskIcon = '🟢';
-            } else if (score > 40) {
+                riskDescription = 'Sua privacidade está bem protegida!';
+            } else if (score >= 70) {
+                riskLevel = 'risk-medium';
+                riskText = 'Risco Baixo-Médio';
+                riskIcon = '🟡';
+                riskDescription = 'Boa privacidade, com pequenos pontos de melhoria.';
+            } else if (score >= 50) {
                 riskLevel = 'risk-medium';
                 riskText = 'Médio Risco';
-                riskIcon = '🟡';
+                riskIcon = '🟠';
+                riskDescription = 'Privacidade moderada, algumas melhorias recomendadas.';
+            } else if (score >= 30) {
+                riskLevel = 'risk-high';
+                riskText = 'Risco Médio-Alto';
+                riskIcon = '🔴';
+                riskDescription = 'Várias vulnerabilidades detectadas.';
+            } else {
+                riskLevel = 'risk-high';
+                riskText = 'Alto Risco';
+                riskIcon = '🔴';
+                riskDescription = 'Muitas vulnerabilidades críticas encontradas!';
             }
+
+            // Gerar dicas personalizadas baseadas nos problemas encontrados
+            const personalizedTips = generatePersonalizedTips(criticalIssues, mediumIssues, minorIssues, detectedInfo);
 
             const finalContent = `
             <div class="privacy-score">${score}/100</div>
             <div class="risk-indicator ${riskLevel}">
             ${riskIcon} ${riskText}
             </div>
-            <div style="margin-top: 20px;">
-            <strong>Vulnerabilidades encontradas (${risks.length}):</strong>
-            <ul style="margin-top: 10px; padding-left: 20px; max-height: 150px; overflow-y: auto;">
-            ${risks.map(risk => `<li>${risk}</li>`).join('')}
-            </ul>
+            <div style="text-align: center; margin: 10px 0; font-style: italic; color: #ccc;">
+            ${riskDescription}
             </div>
-            <div style="margin-top: 20px; font-size: 0.9em; color: #666;">
-            <strong>Dicas para melhorar sua privacidade:</strong>
-            <ul style="margin-top: 10px; padding-left: 20px;">
-            <li>Use extensões anti-tracking (uBlock Origin, Privacy Badger)</li>
-            <li>Desabilite JavaScript para sites não confiáveis</li>
-            <li>Use VPN para mascarar seu IP</li>
-            <li>Configure seu navegador para bloquear fingerprinting</li>
-            <li>Desabilite plugins desnecessários</li>
-            ${score < 50 ? '<li><strong style="color: #ff6600;">Considere usar Tor Browser para máxima privacidade</strong></li>' : ''}
+
+            <div style="margin: 20px 0;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 10px;">
+            <span>🔴 Críticos: ${criticalIssues}</span>
+            <span>🟡 Médios: ${mediumIssues}</span>
+            <span>🔵 Menores: ${minorIssues}</span>
+            </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+            <strong>Problemas encontrados (${risks.length}):</strong>
+            <div style="margin-top: 10px; max-height: 200px; overflow-y: auto;">
+            ${risks.map(risk => `<div style="margin: 5px 0; padding: 5px; background: rgba(255,255,255,0.1); border-radius: 3px;">• ${risk}</div>`).join('')}
+            </div>
+            </div>
+
+            <div style="margin-top: 20px; font-size: 0.9em;">
+            <strong>💡 Dicas personalizadas para você:</strong>
+            <ul style="margin-top: 10px; padding-left: 20px; line-height: 1.6;">
+            ${personalizedTips.map(tip => `<li>${tip}</li>`).join('')}
             </ul>
             </div>
             `;
 
-            // Mostrar resultado IMEDIATAMENTE - sem setTimeout
             progressManager.completeProgress('privacy-score', finalContent);
 
-            // Se testes opcionais terminarem depois, recalcular
+            // Recalcular se novos dados chegarem
             setTimeout(() => {
                 if (detectedInfo.webrtcComprehensive || detectedInfo.dnsLeak) {
-                    calculatePrivacyScore(); // Recalcular se novos dados chegaram
+                    calculatePrivacyScore();
                 }
             }, 3000);
+        }
+
+        // Função para gerar dicas personalizadas
+        function generatePersonalizedTips(criticalIssues, mediumIssues, minorIssues, detectedInfo) {
+            const tips = [];
+
+            // Dicas baseadas em problemas críticos
+            if (criticalIssues > 0) {
+                if (detectedInfo.preciseLocation) {
+                    tips.push('<strong style="color: #ff6600;">Desabilite geolocalização</strong> para sites não confiáveis');
+                }
+                if (detectedInfo.webrtcComprehensive?.leaks?.length > 0) {
+                    tips.push('<strong style="color: #ff6600;">Configure WebRTC</strong> - use extensão para desabilitar ou VPN');
+                }
+                if (detectedInfo.dnsLeak?.realLeaks?.length > 0) {
+                    tips.push('<strong style="color: #ff6600;">Configure DNS seguro</strong> - use 1.1.1.1 ou Quad9');
+                }
+            }
+
+            // Dicas baseadas em problemas médios
+            if (mediumIssues > 0) {
+                tips.push('Use <strong>uBlock Origin</strong> ou <strong>Privacy Badger</strong> para bloquear fingerprinting');
+                if (detectedInfo.canvas || detectedInfo.webgl) {
+                    tips.push('Configure seu navegador para <strong>bloquear canvas/WebGL</strong> em sites não confiáveis');
+                }
+            }
+
+            // Dicas baseadas em problemas menores
+            if (minorIssues > 0 && !detectedInfo.adBlocker?.detected) {
+                tips.push('Instale um <strong>ad blocker</strong> para melhor privacidade');
+            }
+
+            // Dicas gerais
+            if (criticalIssues === 0 && mediumIssues <= 2) {
+                tips.push('Sua privacidade está <strong>bem configurada</strong>! Continue assim.');
+            } else if (criticalIssues >= 3) {
+                tips.push('<strong style="color: #ff6600;">Considere usar Tor Browser</strong> para máxima privacidade');
+            }
+
+            tips.push('Mantenha seu <strong>navegador atualizado</strong>');
+            tips.push('Use <strong>HTTPS</strong> sempre que possível');
+
+            return tips;
         }
 
         // Função para atualizar todas as informações
