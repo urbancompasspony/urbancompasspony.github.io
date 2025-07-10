@@ -37,7 +37,445 @@
             }
         }
 
-        // Carregar informações de IP
+        // ===== FUNÇÕES DE LOCALIZAÇÃO E MAPA =====
+
+        // 1. Função para solicitar permissão de localização
+        async function requestLocationPermission() {
+            const locationBtn = document.getElementById('location-btn');
+            const locationContainer = document.getElementById('location-details');
+
+            if (locationBtn) {
+                locationBtn.innerHTML = '📍 Obtendo localização...';
+                locationBtn.disabled = true;
+            }
+
+            try {
+                const position = await getCurrentPosition();
+                const { latitude, longitude } = position.coords;
+
+                // Obter endereço completo
+                const address = await getAddressFromCoords(latitude, longitude);
+
+                // Atualizar informações de localização
+                const preciseLocationHTML = `
+                <div class="info-item">
+                <span class="info-label">Latitude:</span>
+                <span class="info-value">${latitude.toFixed(6)}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Longitude:</span>
+                <span class="info-value">${longitude.toFixed(6)}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Precisão:</span>
+                <span class="info-value">${position.coords.accuracy.toFixed(0)}m</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Endereço:</span>
+                <span class="info-value">${address}</span>
+                </div>
+                `;
+
+                if (locationContainer) {
+                    locationContainer.innerHTML = preciseLocationHTML;
+                }
+
+                // Carregar mapa
+                loadGoogleMap(latitude, longitude);
+
+                // Remover botão após sucesso
+                if (locationBtn) {
+                    locationBtn.remove();
+                }
+
+                // Atualizar dados globais
+                detectedInfo.preciseLocation = {
+                    latitude,
+                    longitude,
+                    accuracy: position.coords.accuracy,
+                    address: address
+                };
+
+            } catch (error) {
+                console.error('Erro ao obter localização:', error);
+
+                if (locationBtn) {
+                    locationBtn.innerHTML = '❌ Permissão negada';
+                    locationBtn.disabled = false;
+                }
+
+                if (locationContainer) {
+                    locationContainer.innerHTML = `
+                    <div class="info-item">
+                    <span class="info-label">Erro:</span>
+                    <span class="info-value">${getLocationErrorMessage(error.code)}</span>
+                    </div>
+                    `;
+                }
+            }
+        }
+
+        // 2. Função para obter posição atual (Promise wrapper)
+        function getCurrentPosition() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error('Geolocalização não suportada'));
+                    return;
+                }
+
+                navigator.geolocation.getCurrentPosition(
+                    resolve,
+                    reject,
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 300000 // 5 minutos
+                    }
+                );
+            });
+        }
+
+        // 3. Função para obter endereço por geocodificação reversa
+        async function getAddressFromCoords(lat, lng) {
+            try {
+                // Usando API gratuita do OpenStreetMap Nominatim
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`
+                );
+
+                if (!response.ok) {
+                    throw new Error('Erro na geocodificação');
+                }
+
+                const data = await response.json();
+
+                if (data.display_name) {
+                    return data.display_name;
+                }
+
+                // Fallback: construir endereço manualmente
+                const address = data.address || {};
+                const parts = [
+                    address.road || address.pedestrian || address.path,
+                    address.house_number,
+                    address.suburb || address.neighbourhood,
+                    address.city || address.town || address.village,
+                    address.state,
+                    address.country
+                ].filter(Boolean);
+
+                return parts.join(', ') || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+            } catch (error) {
+                console.error('Erro na geocodificação:', error);
+                return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            }
+        }
+
+        // 4. Função para carregar mapa do Google Maps
+        function loadGoogleMap(latitude, longitude) {
+            const mapContainer = document.getElementById('map-container');
+
+            if (!mapContainer) {
+                console.error('Container do mapa não encontrado');
+                return;
+            }
+
+            // Criar iframe do Google Maps
+            const mapIframe = document.createElement('iframe');
+            mapIframe.width = '100%';
+            mapIframe.height = '200';
+            mapIframe.style.border = '2px solid #576879';
+            mapIframe.style.borderRadius = '8px';
+            mapIframe.style.marginTop = '10px';
+            mapIframe.loading = 'lazy';
+            mapIframe.referrerPolicy = 'no-referrer-when-downgrade';
+
+            // URL do Google Maps com marcador
+            const mapUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dO_TqXYSKr0p5A&q=${latitude},${longitude}&zoom=16&maptype=roadmap`;
+
+            // Fallback para OpenStreetMap se Google Maps não funcionar
+            const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${longitude-0.01},${latitude-0.01},${longitude+0.01},${latitude+0.01}&layer=mapnik&marker=${latitude},${longitude}`;
+
+            mapIframe.src = mapUrl;
+
+            // Adicionar tratamento de erro para fallback
+            mapIframe.onerror = () => {
+                mapIframe.src = osmUrl;
+            };
+
+            // Limpar container e adicionar mapa
+            mapContainer.innerHTML = '';
+            mapContainer.appendChild(mapIframe);
+
+            // Adicionar links úteis
+            const linksDiv = document.createElement('div');
+            linksDiv.style.marginTop = '10px';
+            linksDiv.style.fontSize = '0.8em';
+            linksDiv.innerHTML = `
+            <a href="https://www.google.com/maps?q=${latitude},${longitude}" target="_blank" style="color: #00f000; text-decoration: none; margin-right: 15px;">
+            🌍 Abrir no Google Maps
+            </a>
+            <a href="https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}&zoom=16" target="_blank" style="color: #00f000; text-decoration: none;">
+            🗺️ Abrir no OpenStreetMap
+            </a>
+            `;
+
+            mapContainer.appendChild(linksDiv);
+        }
+
+        // 5. Função para verificar permissão de localização
+        async function checkLocationPermission() {
+            if (!navigator.permissions) {
+                return 'unavailable';
+            }
+
+            try {
+                const permission = await navigator.permissions.query({name: 'geolocation'});
+                return permission.state; // 'granted', 'denied', 'prompt'
+            } catch (error) {
+                return 'unknown';
+            }
+        }
+
+        // 6. Função para obter mensagem de erro amigável
+        function getLocationErrorMessage(errorCode) {
+            switch (errorCode) {
+                case 1:
+                    return 'Permissão de localização negada pelo usuário';
+                case 2:
+                    return 'Localização indisponível';
+                case 3:
+                    return 'Tempo limite para obter localização';
+                default:
+                    return 'Erro desconhecido ao obter localização';
+            }
+        }
+
+        // ===== FUNÇÕES DE LOCALIZAÇÃO E MAPA =====
+
+        // 1. Função para solicitar permissão de localização
+        async function requestLocationPermission() {
+            const locationBtn = document.getElementById('location-btn');
+            const locationContainer = document.getElementById('location-details');
+
+            if (locationBtn) {
+                locationBtn.innerHTML = '📍 Obtendo localização...';
+                locationBtn.disabled = true;
+            }
+
+            try {
+                const position = await getCurrentPosition();
+                const { latitude, longitude } = position.coords;
+
+                // Obter endereço completo
+                const address = await getAddressFromCoords(latitude, longitude);
+
+                // Atualizar informações de localização
+                const preciseLocationHTML = `
+                <div class="info-item">
+                <span class="info-label">Latitude:</span>
+                <span class="info-value">${latitude.toFixed(6)}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Longitude:</span>
+                <span class="info-value">${longitude.toFixed(6)}</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Precisão:</span>
+                <span class="info-value">${position.coords.accuracy.toFixed(0)}m</span>
+                </div>
+                <div class="info-item">
+                <span class="info-label">Endereço:</span>
+                <span class="info-value">${address}</span>
+                </div>
+                `;
+
+                if (locationContainer) {
+                    locationContainer.innerHTML = preciseLocationHTML;
+                }
+
+                // Carregar mapa
+                loadGoogleMap(latitude, longitude);
+
+                // Remover botão após sucesso
+                if (locationBtn) {
+                    locationBtn.remove();
+                }
+
+                // Atualizar dados globais
+                detectedInfo.preciseLocation = {
+                    latitude,
+                    longitude,
+                    accuracy: position.coords.accuracy,
+                    address: address
+                };
+
+            } catch (error) {
+                console.error('Erro ao obter localização:', error);
+
+                if (locationBtn) {
+                    locationBtn.innerHTML = '❌ Permissão negada';
+                    locationBtn.disabled = false;
+                }
+
+                if (locationContainer) {
+                    locationContainer.innerHTML = `
+                    <div class="info-item">
+                    <span class="info-label">Erro:</span>
+                    <span class="info-value">${getLocationErrorMessage(error.code)}</span>
+                    </div>
+                    `;
+                }
+            }
+        }
+
+        // 2. Função para obter posição atual (Promise wrapper)
+        function getCurrentPosition() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error('Geolocalização não suportada'));
+                    return;
+                }
+
+                navigator.geolocation.getCurrentPosition(
+                    resolve,
+                    reject,
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 300000 // 5 minutos
+                    }
+                );
+            });
+        }
+
+        // 3. Função para obter endereço por geocodificação reversa
+        async function getAddressFromCoords(lat, lng) {
+            try {
+                // Usando API gratuita do OpenStreetMap Nominatim
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`
+                );
+
+                if (!response.ok) {
+                    throw new Error('Erro na geocodificação');
+                }
+
+                const data = await response.json();
+
+                if (data.display_name) {
+                    return data.display_name;
+                }
+
+                // Fallback: construir endereço manualmente
+                const address = data.address || {};
+                const parts = [
+                    address.road || address.pedestrian || address.path,
+                    address.house_number,
+                    address.suburb || address.neighbourhood,
+                    address.city || address.town || address.village,
+                    address.state,
+                    address.country
+                ].filter(Boolean);
+
+                return parts.join(', ') || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+            } catch (error) {
+                console.error('Erro na geocodificação:', error);
+                return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            }
+        }
+
+        // 4. Função para carregar área de mapas (apenas links)
+        function loadGoogleMap(latitude, longitude) {
+            const mapContainer = document.getElementById('map-container');
+
+            if (!mapContainer) {
+                console.error('Container do mapa não encontrado');
+                return;
+            }
+
+            // Criar container visual para as coordenadas
+            const coordsDisplay = document.createElement('div');
+            coordsDisplay.style.background = '#0a0a0a';
+            coordsDisplay.style.border = '2px solid #576879';
+            coordsDisplay.style.borderRadius = '8px';
+            coordsDisplay.style.padding = '20px';
+            coordsDisplay.style.marginTop = '10px';
+            coordsDisplay.style.textAlign = 'center';
+            coordsDisplay.style.color = '#00f000';
+            coordsDisplay.style.fontFamily = 'Courier New, monospace';
+
+            coordsDisplay.innerHTML = `
+            <div style="font-size: 1.2em; margin-bottom: 10px;">📍 Localização Detectada</div>
+            <div style="font-size: 0.9em; color: #ccc;">
+            <strong>Latitude:</strong> ${latitude.toFixed(6)}<br>
+            <strong>Longitude:</strong> ${longitude.toFixed(6)}
+            </div>
+            `;
+
+            // Adicionar links úteis
+            const linksDiv = document.createElement('div');
+            linksDiv.style.marginTop = '15px';
+            linksDiv.style.fontSize = '0.9em';
+            linksDiv.innerHTML = `
+            <a href="https://www.google.com/maps?q=${latitude},${longitude}" target="_blank" style="color: #00f000; text-decoration: none; margin-right: 15px; display: inline-block; padding: 8px 16px; border: 1px solid #00f000; border-radius: 5px; transition: all 0.3s ease;">
+            🌍 Abrir no Google Maps
+            </a>
+            <a href="https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}&zoom=16" target="_blank" style="color: #00f000; text-decoration: none; display: inline-block; padding: 8px 16px; border: 1px solid #00f000; border-radius: 5px; transition: all 0.3s ease;">
+            🗺️ Abrir no OpenStreetMap
+            </a>
+            `;
+
+            // Limpar container e adicionar elementos
+            mapContainer.innerHTML = '';
+            mapContainer.appendChild(coordsDisplay);
+            mapContainer.appendChild(linksDiv);
+
+            // Adicionar hover effects via JavaScript
+            const links = linksDiv.querySelectorAll('a');
+            links.forEach(link => {
+                link.addEventListener('mouseenter', () => {
+                    link.style.backgroundColor = '#00f000';
+                    link.style.color = '#000';
+                });
+                link.addEventListener('mouseleave', () => {
+                    link.style.backgroundColor = 'transparent';
+                    link.style.color = '#00f000';
+                });
+            });
+        }
+
+        // 5. Função para verificar permissão de localização
+        async function checkLocationPermission() {
+            if (!navigator.permissions) {
+                return 'unavailable';
+            }
+
+            try {
+                const permission = await navigator.permissions.query({name: 'geolocation'});
+                return permission.state; // 'granted', 'denied', 'prompt'
+            } catch (error) {
+                return 'unknown';
+            }
+        }
+
+        // 6. Função para obter mensagem de erro amigável
+        function getLocationErrorMessage(errorCode) {
+            switch (errorCode) {
+                case 1:
+                    return 'Permissão de localização negada pelo usuário';
+                case 2:
+                    return 'Localização indisponível';
+                case 3:
+                    return 'Tempo limite para obter localização';
+                default:
+                    return 'Erro desconhecido ao obter localização';
+            }
+        }
+
+        // 7. Função modificada para loadIPInfo (substituir a existente)
         async function loadIPInfo() {
             const container = document.getElementById('ip-info');
 
@@ -61,6 +499,18 @@
                 }
 
                 if (ipData) {
+                    // Verificar permissão de localização
+                    const locationPermission = await checkLocationPermission();
+
+                    let locationButton = '';
+                    if (locationPermission !== 'granted') {
+                        locationButton = `
+                        <button id="location-btn" class="location-btn" onclick="requestLocationPermission()">
+                        📍 Descobrir Localização Precisa
+                        </button>
+                        `;
+                    }
+
                     container.innerHTML = `
                     <div class="info-item">
                     <span class="info-label">IP Público:</span>
@@ -86,8 +536,20 @@
                     <span class="info-label">Timezone:</span>
                     <span class="info-value">${ipData.timezone || 'Não disponível'}</span>
                     </div>
+                    ${locationButton}
+                    <div id="location-details"></div>
+                    <div id="map-container"></div>
                     `;
+
                     detectedInfo.ip = ipData;
+
+                    // Se já tem permissão, carregar automaticamente
+                    if (locationPermission === 'granted') {
+                        setTimeout(() => {
+                            requestLocationPermission();
+                        }, 1000);
+                    }
+
                 } else {
                     throw new Error('Nenhuma API de IP disponível');
                 }
@@ -103,6 +565,112 @@
                 </div>
                 `;
             }
+        }
+
+        // 8. Função para criar mapa alternativo com Canvas (se APIs falharem)
+        function createCanvasMap(latitude, longitude) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 300;
+            canvas.height = 200;
+            canvas.style.border = '2px solid #576879';
+            canvas.style.borderRadius = '8px';
+            canvas.style.marginTop = '10px';
+
+            const ctx = canvas.getContext('2d');
+
+            // Fundo
+            ctx.fillStyle = '#2a2a2a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Grid
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 1;
+
+            // Linhas verticais
+            for (let x = 0; x <= canvas.width; x += 30) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+
+            // Linhas horizontais
+            for (let y = 0; y <= canvas.height; y += 30) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Marcador central
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            ctx.fillStyle = '#ff0000';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Texto de coordenadas
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`, centerX, centerY - 15);
+
+            return canvas;
+        }
+
+        // 8. Função para criar mapa alternativo com Canvas (se APIs falharem)
+        function createCanvasMap(latitude, longitude) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 300;
+            canvas.height = 200;
+            canvas.style.border = '2px solid #576879';
+            canvas.style.borderRadius = '8px';
+            canvas.style.marginTop = '10px';
+
+            const ctx = canvas.getContext('2d');
+
+            // Fundo
+            ctx.fillStyle = '#2a2a2a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Grid
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 1;
+
+            // Linhas verticais
+            for (let x = 0; x <= canvas.width; x += 30) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+
+            // Linhas horizontais
+            for (let y = 0; y <= canvas.height; y += 30) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Marcador central
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            ctx.fillStyle = '#ff0000';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Texto de coordenadas
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`, centerX, centerY - 15);
+
+            return canvas;
         }
 
         // Obter IP local (aproximado)

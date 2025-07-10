@@ -14,6 +14,70 @@
           overflow-x: hidden;
         }
 
+        /* Estilos para localização e mapa */
+        .location-btn {
+          background-color: #00f000;
+          color: #000;
+          border: 1px solid #00d000;
+          padding: 10px 20px;
+          border-radius: 5px;
+          font-size: 0.9em;
+          font-weight: bold;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          margin: 10px 0;
+          width: 100%;
+          font-family: 'Times New Roman', serif;
+        }
+
+        .location-btn:hover {
+          background-color: #00d000;
+          transform: scale(1.02);
+        }
+
+        .location-btn:disabled {
+          background-color: #666;
+          color: #ccc;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        #map-container {
+        margin-top: 15px;
+        min-height: 200px;
+        }
+
+        #location-details {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #576879;
+        }
+
+        /* Estilos para o container de coordenadas */
+        #map-container {
+        margin-top: 15px;
+        }
+
+        #map-container a {
+        transition: all 0.3s ease;
+        margin: 5px;
+        }
+
+        #map-container a:hover {
+        background-color: #00f000 !important;
+        color: #000 !important;
+        transform: scale(1.02);
+        }
+
+        /* Responsividade para móveis */
+        @media (max-width: 768px) {
+          #map-container a {
+          display: block;
+          margin: 8px 0;
+          text-align: center;
+          }
+        }
+
         body::before {
           content: '';
           position: fixed;
@@ -268,18 +332,21 @@
         .connection-list {
           max-height: 200px;
           overflow-y: auto;
-          background: #f8f9fa;
+          background: #0a0a0a;
           padding: 10px;
           border-radius: 8px;
           margin-top: 10px;
+          border: 1px solid #576879;
         }
 
         .connection-item {
           padding: 5px 10px;
           margin: 3px 0;
-          background: white;
+          background: #1a1a1a;
           border-radius: 5px;
           font-size: 0.85em;
+          color: #ccc;
+          border: 1px solid #333;
         }
 
         @media (max-width: 768px) {
