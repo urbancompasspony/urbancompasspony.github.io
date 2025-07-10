@@ -978,6 +978,55 @@
           box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
         }
 
+        /* Novo estilo para a informação do IP */
+        .ip-info {
+          background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+          border: 2px solid #e17055;
+          border-radius: 10px;
+          padding: 12px 20px;
+          margin: 15px 30px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          font-weight: 600;
+          color: #2d3436;
+          box-shadow: 0 4px 8px rgba(225, 112, 85, 0.2);
+        }
+
+        .ip-info .icon {
+          font-size: 1.2rem;
+        }
+
+        .ip-info .ip-address {
+          font-family: 'Courier New', monospace;
+          background: rgba(255, 255, 255, 0.7);
+          padding: 4px 8px;
+          border-radius: 6px;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .ip-info.loading {
+          background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+          color: #666;
+        }
+
+        .ip-info.error {
+          background: linear-gradient(135deg, #ffcccb, #ffb3b3);
+          border-color: #d63031;
+          color: #2d3436;
+        }
+
+        @media (max-width: 768px) {
+          .ip-info {
+            margin: 15px 15px;
+            padding: 10px 15px;
+            flex-direction: column;
+            gap: 8px;
+            text-align: center;
+          }
+        }
+
         @media (max-width: 768px) {
           .header h1 {
             font-size: 2rem;

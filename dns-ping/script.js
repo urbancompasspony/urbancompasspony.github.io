@@ -1244,6 +1244,109 @@
             hideCacheInfo();
         }
 
+        // Funções para detectar o IP do usuário
+        async function detectUserIP() {
+            const ipInfoElement = document.getElementById('ipInfo');
+
+            try {
+                // Lista de serviços para detectar o IP (em ordem de preferência)
+                const ipServices = [
+                    {
+                        name: 'ipify',
+                        url: 'https://api.ipify.org?format=json',
+                        parser: (data) => data.ip
+                    },
+                    {
+                        name: 'ipapi',
+                        url: 'https://ipapi.co/json/',
+                        parser: (data) => data.ip
+                    },
+                    {
+                        name: 'ip-api',
+                        url: 'http://ip-api.com/json/',
+                        parser: (data) => data.query
+                    }
+                ];
+
+                let detectedIP = null;
+                let serviceUsed = '';
+
+                // Tentar cada serviço até conseguir um IP
+                for (const service of ipServices) {
+                    try {
+                        const controller = new AbortController();
+                        const timeout = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
+
+                        const response = await fetch(service.url, {
+                            signal: controller.signal,
+                            mode: 'cors'
+                        });
+
+                        clearTimeout(timeout);
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            detectedIP = service.parser(data);
+                            serviceUsed = service.name;
+
+                            if (detectedIP) {
+                                break; // Sucesso, sair do loop
+                            }
+                        }
+                    } catch (error) {
+                        console.warn(`Falha ao detectar IP via ${service.name}:`, error.message);
+                        continue; // Tentar próximo serviço
+                    }
+                }
+
+                if (detectedIP) {
+                    updateIPDisplay(detectedIP, serviceUsed);
+                } else {
+                    throw new Error('Todos os serviços falharam');
+                }
+
+            } catch (error) {
+                console.error('Erro ao detectar IP:', error);
+                showIPError();
+            }
+        }
+
+        function updateIPDisplay(ip, service) {
+            const ipInfoElement = document.getElementById('ipInfo');
+            const ipType = detectIpType(ip);
+            const protocolIcon = ipType === 'ipv6' ? '🆕' : '🌐';
+
+            ipInfoElement.className = 'ip-info';
+            ipInfoElement.innerHTML = `
+            <span class="icon">${protocolIcon}</span>
+            <span>Seu endereço de IP WAN é:</span>
+            <span class="ip-address">${ip}</span>
+            <span style="font-size: 0.8rem; opacity: 0.8;">(${ipType.toUpperCase()} via ${service})</span>
+            `;
+        }
+
+        function showIPError() {
+            const ipInfoElement = document.getElementById('ipInfo');
+            ipInfoElement.className = 'ip-info error';
+            ipInfoElement.innerHTML = `
+            <span class="icon">⚠️</span>
+            <span>Não foi possível detectar seu IP atual</span>
+            <span style="font-size: 0.8rem; opacity: 0.8;">(Verifique sua conexão)</span>
+            `;
+        }
+
+        // Função para atualizar o IP manualmente (opcional)
+        function refreshIP() {
+            const ipInfoElement = document.getElementById('ipInfo');
+            ipInfoElement.className = 'ip-info loading';
+            ipInfoElement.innerHTML = `
+            <span class="icon">🔄</span>
+            <span>Atualizando seu endereço IP...</span>
+            `;
+            detectUserIP();
+        }
+
+        // Event listeners para adicionar DNS com Enter
         // Event listeners para adicionar DNS com Enter
         document.addEventListener('DOMContentLoaded', function() {
             // Carregar dados salvos do localStorage
@@ -1258,6 +1361,11 @@
 
             // Inicializar histórico
             updateHistoryDisplay();
+
+            // ADICIONAR ESTA LINHA - Detectar IP do usuário
+            setTimeout(() => {
+                detectUserIP();
+            }, 1000);
 
             // Event listeners existentes...
             document.getElementById('customDnsIp').addEventListener('keypress', function(e) {
