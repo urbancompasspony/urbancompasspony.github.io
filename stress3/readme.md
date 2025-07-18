@@ -1,4 +1,4 @@
-# 🚀 WebGPU Ultra Benchmark - Next Generation
+# 🚀 WebGPU Ultra Stress - Next Generation
 
 Um benchmark avançado de WebGPU que explora os limites da computação gráfica no navegador, utilizando **Compute Shaders**, **Render Bundles** e **sistemas de partículas** para testar o desempenho extremo da GPU.
 
