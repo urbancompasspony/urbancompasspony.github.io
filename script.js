@@ -42,23 +42,23 @@
 },
 {
     name: 'stress',
-    title: 'Estresse de GPU com WebGL 1.0',
-    description: 'Ferramenta para estressar placas de vídeo tipo Intel HD Graphics e VideoCore IV (Raspberry Pi)',
+    title: 'Estresse de Placas de Vídeo com WebGL 1.0',
+    description: 'Ferramenta para estressar Intel HD Graphics ou ainda VideoCore IV (Raspberry Pi)',
     icon: '🧊',
     category: 'tools',
     status: 'online'
 },
 {
     name: 'stress2',
-    title: 'Estresse de GPU com WebGL 2.0',
-    description: 'Ferramenta para estressar placas de vídeo medianas e topo de linha!',
+    title: 'Estresse de Placas de Vídeo com WebGL 2.0',
+    description: 'Ferramenta para estressar placas de vídeo medianas!',
     icon: '🔥',
     category: 'tools',
     status: 'online'
 },
 {
     name: 'stress3',
-    title: 'Estresse de GPU com WebGPU',
+    title: 'Estresse de Placas de Vídeo com WebGPU',
     description: 'Ferramenta para estressar placas de vídeo topo de linha!',
     icon: '💥',
     category: 'tools',
