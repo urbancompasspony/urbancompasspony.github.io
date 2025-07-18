@@ -1,13 +1,13 @@
-        // Lista de projetos expandida
-        const projects = [
-            {
-                name: 'linuxuniverse',
-                title: 'Linux Universe',
-                description: 'Site completo sobre notícias, tutoriais e guias do mundo Linux. Uma fonte confiável para entusiastas e profissionais.',
-                icon: '🐧',
-                category: 'web',
-                status: 'online'
-            },
+    // Lista de projetos expandida
+    const projects = [
+{
+    name: 'linuxuniverse',
+    title: 'Linux Universe',
+    description: 'Site completo sobre notícias, tutoriais e guias do mundo Linux. Uma fonte confiável para entusiastas e profissionais.',
+    icon: '🐧',
+    category: 'web',
+    status: 'online'
+},
 {
     name: 'p',
     title: 'Publicações Recentes',
@@ -51,8 +51,16 @@
 {
     name: 'stress2',
     title: 'Estresse de GPU com WebGL 2.0',
-    description: 'Ferramenta para estressar placas de vídeo topo de linha como a RTX 4060!',
+    description: 'Ferramenta para estressar placas de vídeo medianas e topo de linha!',
     icon: '🔥',
+    category: 'tools',
+    status: 'online'
+},
+{
+    name: 'stress3',
+    title: 'Estresse de GPU com WebGPU',
+    description: 'Ferramenta para estressar placas de vídeo topo de linha!',
+    icon: '💥',
     category: 'tools',
     status: 'online'
 },
